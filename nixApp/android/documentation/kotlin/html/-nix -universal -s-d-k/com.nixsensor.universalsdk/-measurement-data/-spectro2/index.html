@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>Spectro2</title>
+    <link href="../../../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async="async"></script>
+<script type="text/javascript" src="../../../../scripts/sourceset_dependencies.js" async="async"></script>
+<link href="../../../../styles/style.css" rel="Stylesheet">
+<link href="../../../../styles/main.css" rel="Stylesheet">
+<link href="../../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../../scripts/clipboard.js" async="async"></script>
+<script type="text/javascript" src="../../../../scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="../../../../scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="../../../../scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="../../../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
+</head>
+<body>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+                    <a class="library-name--link" href="../../../../index.html">
+                            Nix Universal SDK
+                    </a>
+            </div>
+            <div class="library-version">
+            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":universalsdk:dokkaHtml/release">androidJvm</button>
+        </div>
+    </div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
+    </div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageIds="Nix Universal SDK::com.nixsensor.universalsdk/MeasurementData.Spectro2///PointingToDeclaration//-343231423">
+  <div class="breadcrumbs"><a href="../../../../index.html">Nix Universal SDK</a><span class="delimiter">/</span><a href="../../index.html">com.nixsensor.universalsdk</a><span class="delimiter">/</span><a href="../index.html">MeasurementData</a><span class="delimiter">/</span><span class="current">Spectro2</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>Spectro2</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">class </span><a href="index.html">Spectro2</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>status<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-byte/index.html">Byte</a><span class="token punctuation">, </span></span><span class="parameter ">scanBytes<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-byte-array/index.html">ByteArray</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>mode<span class="token operator">: </span><a href="../../-scan-mode/index.html">ScanMode</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>tRef<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-float/index.html">Float</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>tScan<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-float/index.html">Float</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>tCompEnabled<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>tileEnabled<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>deviceType<span class="token operator">: </span><a href="../../-device-type/index.html">DeviceType</a><span class="token operator"> = </span>DeviceType.SPECTRO2</span></span><span class="token punctuation">)</span> : <a href="../../-i-measurement-data/index.html">IMeasurementData</a></div><p class="paragraph">Class describing measurement data from a <a href="../../-device-type/-s-p-e-c-t-r-o2/index.html">DeviceType.SPECTRO2</a> device</p><h4 class="">Inheritors</h4><div class="table"><div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-mini3/index.html">Mini3</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-spectro-l/index.html">SpectroL</a></div></span></div><div></div></div></div></div></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="">Constructors</h2>
+        <div class="table"><a data-name="-931211360%2FConstructors%2F-343231423" anchor-label="Spectro2" id="-931211360%2FConstructors%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-spectro2.html"><span><span>Spectro2</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-931211360%2FConstructors%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">status<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-byte/index.html">Byte</a><span class="token punctuation">, </span></span><span class="parameter ">scanBytes<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-byte-array/index.html">ByteArray</a><span class="token punctuation">, </span></span><span class="parameter ">mode<span class="token operator">: </span><a href="../../-scan-mode/index.html">ScanMode</a><span class="token punctuation">, </span></span><span class="parameter ">tRef<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-float/index.html">Float</a><span class="token punctuation">, </span></span><span class="parameter ">tScan<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-float/index.html">Float</a><span class="token punctuation">, </span></span><span class="parameter ">tCompEnabled<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token punctuation">, </span></span><span class="parameter ">tileEnabled<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token punctuation">, </span></span><span class="parameter ">deviceType<span class="token operator">: </span><a href="../../-device-type/index.html">DeviceType</a><span class="token operator"> = </span>DeviceType.SPECTRO2</span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="TYPE">
+        <h2 class="">Types</h2>
+        <div class="table"><a data-name="-285039117%2FClasslikes%2F-343231423" anchor-label="Companion" id="-285039117%2FClasslikes%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-companion/index.html"><span><span>Companion</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-285039117%2FClasslikes%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">object </span><a href="-companion/index.html">Companion</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="-1547997186%2FProperties%2F-343231423" anchor-label="deviceType" id="-1547997186%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="device-type.html"><span>device</span><wbr></wbr><span><span>Type</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1547997186%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">override </span><span class="token keyword">val </span><a href="device-type.html">deviceType</a><span class="token operator">: </span><a href="../../-device-type/index.html">DeviceType</a></div><div class="brief "><p class="paragraph">Device type that was used to make this measurement.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1964298965%2FProperties%2F-343231423" anchor-label="mode" id="-1964298965%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="mode.html"><span><span>mode</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1964298965%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">override </span><span class="token keyword">val </span><a href="mode.html">mode</a><span class="token operator">: </span><a href="../../-scan-mode/index.html">ScanMode</a></div><div class="brief "><p class="paragraph">Scan mode for this measurement (one of <a href="../../-scan-mode/-m0/index.html">ScanMode.M0</a>, <a href="../../-scan-mode/-m1/index.html">ScanMode.M1</a>, or <a href="../../-scan-mode/-m2/index.html">ScanMode.M2</a>)</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-428421059%2FProperties%2F-343231423" anchor-label="providesDensity" id="-428421059%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../../-i-measurement-data/provides-density.html"><span>provides</span><wbr></wbr><span><span>Density</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-428421059%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">val </span><a href="../../-i-measurement-data/provides-density.html">providesDensity</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Flag indicating if this measurement provides absolute density values. This value depends on both the <a href="../../-i-measurement-data/device-type.html">deviceType</a> and <a href="../../-license-manager/index.html">LicenseManager</a> supporting the <a href="../../-license-feature/-d-e-n-s-i-t-y_-d-a-t-a/index.html">LicenseFeature.DENSITY_DATA</a> feature. See also <a href="../../-device-type/is-feature-supported.html">DeviceType.isFeatureSupported</a> and <a href="../../-license-manager/-shared/is-feature-enabled.html">LicenseManager.Shared.isFeatureEnabled</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="817710961%2FProperties%2F-343231423" anchor-label="providesSpectral" id="817710961%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../../-i-measurement-data/provides-spectral.html"><span>provides</span><wbr></wbr><span><span>Spectral</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="817710961%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">val </span><a href="../../-i-measurement-data/provides-spectral.html">providesSpectral</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Flag indicating if this measurement provides spectral values. This value depends on both the <a href="../../-i-measurement-data/device-type.html">deviceType</a> and availability of the <a href="../../-license-feature/-s-p-e-c-t-r-a-l_-d-a-t-a/index.html">LicenseFeature.SPECTRAL_DATA</a> feature. See also <a href="../../-device-type/is-feature-supported.html">DeviceType.isFeatureSupported</a> and <a href="../../-license-manager/-shared/is-feature-enabled.html">LicenseManager.Shared.isFeatureEnabled</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1638975292%2FProperties%2F-343231423" anchor-label="raw" id="-1638975292%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="raw.html"><span><span>raw</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1638975292%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">val </span><a href="raw.html">raw</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">Raw data for a measurement. Can be used for measurement object reconstruction.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1202994944%2FProperties%2F-343231423" anchor-label="spectralData" id="-1202994944%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="spectral-data.html"><span>spectral</span><wbr></wbr><span><span>Data</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1202994944%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">val </span><a href="spectral-data.html">spectralData</a><span class="token operator">: </span><a href="../../-i-spectral-data/index.html">ISpectralData</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Provides a spectral data object from this measurement, or <code class="lang-kotlin">null</code> if spectral data is not available. See also <span data-unresolved-link="com.nixsensor.universalsdk/MeasurementData.Spectro2/providesSpectral/#/PointingToDeclaration/">providesSpectral</span>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1140894340%2FProperties%2F-343231423" anchor-label="status" id="-1140894340%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="status.html"><span><span>status</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1140894340%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">override </span><span class="token keyword">val </span><a href="status.html">status</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-byte/index.html">Byte</a></div><div class="brief "><p class="paragraph">Scan status byte. A value of <code class="lang-kotlin">0x01</code> indicates success, all other values indicate error states.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1508280835%2FProperties%2F-343231423" anchor-label="supportedReferences" id="-1508280835%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../../-i-measurement-data/supported-references.html"><span>supported</span><wbr></wbr><span><span>References</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1508280835%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">val </span><a href="../../-i-measurement-data/supported-references.html">supportedReferences</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-array/index.html">Array</a><span class="token operator">&lt;</span><a href="../../-reference-white/index.html">ReferenceWhite</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Array describing all reference white points that are available when requesting color data from this measurement using <a href="../../-i-measurement-data/to-color-data.html">IMeasurementData.toColorData</a></p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1086551536%2FProperties%2F-343231423" anchor-label="tCompEnabled" id="-1086551536%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="t-comp-enabled.html"><span>t</span><wbr></wbr><span>Comp</span><wbr></wbr><span><span>Enabled</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1086551536%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">override </span><span class="token keyword">val </span><a href="t-comp-enabled.html">tCompEnabled</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Flag indicating if temperature compensation was applied to the calibrated output for this measurement. Value is <code class="lang-kotlin">null</code> if the device did not support temperature measurements.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="691974722%2FProperties%2F-343231423" anchor-label="tileDelta" id="691974722%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="tile-delta.html"><span>tile</span><wbr></wbr><span><span>Delta</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="691974722%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">val </span><a href="tile-delta.html">tileDelta</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-double/index.html">Double</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Delta E value between this measurement and factory reference. Value is non-null for measurement values from <a href="../../-i-device-compat/run-field-calibration.html">IDeviceCompat.runFieldCalibration</a> and <code class="lang-kotlin">null</code> in all other cases.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-270113895%2FProperties%2F-343231423" anchor-label="tileEnabled" id="-270113895%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="tile-enabled.html"><span>tile</span><wbr></wbr><span><span>Enabled</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-270113895%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">override </span><span class="token keyword">val </span><a href="tile-enabled.html">tileEnabled</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Flag indicating if in-field profiling corrections / white reference tile measurements were applied to the calibrated output data. Value is <code class="lang-kotlin">null</code> if the device did not support in-field profiling.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2061702086%2FProperties%2F-343231423" anchor-label="tReal" id="-2061702086%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="t-real.html"><span>t</span><wbr></wbr><span><span>Real</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2061702086%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">val </span><a href="t-real.html">tReal</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator">?</span><span class="token operator"> = </span><span class="token boolean">true</span></div><div class="brief "><p class="paragraph">Flag describing the units for the reported temperature measurement. When <code class="lang-kotlin">true</code>, temperature values are 'real' (floating point, degrees C). When <code class="lang-kotlin">false</code>, temperatures are reported on an arbitrary raw scale. Value is <code class="lang-kotlin">null</code> if the device did not support temperature measurements.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1617495345%2FProperties%2F-343231423" anchor-label="tRef" id="-1617495345%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="t-ref.html"><span>t</span><wbr></wbr><span><span>Ref</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1617495345%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">override </span><span class="token keyword">val </span><a href="t-ref.html">tRef</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-float/index.html">Float</a></div><div class="brief "><p class="paragraph">Baseline reference temperature for this measurement, or <code class="lang-kotlin">null</code> if the device did not support temperature measurements.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-797087685%2FProperties%2F-343231423" anchor-label="tScan" id="-797087685%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="t-scan.html"><span>t</span><wbr></wbr><span><span>Scan</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-797087685%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">override </span><span class="token keyword">val </span><a href="t-scan.html">tScan</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-float/index.html">Float</a></div><div class="brief "><p class="paragraph">Temperature of the Nix device at the time of this measurement, or <code class="lang-kotlin">null</code> if the device did not support temperature measurements.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="-822686076%2FFunctions%2F-343231423" anchor-label="providesColor" id="-822686076%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../../-i-measurement-data/provides-color.html"><span>provides</span><wbr></wbr><span><span>Color</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-822686076%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="../../-i-measurement-data/provides-color.html"><span class="token function">providesColor</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">illuminant<span class="token operator">: </span><a href="../../-illuminant/index.html">Illuminant</a><span class="token punctuation">, </span></span><span class="parameter ">observer<span class="token operator">: </span><a href="../../-observer/index.html">Observer</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="provides-color.html"><span class="token function">providesColor</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">reference<span class="token operator">: </span><a href="../../-reference-white/index.html">ReferenceWhite</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Returns <code class="lang-kotlin">true</code> if color data for the selected combination of illuminant and observer are available for this measurement.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1971095036%2FFunctions%2F-343231423" anchor-label="toColorData" id="-1971095036%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../../-i-measurement-data/to-color-data.html"><span>to</span><wbr></wbr><span>Color</span><wbr></wbr><span><span>Data</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1971095036%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="../../-i-measurement-data/to-color-data.html"><span class="token function">toColorData</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">illuminant<span class="token operator">: </span><a href="../../-illuminant/index.html">Illuminant</a><span class="token operator"> = </span>Illuminant.D50<span class="token punctuation">, </span></span><span class="parameter ">observer<span class="token operator">: </span><a href="../../-observer/index.html">Observer</a><span class="token operator"> = </span>Observer.CIE1931<span class="token punctuation">, </span></span><span class="parameter ">type<span class="token operator">: </span><a href="../../-i-color-data/-color-type/index.html">IColorData.ColorType</a><span class="token operator"> = </span>CIEXYZ</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../-i-color-data/index.html">IColorData</a><span class="token operator">?</span></div><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="to-color-data.html"><span class="token function">toColorData</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">reference<span class="token operator">: </span><a href="../../-reference-white/index.html">ReferenceWhite</a><span class="token punctuation">, </span></span><span class="parameter ">type<span class="token operator">: </span><a href="../../-i-color-data/-color-type/index.html">IColorData.ColorType</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../-i-color-data/index.html">IColorData</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Provides color data from this measurement for the specified illuminant and observer white point. Result is <code class="lang-kotlin">null</code> if the specified white point is not available for this measurement.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-725480107%2FFunctions%2F-343231423" anchor-label="toColorInt" id="-725480107%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../../-i-measurement-data/to-color-int.html"><span>to</span><wbr></wbr><span>Color</span><wbr></wbr><span><span>Int</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-725480107%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/androidx/annotation/ColorInt.html"><span class="token annotation builtin">ColorInt</span></a></div></div><span class="token keyword">open </span><span class="token keyword">fun </span><a href="../../-i-measurement-data/to-color-int.html"><span class="token function">toColorInt</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">reference<span class="token operator">: </span><a href="../../-reference-white/index.html">ReferenceWhite</a><span class="token operator"> = </span>ReferenceWhite.D50_2</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token operator">?</span></div><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/androidx/annotation/ColorInt.html"><span class="token annotation builtin">ColorInt</span></a></div></div><span class="token keyword">open </span><span class="token keyword">fun </span><a href="../../-i-measurement-data/to-color-int.html"><span class="token function">toColorInt</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">illuminant<span class="token operator">: </span><a href="../../-illuminant/index.html">Illuminant</a><span class="token operator"> = </span>Illuminant.D50<span class="token punctuation">, </span></span><span class="parameter ">observer<span class="token operator">: </span><a href="../../-observer/index.html">Observer</a><span class="token operator"> = </span>Observer.CIE1931</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Provides an sRGB value (as a <code class="lang-kotlin">ColorInt</code>) for this measurement for the specified illuminant and observer white point. Result is <code class="lang-kotlin">null</code> if the specified white point is not available for this measurement.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-551186122%2FFunctions%2F-343231423" anchor-label="toDensityData" id="-551186122%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="to-density-data.html"><span>to</span><wbr></wbr><span>Density</span><wbr></wbr><span><span>Data</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-551186122%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="to-density-data.html"><span class="token function">toDensityData</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">status<span class="token operator">: </span><a href="../../-density-status/index.html">DensityStatus</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../../-i-density-data/index.html">IDensityData</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Provides absolute density values for this measurement for the specified density status evaluated as per ISO 5-3:2009, or <code class="lang-kotlin">null</code> if density data is not available. See also <span data-unresolved-link="com.nixsensor.universalsdk/MeasurementData.Spectro2/providesDensity/#/PointingToDeclaration/">providesDensity</span>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="467153285%2FFunctions%2F-343231423" anchor-label="toRgbValue" id="467153285%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../../-i-measurement-data/to-rgb-value.html"><span>to</span><wbr></wbr><span>Rgb</span><wbr></wbr><span><span>Value</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="467153285%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="../../-i-measurement-data/to-rgb-value.html"><span class="token function">toRgbValue</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">reference<span class="token operator">: </span><a href="../../-reference-white/index.html">ReferenceWhite</a><span class="token operator"> = </span>ReferenceWhite.D50_2</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-int-array/index.html">IntArray</a><span class="token operator">?</span></div><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="../../-i-measurement-data/to-rgb-value.html"><span class="token function">toRgbValue</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">illuminant<span class="token operator">: </span><a href="../../-illuminant/index.html">Illuminant</a><span class="token operator"> = </span>Illuminant.D50<span class="token punctuation">, </span></span><span class="parameter ">observer<span class="token operator">: </span><a href="../../-observer/index.html">Observer</a><span class="token operator"> = </span>Observer.CIE1931</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-int-array/index.html">IntArray</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Provides an sRGB value for this measurement for the specified illuminant and observer white point. Result is <code class="lang-kotlin">null</code> if the specified white point is not available for this measurement.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2025 Copyright</span><span
+                class="pull-right"><span>Generated by </span><a
+                href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>IColorData</title>
+    <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async="async"></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
+</head>
+<body>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+                    <a class="library-name--link" href="../../../index.html">
+                            Nix Universal SDK
+                    </a>
+            </div>
+            <div class="library-version">
+            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":universalsdk:dokkaHtml/release">androidJvm</button>
+        </div>
+    </div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
+    </div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageIds="Nix Universal SDK::com.nixsensor.universalsdk/IColorData///PointingToDeclaration//-343231423">
+  <div class="breadcrumbs"><a href="../../../index.html">Nix Universal SDK</a><span class="delimiter">/</span><a href="../index.html">com.nixsensor.universalsdk</a><span class="delimiter">/</span><span class="current">IColorData</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>IColor</span><wbr></wbr><span><span>Data</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">public </span><span class="token keyword">interface </span><a href="index.html">IColorData</a></div><p class="paragraph">Interface describing colorimetry data</p><h4 class="">Inheritors</h4><div class="table"><div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-color-data/index.html">ColorData</a></div></span></div><div></div></div></div></div></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="TYPE">
+        <h2 class="">Types</h2>
+        <div class="table"><a data-name="-1517826811%2FClasslikes%2F-343231423" anchor-label="ColorDifferenceType" id="-1517826811%2FClasslikes%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-color-difference-type/index.html"><span>Color</span><wbr></wbr><span>Difference</span><wbr></wbr><span><span>Type</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1517826811%2FClasslikes%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">public </span><span class="token keyword">enum </span><a href="-color-difference-type/index.html">ColorDifferenceType</a><span class="token keyword"> extends </span><a href="https://developer.android.com/reference/kotlin/java/lang/Enum.html">Enum</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="-color-difference-type/index.html">IColorData.ColorDifferenceType</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Enum describing the available color difference (delta E) equations.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-131019006%2FClasslikes%2F-343231423" anchor-label="ColorType" id="-131019006%2FClasslikes%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-color-type/index.html"><span>Color</span><wbr></wbr><span><span>Type</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-131019006%2FClasslikes%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">public </span><span class="token keyword">enum </span><a href="-color-type/index.html">ColorType</a><span class="token keyword"> extends </span><a href="https://developer.android.com/reference/kotlin/java/lang/Enum.html">Enum</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="-color-type/index.html">IColorData.ColorType</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Enum to describe the base color data types available for <a href="index.html">IColorData</a> objects. Values for each of these types can be freely converted to each other without loss of color data.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="-2004094257%2FFunctions%2F-343231423" anchor-label="compareTo" id="-2004094257%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="compare-to.html"><span>compare</span><wbr></wbr><span><span>To</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2004094257%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword">abstract </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Double.html">Double</a> <a href="compare-to.html"><span class="token function">compareTo</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="index.html">IColorData</a> other<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword"></span><a href="-color-difference-type/index.html">IColorData.ColorDifferenceType</a> type</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Calculate delta E between this color and another. The colors must share the same reference white point (<span data-unresolved-link="com.nixsensor.universalsdk/IColorData/reference/#/PointingToDeclaration/">reference</span>)</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="997682486%2FFunctions%2F-343231423" anchor-label="convertTo" id="997682486%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="convert-to.html"><span>convert</span><wbr></wbr><span><span>To</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="997682486%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword">abstract </span><span class="token keyword"></span><a href="index.html">IColorData</a> <a href="convert-to.html"><span class="token function">convertTo</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="-color-type/index.html">IColorData.ColorType</a> type</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Convert this color value to another <a href="-color-type/index.html">ColorType</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="704014922%2FFunctions%2F-343231423" anchor-label="getColorInt" id="704014922%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-color-int.html"><span>get</span><wbr></wbr><span>Color</span><wbr></wbr><span><span>Int</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="704014922%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/androidx/annotation/ColorInt.html"><span class="token annotation builtin">ColorInt</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Integer.html">Integer</a> <a href="get-color-int.html"><span class="token function">getColorInt</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-42440868%2FFunctions%2F-343231423" anchor-label="getHexCode" id="-42440868%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-hex-code.html"><span>get</span><wbr></wbr><span>Hex</span><wbr></wbr><span><span>Code</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-42440868%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> <a href="get-hex-code.html"><span class="token function">getHexCode</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-24220013%2FFunctions%2F-343231423" anchor-label="getMode" id="-24220013%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-mode.html"><span>get</span><wbr></wbr><span><span>Mode</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-24220013%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword">abstract </span><span class="token keyword"></span><a href="../-scan-mode/index.html">ScanMode</a> <a href="get-mode.html"><span class="token function">getMode</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Scan mode for this value (one of <a href="../-scan-mode/-m0/index.html">ScanMode.M0</a>, <a href="../-scan-mode/-m1/index.html">ScanMode.M1</a>, or <a href="../-scan-mode/-m2/index.html">ScanMode.M2</a>).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1226821799%2FFunctions%2F-343231423" anchor-label="getReference" id="-1226821799%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-reference.html"><span>get</span><wbr></wbr><span><span>Reference</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1226821799%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword">abstract </span><span class="token keyword"></span><a href="../-reference-white/index.html">ReferenceWhite</a> <a href="get-reference.html"><span class="token function">getReference</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Reference white point for this color value.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="166020658%2FFunctions%2F-343231423" anchor-label="getRgbValue" id="166020658%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-rgb-value.html"><span>get</span><wbr></wbr><span>Rgb</span><wbr></wbr><span><span>Value</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="166020658%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword">abstract </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-int-array/index.html">IntArray</a> <a href="get-rgb-value.html"><span class="token function">getRgbValue</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">sRGB value for this color.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="934592732%2FFunctions%2F-343231423" anchor-label="getType" id="934592732%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-type.html"><span>get</span><wbr></wbr><span><span>Type</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="934592732%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword">abstract </span><span class="token keyword"></span><a href="-color-type/index.html">IColorData.ColorType</a> <a href="get-type.html"><span class="token function">getType</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Type of color data stored in the <span data-unresolved-link="com.nixsensor.universalsdk/IColorData/value/#/PointingToDeclaration/">value</span> field.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-167456909%2FFunctions%2F-343231423" anchor-label="getValue" id="-167456909%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-value.html"><span>get</span><wbr></wbr><span><span>Value</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-167456909%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword">abstract </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-double-array/index.html">DoubleArray</a> <a href="get-value.html"><span class="token function">getValue</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Color value (3 coordinates) in the format specified by <span data-unresolved-link="com.nixsensor.universalsdk/IColorData/mode/#/PointingToDeclaration/">mode</span>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2025 Copyright</span><span
+                class="pull-right"><span>Generated by </span><a
+                href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

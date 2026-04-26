@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">QuimresaScan</string>
+
+    <string name="action_abort">Abortar</string>
+    <string name="action_activate">Activar</string>
+    <string name="action_calibrate">Calibrar</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_connect">Conectar</string>
+    <string name="action_continue">Continuar</string>
+    <string name="action_copy">Copiar</string>
+    <string name="action_device_info">Información del dispositivo</string>
+    <string name="action_disconnect">Desconectar</string>
+    <string name="action_more">Más</string>
+    <string name="action_ok">Aceptar</string>
+    <string name="action_scan">Escanear</string>
+    <string name="action_settings">Configuración</string>
+
+    <string name="error_calibration_not_started">Error desconocido: no se pudo iniciar el escaneo de calibración</string>
+    <string name="error_calibration_short">La calibración del dispositivo falló</string>
+    <string name="error_calibration_detail">Código de error %1$s y mensaje %2$s</string>
+    <string name="error_incorrect_tile_serial">Error de calibración: el número de serie del azulejo no coincide con el número de serie de la unidad</string>
+    <string name="error_incorrect_tile_format">Error de calibración: el código QR del azulejo no coincide con el formato esperado</string>
+
+    <string name="hint_calibration_place_on_tile">Coloca la unidad sobre el área de escaneo del azulejo de referencia</string>
+    <string name="hint_qr_code">Coloca el código QR del azulejo dentro del marco</string>
+
+    <string name="label_cielab">CIELAB (%1$s)</string>
+    <string name="label_options">Opciones</string>
+    <string name="label_signature">Firma</string>
+
+    <string name="message_location_permission_primer">Esta aplicación usa servicios de ubicación para escanear dispositivos Nix cercanos. %1$s</string>
+    <string name="message_location_permission_primer_reattempt">Cambia los permisos en la configuración de tu dispositivo y permite el acceso a Tu ubicación</string>
+    <string name="message_bluetooth_permission_primer">Esta aplicación usa Bluetooth para escanear dispositivos Nix cercanos. %1$s</string>
+    <string name="message_bluetooth_permission_primer_reattempt">Cambia los permisos en la configuración de tu dispositivo y permite el acceso a Dispositivos cercanos</string>
+    <string name="message_camera_error">No se puede iniciar la cámara</string>
+    <string name="message_camera_permission_primer">Esta aplicación usa la cámara para leer el código QR del azulejo de referencia. %1$s</string>
+    <string name="message_camera_permission_primer_reattempt">Cambia los permisos en la configuración de tu dispositivo y permite el acceso a Cámara</string>
+    <string name="message_confirm_disconnect">¿Desconectarse del dispositivo Nix?</string>
+    <string name="message_device_scanner_error">No se pudieron buscar dispositivos (%1$s)</string>
+    <string name="message_location_denied">No se concedió acceso a la ubicación; ¡no se pueden encontrar dispositivos!</string>
+    <string name="message_bluetooth_denied">No se concedió acceso a Bluetooth; ¡no se pueden encontrar dispositivos!</string>
+    <string name="message_camera_denied">No se concedió acceso a la cámara; ¡no se puede escanear el código QR!</string>
+    <string name="message_no_devices_found">No se encontraron dispositivos Nix compatibles cerca</string>
+    <string name="message_permission_error">Error: %1$s</string>
+    <string name="message_permission_primer_first_attempt">Por favor, permite el acceso en el siguiente aviso.</string>
+    <string name="message_sdk_check_fail">Este dispositivo no puede usarse con esta aplicación. Contacta al proveedor para más soporte.</string>
+    <string name="message_sdk_check_report">Tipo: %1$s\nS/N: %2$s\nSDK ID: %3$s</string>
+    <string name="message_minimum_modes_error">Debe haber al menos un modo de escaneo habilitado</string>
+    <string name="message_spectral_unavailable_device">Los datos espectrales no están disponibles para dispositivos %1$s</string>
+    <string name="message_spectral_unavailable_licensing">Los datos espectrales no están disponibles para la licencia activa</string>
+    <string name="message_spectral_unavailable_generic">Los datos espectrales no están disponibles</string>
+    <string name="message_activation_error">El SDK Universal de Nix no está activado (%1$s).\n\nVerifica que las opciones de activación y la firma sean correctas.</string>
+    <string name="message_device_not_supported">La licencia activa no admite dispositivos %1$s.</string>
+    <string name="message_license_change">Actualiza estos valores para que coincidan con tu licencia y haz clic en %1$s</string>
+    <string name="message_license_new_state">El nuevo estado de la licencia es %1$s</string>
+
+    <string name="status_calibration_complete">Calibración completada con estado %1$s</string>
+    <string name="status_connected">Conectado a %1$s</string>
+    <string name="status_connecting">Conectando a %1$s…</string>
+    <string name="status_disconnected">Desconectado de %1$s</string>
+    <string name="status_scanning">Escaneando…</string>
+    <string name="status_scan_error">Error: %1$s</string>
+    <string name="status_scan_error_battery">Batería baja, por favor recarga el dispositivo Nix</string>
+    <string name="status_scan_error_unknown">Error de escaneo desconocido</string>
+    <string name="status_scan_error_scan_mode">Modo de escaneo no compatible</string>
+    <string name="status_scan_error_ambient">Se detectó luz ambiental</string>
+    <string name="status_scan_error_busy">El dispositivo está ocupado</string>
+    <string name="status_scan_error_activation">La licencia no está activa</string>
+    <string name="status_unavailable">No disponible</string>
+    <string name="status_disabled">Deshabilitado</string>
+    <string name="status_enabled">Habilitado</string>
+
+    <string name="temperature_format_celsius">%1$.1f °C</string>
+    <string name="temperature_format_raw">%1$.0f (crudo)</string>
+
+    <string name="title_activation_error">Error de activación</string>
+    <string name="title_axis_reflectance">Reflectancia</string>
+    <string name="title_axis_wavelength">λ [nm]</string>
+    <string name="title_battery_level">Nivel de batería</string>
+    <string name="title_scan_info">Información de escaneo</string>
+    <string name="title_device_firmware">Versión de firmware</string>
+    <string name="title_device_hardware">Versión de hardware</string>
+    <string name="title_device_list_searching">Dispositivos cercanos</string>
+    <string name="title_device_name">Nombre del dispositivo</string>
+    <string name="title_device_not_supported">Dispositivo no compatible</string>
+    <string name="title_device_settings">Configuración del dispositivo</string>
+    <string name="title_false">Falso</string>
+    <string name="title_haptic_feedback">Retroalimentación háptica</string>
+    <string name="title_home">Inicio</string>
+    <string name="title_temperature_compensation">Compensación de temperatura</string>
+    <string name="title_permission_primer">Conceder acceso</string>
+    <string name="title_reference_white">Blanco de referencia</string>
+    <string name="title_rgb_feedback">Retroalimentación RGB</string>
+    <string name="title_scan_counter">Contador de escaneos</string>
+    <string name="title_scan_mode">Modo de escaneo</string>
+    <string name="title_scan_modes">Modos de escaneo</string>
+    <string name="title_serial_number">Número de serie</string>
+    <string name="title_temperature">Temperatura del dispositivo</string>
+    <string name="title_temperature_reference">Temperatura de referencia</string>
+    <string name="title_temperature_scan">Temperatura del escaneo</string>
+    <string name="title_true">Verdadero</string>
+    <string name="title_usb_connected">Energía externa conectada</string>
+    <string name="title_white_tile_normalization">Normalización del azulejo</string>
+    <string name="title_field_calibration_date">Fecha de calibración de campo</string>
+    <string name="title_field_calibration_due">Calibración de campo pendiente</string>
+    <string name="title_license_change">Cambiar clave de licencia</string>
+    <string name="title_license_info">Información de licencia</string>
+    <string name="title_license_sdk_version">Versión del SDK</string>
+    <string name="title_license_state">Estado del gestor de licencias</string>
+    <string name="title_license_expiry">Fecha de expiración</string>
+    <string name="title_license_uuid">UUID</string>
+    <string name="title_license_allocation">Códigos de asignación</string>
+    <string name="title_license_device_types">Tipos de dispositivos</string>
+    <string name="title_license_features">Características</string>
+</resources>

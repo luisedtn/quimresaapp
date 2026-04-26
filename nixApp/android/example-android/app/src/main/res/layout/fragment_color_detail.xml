@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".fragment.ColorDetailFragment">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:id="@+id/swatch"
+            android:background="@drawable/shape_empty_swatch_mirror"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_chainStyle="packed"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/lab_value_view"
+            android:layout_marginBottom="16dp"
+            android:layout_marginStart="16dp"
+            app:layout_constraintStart_toStartOf="@+id/swatch"
+            app:layout_constraintBottom_toBottomOf="@+id/swatch"
+            app:layout_constraintEnd_toEndOf="@+id/swatch"
+            app:layout_constraintHorizontal_bias="0"
+            android:textAppearance="@style/lab_label_style"
+            android:text="100.00, -128.00, -128.00"
+            android:visibility="invisible"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/lab_reference_view"
+            app:layout_constraintStart_toStartOf="@+id/lab_value_view"
+            app:layout_constraintEnd_toEndOf="@+id/lab_value_view"
+            app:layout_constraintBottom_toTopOf="@+id/lab_value_view"
+            app:layout_constraintHorizontal_bias="0"
+            android:textAppearance="@style/lab_label_style"
+            android:text="LAB (D65/10°)"
+            android:visibility="invisible"/>
+
+        <ImageButton
+            android:id="@+id/button_more"
+            android:layout_width="@dimen/plot_button_size"
+            android:layout_height="@dimen/plot_button_size"
+            app:layout_constraintTop_toTopOf="@+id/lab_value_view"
+            app:layout_constraintBottom_toBottomOf="@+id/lab_reference_view"
+            app:layout_constraintStart_toEndOf="@+id/lab_reference_view"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1"
+            app:srcCompat="@drawable/ic_expand_more"
+            style="@style/action_button_style"
+            app:tint="?attr/colorOnBackground"
+            android:visibility="gone"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+
+
+</FrameLayout>

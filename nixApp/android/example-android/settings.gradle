@@ -1,0 +1,20 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
+    repositories {
+        google()
+        mavenCentral()
+
+        // JitPack used for optional USB support (com.github.mik3y:usb-serial-for-android:v3.8.1)
+        maven { url 'https://jitpack.io' }
+        maven { url "${rootProject.projectDir}/../library/nixrepo" }
+    }
+}
+rootProject.name = "Nix Example"
+include ':app'

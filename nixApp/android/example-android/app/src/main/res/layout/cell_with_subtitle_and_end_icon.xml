@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:descendantFocusability="blocksDescendants">
+
+    <androidx.appcompat.widget.AppCompatRadioButton
+        android:id="@+id/radio_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="?dialogPreferredPadding"
+        android:clickable="false"
+        android:visibility="gone"
+        android:theme="@style/Theme.NixExample"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toEndOf="@+id/radio_button"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:paddingStart="?dialogPreferredPadding"
+        android:paddingEnd="?dialogPreferredPadding"
+        android:orientation="vertical"
+        android:layout_toStartOf="@+id/end_image_view">
+        <TextView
+            android:id="@+id/first_line_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/device_list_title_style"
+            android:text="Placeholder line 1"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/second_line_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/device_list_subtitle_style"
+            android:text="Placeholder line 2"
+            tools:ignore="HardcodedText" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/end_image_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_alignParentEnd="true"
+        android:paddingEnd="?dialogPreferredPadding"
+        app:srcCompat="@drawable/ic_signal_3_bar"
+        app:tint="?attr/colorPrimary"
+        android:visibility="gone"
+        tools:ignore="RtlSymmetry" />
+
+    <RelativeLayout
+        android:id="@+id/end_switch_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:layout_centerVertical="true"
+        android:layout_alignParentEnd="true"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:padding="8dp"
+            android:theme="@style/Theme.NixExample.ProgressBar"
+            android:visibility="invisible"/>
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/end_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:theme="@style/Theme.NixExample.Switch"
+            android:visibility="visible"
+            android:clickable="false"
+            android:focusable="false"
+            android:focusableInTouchMode="false"
+            tools:ignore="RtlSymmetry" />
+    </RelativeLayout>
+
+
+
+</RelativeLayout>

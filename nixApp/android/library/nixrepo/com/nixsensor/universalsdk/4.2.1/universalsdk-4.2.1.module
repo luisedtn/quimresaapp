@@ -1,0 +1,131 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.nixsensor",
+    "module": "universalsdk",
+    "version": "4.2.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.9"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "universalsdk-4.2.1.aar",
+          "url": "universalsdk-4.2.1.aar",
+          "size": 883015,
+          "sha512": "3725a69cf442d24756437ed9b1ffd32e9ebf00775ff7a6430edf181dd14cd9165b58541c3e2702110ba3aadeb1881f8fc3052ff8f4e65c5f140c5c0595e912ce",
+          "sha256": "f51110068f88100f3443fbf14aefe67da9d639e517624f546f8f2c1345db62cd",
+          "sha1": "615c1f95a3ebf438af3fed9a0adaefa18d1e225d",
+          "md5": "de18b41feb609f45a18a89c71ce1ffe4"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "androidx.core",
+          "module": "core-ktx",
+          "version": {
+            "requires": "1.13.1"
+          }
+        },
+        {
+          "group": "androidx.fragment",
+          "module": "fragment-ktx",
+          "version": {
+            "requires": "1.8.5"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-coroutines-android",
+          "version": {
+            "requires": "1.9.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-coroutines-jdk8",
+          "version": {
+            "requires": "1.9.0"
+          }
+        },
+        {
+          "group": "com.google.code.gson",
+          "module": "gson",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "universalsdk-4.2.1.aar",
+          "url": "universalsdk-4.2.1.aar",
+          "size": 883015,
+          "sha512": "3725a69cf442d24756437ed9b1ffd32e9ebf00775ff7a6430edf181dd14cd9165b58541c3e2702110ba3aadeb1881f8fc3052ff8f4e65c5f140c5c0595e912ce",
+          "sha256": "f51110068f88100f3443fbf14aefe67da9d639e517624f546f8f2c1345db62cd",
+          "sha1": "615c1f95a3ebf438af3fed9a0adaefa18d1e225d",
+          "md5": "de18b41feb609f45a18a89c71ce1ffe4"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseJavaDocPublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "universalsdk-4.2.1-javadoc.jar",
+          "url": "universalsdk-4.2.1-javadoc.jar",
+          "size": 588084,
+          "sha512": "f1a2f399b81508b202494ae5b46171716a6475a281517bda21c61761a984b91bca55a1571f2fe9d7bcf66223046a3f59a37c32a8229a87e561993fba48f1027a",
+          "sha256": "f6ef100f6bf5ab1dc556aad201400930c836d78a37cd7e974bf18f92f710d344",
+          "sha1": "2ef47155eeaec5308ad067e49ba4f9e71414f204",
+          "md5": "e065f937b3f3aefd0b3bd74920aadc8a"
+        }
+      ]
+    }
+  ]
+}

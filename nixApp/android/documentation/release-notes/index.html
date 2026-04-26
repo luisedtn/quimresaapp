@@ -1,0 +1,766 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../example-apps/">
+      
+      
+      
+      <link rel="icon" href="../images/ic_nix_swatches.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.4.6">
+    
+    
+      
+        <title>Release Notes - Nix Universal SDK</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.35e1ed30.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.356b1318.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#release-notes" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Nix Universal SDK" class="md-header__button md-logo" aria-label="Nix Universal SDK" data-md-component="logo">
+      
+  <img src="../images/nix_logo_white.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Nix Universal SDK
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Release Notes
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode\"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode\" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Nix Universal SDK" class="md-nav__button md-logo" aria-label="Nix Universal SDK" data-md-component="logo">
+      
+  <img src="../images/nix_logo_white.svg" alt="logo">
+
+    </a>
+    Nix Universal SDK
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../add-to-as/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Adding to Your Android Studio Project
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../activating-license/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Activating the SDK License
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../discovering-connecting/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Discovering and Connecting to Nix Devices
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../device-operations/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Device Operations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../handling-measurements/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Handling Measurement Data
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../example-apps/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Example Application
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    API
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            API
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Kotlin
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Java
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Release Notes
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Release Notes
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#version-421" class="md-nav__link">
+    Version 4.2.1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-420" class="md-nav__link">
+    Version 4.2.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-410" class="md-nav__link">
+    Version 4.1.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-402" class="md-nav__link">
+    Version 4.0.2
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-400" class="md-nav__link">
+    Version 4.0.0
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#version-421" class="md-nav__link">
+    Version 4.2.1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-420" class="md-nav__link">
+    Version 4.2.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-410" class="md-nav__link">
+    Version 4.1.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-402" class="md-nav__link">
+    Version 4.0.2
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-400" class="md-nav__link">
+    Version 4.0.0
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="release-notes">Release Notes</h1>
+<h2 id="version-421">Version 4.2.1</h2>
+<ul>
+<li>Released on March 1, 2025</li>
+<li>Fixed issue that caused querying <code>IDeviceCompat/supportedReferences</code> to crash for some device types (see <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/supported-references.html">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/get-supported-references.html">Java</a>).</li>
+<li>Fixed errors in color conversion functions in <code>ColorUtils</code>.<ul>
+<li>CIEXYZ to CIELUV (see <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-color-utils/-companion/xyz-to-luv.html">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-color-utils/-companion/xyz-to-luv.html">Java</a>)</li>
+<li>CIELUV to CIEXYZ (see <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-color-utils/-companion/luv-to-xyz.html">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-color-utils/-companion/luv-to-xyz.html">Java</a>)</li>
+</ul>
+</li>
+</ul>
+<h2 id="version-420">Version 4.2.0</h2>
+<ul>
+<li>Released on February 21, 2025</li>
+<li>Nix Universal SDK functions must now be enabled with a license key using <code>LicenseManager</code> (see <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-license-manager/-shared/">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-license-manager/-shared/">Java</a>). For further details, refer to <a href="../activating-license/">Activating the SDK License</a>.</li>
+<li>Existing <code>enum</code> types have added cases related to <code>LicenseManager</code> errors. Refer to the API documentation linked below for additional details.<ul>
+<li><code>CommandStatus/ERROR_LICENSE</code> (see <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-command-status/-e-r-r-o-r_-l-i-c-e-n-s-e/">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-command-status/-e-r-r-o-r_-l-i-c-e-n-s-e/">Java</a>)</li>
+<li><code>DeviceScannerState/ERROR_LICENSE</code> (see <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-scanner/-device-scanner-state/-e-r-r-o-r_-l-i-c-e-n-s-e/">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-scanner/-device-scanner-state/-e-r-r-o-r_-l-i-c-e-n-s-e/">Java</a>)</li>
+<li><code>DeviceStatus/ERROR_LICENSE</code> (see <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-device-status/-e-r-r-o-r_-l-i-c-e-n-s-e/">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-device-status/-e-r-r-o-r_-l-i-c-e-n-s-e/">Java</a>)</li>
+</ul>
+</li>
+<li><code>ISpectralData.toDensityData()</code> now returns an optional data type (see <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-spectral-data/to-density-data.html">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-spectral-data/to-density-data.html">Java</a>).<ul>
+<li>The result is <code>null</code> when <code>LicenseFeature/DENSITY_DATA</code> is not provided by the active license.</li>
+</ul>
+</li>
+<li>The dependency on <a href="https://github.com/mik3y/usb-serial-for-android"><code>usb-serial-for-android</code></a> has been changed from 'required' to 'optional'<ul>
+<li>This dependency is used provide support for devices directly attached via USB. It can be safely omitted if USB support is not required.</li>
+<li>To enable USB device support, include this dependency in your application's <code>build.gradle</code> file. Refer to <a href="../add-to-as/#optional-add-dependencies-for-usb-support">Add dependencies for USB support</a> for further details.</li>
+</ul>
+</li>
+</ul>
+<h2 id="version-410">Version 4.1.0</h2>
+<ul>
+<li>Released on July 31, 2023</li>
+<li>Added support for Nix Spectro L devices</li>
+<li>Added <code>IDeviceCompat/fieldCalibrationMaxDelta</code><ul>
+<li>Allows override of the maximum Delta E threshold used when performing in-field calibration</li>
+<li>Review the API reference (<a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/field-calibration-max-delta.html">Kotlin</a> or Java <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/get-field-calibration-max-delta.html">getter</a> and <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/set-field-calibration-max-delta.html">setter</a>) for additional details</li>
+</ul>
+</li>
+<li>Updated field calibration routine for Nix Spectro 2 devices<ul>
+<li>API calls to <code>IDeviceCompat/runFieldCalibration</code> function are unchanged</li>
+<li>Additional diagnostics are performed during the white tile scan on Spectro 2 type devices. As a result, the calibration command can now take 5 - 10 seconds to complete</li>
+<li>The operation can now fail with status <code>CommandStatus/ERROR_SCAN_DELTA</code> if the tile measurement delta exceeds the allowable threshold</li>
+</ul>
+</li>
+<li>Added <code>IDeviceCompat/invalidateFieldCalibration</code> function<ul>
+<li>This function forces the field calibration record to expire on QC and Spectro 2 type devices. </li>
+<li>Review the API reference (<a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/invalidate-field-calibration.html">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/invalidate-field-calibration.html">Java</a>) for additional details</li>
+</ul>
+</li>
+</ul>
+<h2 id="version-402">Version 4.0.2</h2>
+<ul>
+<li>Released on February 13, 2023</li>
+<li>Added ISO Density calculations and supporting classes<ul>
+<li>Density data can be obtained from measurements as <code>IDensityData</code></li>
+<li>The <a href="../handling-measurements/">Handling Measurement Data</a> article has been updated to reflect its usage</li>
+</ul>
+</li>
+</ul>
+<h2 id="version-400">Version 4.0.0</h2>
+<ul>
+<li>Released on January 6, 2023</li>
+<li>Initial release for <code>NixUniversalSDK</code>, replacing the older <code>nixlibrary</code> project</li>
+</ul>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.aecac24b.min.js"></script>
+      
+    
+  </body>
+</html>

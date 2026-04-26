@@ -1,0 +1,53 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.nixsensor.nixexample.MainActivity">
+    <item
+        android:id="@+id/action_license_info"
+        android:orderInCategory="100"
+        android:title="@string/title_license_info"
+        android:icon="@drawable/ic_info"
+        app:iconTint="?attr/colorOnPrimary"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/action_license_change"
+        android:orderInCategory="100"
+        android:title="@string/title_license_change"
+        android:icon="@drawable/ic_license"
+        app:iconTint="?attr/colorOnPrimary"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/action_calibrate"
+        android:orderInCategory="102"
+        android:title="@string/action_calibrate"
+        android:icon="@drawable/ic_tune"
+        app:iconTint="?attr/colorOnPrimary"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/action_settings"
+        android:orderInCategory="103"
+        android:title="@string/title_device_settings"
+        android:icon="@drawable/ic_settings"
+        app:iconTint="?attr/colorOnPrimary"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_device"
+        android:orderInCategory="104"
+        android:title="@string/action_device_info"
+        android:icon="@drawable/ic_info"
+        app:iconTint="?attr/colorOnPrimary"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_disconnect"
+        android:orderInCategory="105"
+        android:title="@string/action_disconnect"
+        android:icon="@drawable/ic_disconnect"
+        app:iconTint="?attr/colorOnPrimary"
+        app:showAsAction="ifRoom"/>
+
+</menu>

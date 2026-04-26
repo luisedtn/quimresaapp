@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>DeviceCompat</title>
+    <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async="async"></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
+</head>
+<body>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+                    <a class="library-name--link" href="../../../index.html">
+                            Nix Universal SDK
+                    </a>
+            </div>
+            <div class="library-version">
+            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":universalsdk:dokkaHtml/release">androidJvm</button>
+        </div>
+    </div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
+    </div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageIds="Nix Universal SDK::com.nixsensor.universalsdk/DeviceCompat///PointingToDeclaration//-343231423">
+  <div class="breadcrumbs"><a href="../../../index.html">Nix Universal SDK</a><span class="delimiter">/</span><a href="../index.html">com.nixsensor.universalsdk</a><span class="delimiter">/</span><span class="current">DeviceCompat</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Device</span><wbr></wbr><span><span>Compat</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace"><span class="token keyword">public </span><span class="token keyword">final </span><span class="token keyword"></span><span class="token keyword">class </span><a href="index.html">DeviceCompat</a><span class="token keyword"> implements </span><a href="../-i-device-compat/index.html">IDeviceCompat</a></div><p class="paragraph">Class describing the supported properties and methods for a Nix device.</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="">Constructors</h2>
+        <div class="table"><a data-name="1286642006%2FConstructors%2F-343231423" anchor-label="DeviceCompat" id="1286642006%2FConstructors%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-device-compat.html"><span>Device</span><wbr></wbr><span><span>Compat</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1286642006%2FConstructors%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="index.html">DeviceCompat</a> <a href="-device-compat.html"><span class="token function">DeviceCompat</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/android/content/Context.html">Context</a> context<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> address<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> name<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Integer.html">Integer</a> rssi</span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="96197867%2FProperties%2F-343231423" anchor-label="batteryLevel" id="96197867%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#96197867%2FProperties%2F-343231423"><span>battery</span><wbr></wbr><span><span>Level</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="96197867%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Integer.html">Integer</a> <a href="index.html#96197867%2FProperties%2F-343231423">batteryLevel</a></div><div class="brief "><p class="paragraph">Current battery level for this device (0 - 100), or null if not available. The value is valid only after a connection has successfully been opened.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1585896107%2FProperties%2F-343231423" anchor-label="extPowerState" id="1585896107%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#1585896107%2FProperties%2F-343231423"><span>ext</span><wbr></wbr><span>Power</span><wbr></wbr><span><span>State</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1585896107%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="index.html#1585896107%2FProperties%2F-343231423">extPowerState</a></div><div class="brief "><p class="paragraph">External power connection state for this device. The value is valid only after a connection has successfully been opened.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1323649684%2FProperties%2F-343231423" anchor-label="fieldCalibrationDue" id="1323649684%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#1323649684%2FProperties%2F-343231423"><span>field</span><wbr></wbr><span>Calibration</span><wbr></wbr><span><span>Due</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1323649684%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="index.html#1323649684%2FProperties%2F-343231423">fieldCalibrationDue</a></div><div class="brief "><p class="paragraph">Flag to indicate if in-field calibration is recommended for this device at this time (if supported). This value is only valid after opening a connection and is a function of both time and ambient temperature. This value also updates each time a measurement is completed.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-516110233%2FProperties%2F-343231423" anchor-label="fieldCalibrationEnabled" id="-516110233%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-516110233%2FProperties%2F-343231423"><span>field</span><wbr></wbr><span>Calibration</span><wbr></wbr><span><span>Enabled</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-516110233%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="index.html#-516110233%2FProperties%2F-343231423">fieldCalibrationEnabled</a></div><div class="brief "><p class="paragraph">Flag to indicate if in-field calibration results are applied (<code class="lang-kotlin">true</code>) or bypassed (<code class="lang-kotlin">false</code>) when evaluating the final calibrated measurement result. Value is <code class="lang-kotlin">true</code> by default if supported by the device. It is recommended to leave this set to <code class="lang-kotlin">true</code> if supported.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1560352286%2FProperties%2F-343231423" anchor-label="fieldCalibrationMaxDelta" id="1560352286%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#1560352286%2FProperties%2F-343231423"><span>field</span><wbr></wbr><span>Calibration</span><wbr></wbr><span>Max</span><wbr></wbr><span><span>Delta</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1560352286%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Double.html">Double</a> <a href="index.html#1560352286%2FProperties%2F-343231423">fieldCalibrationMaxDelta</a></div><div class="brief "><p class="paragraph">Maximum Delta E threshold used when performing in-field calibration (if supported), or NaN if the device does not support this operation. It is recommended to leave this set to its default value, which can vary by device type. If a difference from the reference greater than this value is detected during <a href="run-field-calibration.html">runFieldCalibration</a>, the command will fail with status <a href="../-command-status/-e-r-r-o-r_-s-c-a-n_-d-e-l-t-a/index.html">CommandStatus.ERROR_SCAN_DELTA</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="585389787%2FProperties%2F-343231423" anchor-label="firmwareVersion" id="585389787%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#585389787%2FProperties%2F-343231423"><span>firmware</span><wbr></wbr><span><span>Version</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="585389787%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="../-device-version/index.html">DeviceVersion</a> <a href="index.html#585389787%2FProperties%2F-343231423">firmwareVersion</a></div><div class="brief "><p class="paragraph">Firmware version of this device. The value is valid only after a connection has successfully been opened.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1425513939%2FProperties%2F-343231423" anchor-label="hapticFeedbackEnabled" id="1425513939%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#1425513939%2FProperties%2F-343231423"><span>haptic</span><wbr></wbr><span>Feedback</span><wbr></wbr><span><span>Enabled</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1425513939%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="index.html#1425513939%2FProperties%2F-343231423">hapticFeedbackEnabled</a></div><div class="brief "><p class="paragraph">Flag to indicate if device haptic feedback is enabled.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-667807992%2FProperties%2F-343231423" anchor-label="hardwareVersion" id="-667807992%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-667807992%2FProperties%2F-343231423"><span>hardware</span><wbr></wbr><span><span>Version</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-667807992%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="../-device-version/index.html">DeviceVersion</a> <a href="index.html#-667807992%2FProperties%2F-343231423">hardwareVersion</a></div><div class="brief "><p class="paragraph">Hardware version of this device. The value is valid only after a connection has successfully been opened.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-489025169%2FProperties%2F-343231423" anchor-label="hasOptions" id="-489025169%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-489025169%2FProperties%2F-343231423"><span>has</span><wbr></wbr><span><span>Options</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-489025169%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="index.html#-489025169%2FProperties%2F-343231423">hasOptions</a></div><div class="brief "><p class="paragraph">Helper function to describe if any on-device options are available. Value is <code class="lang-kotlin">true</code> if any one of <span data-unresolved-link="com.nixsensor.universalsdk/IDeviceCompat/supportsFieldCalibration/#/PointingToDeclaration/">supportsFieldCalibration</span>, <span data-unresolved-link="com.nixsensor.universalsdk/IDeviceCompat/supportsTemperatureCompensation/#/PointingToDeclaration/">supportsTemperatureCompensation</span>, <span data-unresolved-link="com.nixsensor.universalsdk/IDeviceCompat/supportsHapticFeedback/#/PointingToDeclaration/">supportsHapticFeedback</span>, or <span data-unresolved-link="com.nixsensor.universalsdk/IDeviceCompat/supportsRgbFeedback/#/PointingToDeclaration/">supportsRgbFeedback</span> is <code class="lang-kotlin">true</code>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1539608569%2FProperties%2F-343231423" anchor-label="id" id="-1539608569%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-1539608569%2FProperties%2F-343231423"><span><span>id</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1539608569%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> <a href="index.html#-1539608569%2FProperties%2F-343231423">id</a></div><div class="brief "><p class="paragraph">Unique identifier for this device</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="556648677%2FProperties%2F-343231423" anchor-label="interfaceType" id="556648677%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#556648677%2FProperties%2F-343231423"><span>interface</span><wbr></wbr><span><span>Type</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="556648677%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="../-i-device-compat/-interface-type/index.html">IDeviceCompat.InterfaceType</a> <a href="index.html#556648677%2FProperties%2F-343231423">interfaceType</a></div><div class="brief "><p class="paragraph">Interface / connection type for this device</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1123146728%2FProperties%2F-343231423" anchor-label="name" id="1123146728%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#1123146728%2FProperties%2F-343231423"><span><span>name</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1123146728%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> <a href="index.html#1123146728%2FProperties%2F-343231423">name</a></div><div class="brief "><p class="paragraph">Name for this device.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1971171280%2FProperties%2F-343231423" anchor-label="note" id="1971171280%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#1971171280%2FProperties%2F-343231423"><span><span>note</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1971171280%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> <a href="index.html#1971171280%2FProperties%2F-343231423">note</a></div><div class="brief "><p class="paragraph">Factory note for this device, containing allocation code. The value is valid only after a connection has successfully been opened.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-761703754%2FProperties%2F-343231423" anchor-label="powerState" id="-761703754%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-761703754%2FProperties%2F-343231423"><span>power</span><wbr></wbr><span><span>State</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-761703754%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="index.html#-761703754%2FProperties%2F-343231423">powerState</a></div><div class="brief "><p class="paragraph">Flag set to <code class="lang-kotlin">true</code> if sufficient power is available to complete a measurement, or <code class="lang-kotlin">false</code> if a measurement will be aborted (function of external power connection and battery level).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1334830033%2FProperties%2F-343231423" anchor-label="providesDensity" id="1334830033%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#1334830033%2FProperties%2F-343231423"><span>provides</span><wbr></wbr><span><span>Density</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1334830033%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="index.html#1334830033%2FProperties%2F-343231423">providesDensity</a></div><div class="brief "><p class="paragraph">Flag indicating if this device is capable of providing absolute density values in its <a href="../-i-measurement-data/index.html">IMeasurementData</a> results. This value only indicates the hardware capability; the <a href="../-license-feature/-d-e-n-s-i-t-y_-d-a-t-a/index.html">LicenseFeature.DENSITY_DATA</a> feature must also be be enabled by the active license. See also <a href="../-license-manager/-shared/is-feature-enabled.html">LicenseManager.Shared.isFeatureEnabled</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-356080035%2FProperties%2F-343231423" anchor-label="providesSpectral" id="-356080035%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-356080035%2FProperties%2F-343231423"><span>provides</span><wbr></wbr><span><span>Spectral</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-356080035%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="index.html#-356080035%2FProperties%2F-343231423">providesSpectral</a></div><div class="brief "><p class="paragraph">Flag indicating if this device is capable of providing spectral values in its <a href="../-i-measurement-data/index.html">IMeasurementData</a> results. This value only indicates the hardware capability; the <a href="../-license-feature/-s-p-e-c-t-r-a-l_-d-a-t-a/index.html">LicenseFeature.SPECTRAL_DATA</a> feature must also be be enabled by the active license. See also <a href="../-license-manager/-shared/is-feature-enabled.html">LicenseManager.Shared.isFeatureEnabled</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1442672097%2FProperties%2F-343231423" anchor-label="referenceDate" id="-1442672097%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-1442672097%2FProperties%2F-343231423"><span>reference</span><wbr></wbr><span><span>Date</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1442672097%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/util/Date.html">Date</a> <a href="index.html#-1442672097%2FProperties%2F-343231423">referenceDate</a></div><div class="brief "><p class="paragraph">Date that the last in-field normalization was last performed, or <code class="lang-kotlin">null</code> if this device does not support this feature.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2100825991%2FProperties%2F-343231423" anchor-label="referenceTemperature" id="-2100825991%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-2100825991%2FProperties%2F-343231423"><span>reference</span><wbr></wbr><span><span>Temperature</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2100825991%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Float.html">Float</a> <a href="index.html#-2100825991%2FProperties%2F-343231423">referenceTemperature</a></div><div class="brief "><p class="paragraph">Baseline temperature for this device. Corresponds to in-field normalization temperature for <a href="../-device-type/-s-p-e-c-t-r-o2/index.html">DeviceType.SPECTRO2</a> and <a href="../-device-type/-m-i-n-i3/index.html">DeviceType.MINI3</a>, or factory temperature for others. Value is <code class="lang-kotlin">null</code> if the device does not support this feature.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1079769549%2FProperties%2F-343231423" anchor-label="rgbFeedbackEnabled" id="-1079769549%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-1079769549%2FProperties%2F-343231423"><span>rgb</span><wbr></wbr><span>Feedback</span><wbr></wbr><span><span>Enabled</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1079769549%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="index.html#-1079769549%2FProperties%2F-343231423">rgbFeedbackEnabled</a></div><div class="brief "><p class="paragraph">Flag to indicate if device RGB feedback is enabled.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1407870197%2FProperties%2F-343231423" anchor-label="rssi" id="-1407870197%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-1407870197%2FProperties%2F-343231423"><span><span>rssi</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1407870197%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Integer.html">Integer</a> <a href="index.html#-1407870197%2FProperties%2F-343231423">rssi</a></div><div class="brief "><p class="paragraph">Signal strength for this device</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-900876602%2FProperties%2F-343231423" anchor-label="scanCount" id="-900876602%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-900876602%2FProperties%2F-343231423"><span>scan</span><wbr></wbr><span><span>Count</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-900876602%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Integer.html">Integer</a> <a href="index.html#-900876602%2FProperties%2F-343231423">scanCount</a></div><div class="brief "><p class="paragraph">Lifetime scan count for this device, or <code class="lang-kotlin">null</code> if this device does not support this feature.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1905116161%2FProperties%2F-343231423" anchor-label="scanTemperature" id="1905116161%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#1905116161%2FProperties%2F-343231423"><span>scan</span><wbr></wbr><span><span>Temperature</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1905116161%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Float.html">Float</a> <a href="index.html#1905116161%2FProperties%2F-343231423">scanTemperature</a></div><div class="brief "><p class="paragraph">Last known temperature of the device, corresponding to the most recently completed scan since the device was connected. Value is <code class="lang-kotlin">null</code> if the device does not support this feature. This value is only valid if the device is connected and a measurement has completed.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1246229294%2FProperties%2F-343231423" anchor-label="sdkId" id="-1246229294%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-1246229294%2FProperties%2F-343231423"><span>sdk</span><wbr></wbr><span><span>Id</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1246229294%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-deprecated/index.html"><span class="token annotation builtin">Deprecated</span></a><span class="token punctuation">(</span><span>message<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;Since version 4.2.0. Use the `uuid` value on the LicenseManger singleton instead.&quot;</span></span><span class="token punctuation">, </span></span><wbr></wbr><span>replaceWith<span class="token operator"> = </span><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-replace-with/index.html"><span class="token annotation builtin">ReplaceWith</span></a><span class="token punctuation">(</span><span>imports<span class="token operator"> = </span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">, </span></span><wbr></wbr><span>expression<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;LicenseManager.Shared.uuid&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> <a href="index.html#-1246229294%2FProperties%2F-343231423"><strike>sdkId</strike></a></div><div class="brief "><p class="paragraph">Build ID for this Nix SDK binary</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1407268155%2FProperties%2F-343231423" anchor-label="serialNumber" id="-1407268155%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-1407268155%2FProperties%2F-343231423"><span>serial</span><wbr></wbr><span><span>Number</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1407268155%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> <a href="index.html#-1407268155%2FProperties%2F-343231423">serialNumber</a></div><div class="brief "><p class="paragraph">Serial number for this device. The value is valid only after a connection has successfully been opened.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1059507911%2FProperties%2F-343231423" anchor-label="softwareVersion" id="1059507911%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#1059507911%2FProperties%2F-343231423"><span>software</span><wbr></wbr><span><span>Version</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1059507911%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="../-device-version/index.html">DeviceVersion</a> <a href="index.html#1059507911%2FProperties%2F-343231423">softwareVersion</a></div><div class="brief "><p class="paragraph">Software version of this device. The value is valid only after a connection has successfully been opened.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-874765017%2FProperties%2F-343231423" anchor-label="state" id="-874765017%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-874765017%2FProperties%2F-343231423"><span><span>state</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-874765017%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="../-device-state/index.html">DeviceState</a> <a href="index.html#-874765017%2FProperties%2F-343231423">state</a></div><div class="brief "><p class="paragraph">Current state of this device</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1525403552%2FProperties%2F-343231423" anchor-label="supportedModes" id="-1525403552%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-1525403552%2FProperties%2F-343231423"><span>supported</span><wbr></wbr><span><span>Modes</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1525403552%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-array/index.html">Array</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../-scan-mode/index.html">ScanMode</a><span class="token operator">&gt;</span> <a href="index.html#-1525403552%2FProperties%2F-343231423">supportedModes</a></div><div class="brief "><p class="paragraph">List of scan modes that are supported by this device. The list is valid only after a connection has successfully been opened.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-580715454%2FProperties%2F-343231423" anchor-label="supportedReferences" id="-580715454%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-580715454%2FProperties%2F-343231423"><span>supported</span><wbr></wbr><span><span>References</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-580715454%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-array/index.html">Array</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../-reference-white/index.html">ReferenceWhite</a><span class="token operator">&gt;</span> <a href="index.html#-580715454%2FProperties%2F-343231423">supportedReferences</a></div><div class="brief "><p class="paragraph">List of supported reference white points for the colorimetry data available from the <a href="../-i-measurement-data/index.html">IMeasurementData</a> results provided by this device.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1534082482%2FProperties%2F-343231423" anchor-label="supportsFieldCalibration" id="-1534082482%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-1534082482%2FProperties%2F-343231423"><span>supports</span><wbr></wbr><span>Field</span><wbr></wbr><span><span>Calibration</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1534082482%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="index.html#-1534082482%2FProperties%2F-343231423">supportsFieldCalibration</a></div><div class="brief "><p class="paragraph">Flag to indicate if this device supports in-field calibration using the provided reference tile.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1482525342%2FProperties%2F-343231423" anchor-label="supportsHapticFeedback" id="-1482525342%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-1482525342%2FProperties%2F-343231423"><span>supports</span><wbr></wbr><span>Haptic</span><wbr></wbr><span><span>Feedback</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1482525342%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="index.html#-1482525342%2FProperties%2F-343231423">supportsHapticFeedback</a></div><div class="brief "><p class="paragraph">Flag to indicate if the device supports built-in haptic feedback.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1581461194%2FProperties%2F-343231423" anchor-label="supportsRgbFeedback" id="1581461194%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#1581461194%2FProperties%2F-343231423"><span>supports</span><wbr></wbr><span>Rgb</span><wbr></wbr><span><span>Feedback</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1581461194%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="index.html#1581461194%2FProperties%2F-343231423">supportsRgbFeedback</a></div><div class="brief "><p class="paragraph">Flag to indicate if the device supports built-in RGB feedback.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-37353650%2FProperties%2F-343231423" anchor-label="supportsTemperatureCompensation" id="-37353650%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-37353650%2FProperties%2F-343231423"><span>supports</span><wbr></wbr><span>Temperature</span><wbr></wbr><span><span>Compensation</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-37353650%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="index.html#-37353650%2FProperties%2F-343231423">supportsTemperatureCompensation</a></div><div class="brief "><p class="paragraph">Flag to indicate if this device supports automatic temperature compensation to correct for small changes in ambient temperature.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1572551471%2FProperties%2F-343231423" anchor-label="temperatureCompensationEnabled" id="1572551471%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#1572551471%2FProperties%2F-343231423"><span>temperature</span><wbr></wbr><span>Compensation</span><wbr></wbr><span><span>Enabled</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1572551471%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="index.html#1572551471%2FProperties%2F-343231423">temperatureCompensationEnabled</a></div><div class="brief "><p class="paragraph">Flag to indicate if ambient temperature compensation / correction is applied (<code class="lang-kotlin">true</code>) or bypassed (<code class="lang-kotlin">false</code>) when evaluating the final calibrated measurement. Value is <code class="lang-kotlin">true</code> by default if supported by the device. It is recommended to leave this set to <code class="lang-kotlin">true</code> if supported.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-264040056%2FProperties%2F-343231423" anchor-label="type" id="-264040056%2FProperties%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#-264040056%2FProperties%2F-343231423"><span><span>type</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-264040056%2FProperties%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="../-device-type/index.html">DeviceType</a> <a href="index.html#-264040056%2FProperties%2F-343231423">type</a></div><div class="brief "><p class="paragraph">Type for this device.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="243810017%2FFunctions%2F-343231423" anchor-label="compareTo" id="243810017%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../-i-device-compat/compare-to.html"><span>compare</span><wbr></wbr><span><span>To</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="243810017%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Integer.html">Integer</a> <a href="../-i-device-compat/compare-to.html"><span class="token function">compareTo</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="../-i-device-compat/index.html">IDeviceCompat</a> other</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Compares this device instance to another (via signal strength / RSSI)</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-974512810%2FFunctions%2F-343231423" anchor-label="connect" id="-974512810%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="connect.html"><span><span>connect</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-974512810%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-unit/index.html">Unit</a> <a href="connect.html"><span class="token function">connect</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="../-i-device-compat/-on-device-state-change-listener/index.html">IDeviceCompat.OnDeviceStateChangeListener</a> listener</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Open a connection to this Nix device. This operation is asynchronous and this method returns immediately. Status of this operation is updated via the provided <a href="../-i-device-compat/-on-device-state-change-listener/index.html">OnDeviceStateChangeListener</a> callback.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1982632614%2FFunctions%2F-343231423" anchor-label="disconnect" id="1982632614%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="disconnect.html"><span><span>disconnect</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1982632614%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-unit/index.html">Unit</a> <a href="disconnect.html"><span class="token function">disconnect</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Disconnect from this Nix device, or cancel a connection attempt currently in progress.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2043931839%2FFunctions%2F-343231423" anchor-label="equals" id="2043931839%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="equals.html"><span><span>equals</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2043931839%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="equals.html"><span class="token function">equals</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Object.html">Object</a> other</span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="261145483%2FFunctions%2F-343231423" anchor-label="getBatteryLevel" id="261145483%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-battery-level.html"><span>get</span><wbr></wbr><span>Battery</span><wbr></wbr><span><span>Level</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="261145483%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Integer.html">Integer</a> <a href="get-battery-level.html"><span class="token function">getBatteryLevel</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Current battery level for this device (0 - 100), or null if not available. The value is valid only after a connection has successfully been opened.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1890662389%2FFunctions%2F-343231423" anchor-label="getExtPowerState" id="-1890662389%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-ext-power-state.html"><span>get</span><wbr></wbr><span>Ext</span><wbr></wbr><span>Power</span><wbr></wbr><span><span>State</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1890662389%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="get-ext-power-state.html"><span class="token function">getExtPowerState</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">External power connection state for this device. The value is valid only after a connection has successfully been opened.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1986154508%2FFunctions%2F-343231423" anchor-label="getFieldCalibrationDue" id="-1986154508%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-field-calibration-due.html"><span>get</span><wbr></wbr><span>Field</span><wbr></wbr><span>Calibration</span><wbr></wbr><span><span>Due</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1986154508%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="get-field-calibration-due.html"><span class="token function">getFieldCalibrationDue</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Flag to indicate if in-field calibration is recommended for this device at this time (if supported). This value is only valid after opening a connection and is a function of both time and ambient temperature. This value also updates each time a measurement is completed.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1803321913%2FFunctions%2F-343231423" anchor-label="getFieldCalibrationEnabled" id="-1803321913%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-field-calibration-enabled.html"><span>get</span><wbr></wbr><span>Field</span><wbr></wbr><span>Calibration</span><wbr></wbr><span><span>Enabled</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1803321913%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="get-field-calibration-enabled.html"><span class="token function">getFieldCalibrationEnabled</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Flag to indicate if in-field calibration results are applied (<code class="lang-kotlin">true</code>) or bypassed (<code class="lang-kotlin">false</code>) when evaluating the final calibrated measurement result. Value is <code class="lang-kotlin">true</code> by default if supported by the device. It is recommended to leave this set to <code class="lang-kotlin">true</code> if supported.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="311495870%2FFunctions%2F-343231423" anchor-label="getFieldCalibrationMaxDelta" id="311495870%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-field-calibration-max-delta.html"><span>get</span><wbr></wbr><span>Field</span><wbr></wbr><span>Calibration</span><wbr></wbr><span>Max</span><wbr></wbr><span><span>Delta</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="311495870%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Double.html">Double</a> <a href="get-field-calibration-max-delta.html"><span class="token function">getFieldCalibrationMaxDelta</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Maximum Delta E threshold used when performing in-field calibration (if supported), or NaN if the device does not support this operation. It is recommended to leave this set to its default value, which can vary by device type. If a difference from the reference greater than this value is detected during <a href="../-i-device-compat/run-field-calibration.html">runFieldCalibration</a>, the command will fail with status <a href="../-command-status/-e-r-r-o-r_-s-c-a-n_-d-e-l-t-a/index.html">CommandStatus.ERROR_SCAN_DELTA</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1097231419%2FFunctions%2F-343231423" anchor-label="getFirmwareVersion" id="1097231419%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-firmware-version.html"><span>get</span><wbr></wbr><span>Firmware</span><wbr></wbr><span><span>Version</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1097231419%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="../-device-version/index.html">DeviceVersion</a> <a href="get-firmware-version.html"><span class="token function">getFirmwareVersion</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Firmware version of this device. The value is valid only after a connection has successfully been opened.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1020515533%2FFunctions%2F-343231423" anchor-label="getHapticFeedbackEnabled" id="-1020515533%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-haptic-feedback-enabled.html"><span>get</span><wbr></wbr><span>Haptic</span><wbr></wbr><span>Feedback</span><wbr></wbr><span><span>Enabled</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1020515533%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="get-haptic-feedback-enabled.html"><span class="token function">getHapticFeedbackEnabled</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Flag to indicate if device haptic feedback is enabled.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-155966360%2FFunctions%2F-343231423" anchor-label="getHardwareVersion" id="-155966360%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-hardware-version.html"><span>get</span><wbr></wbr><span>Hardware</span><wbr></wbr><span><span>Version</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-155966360%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="../-device-version/index.html">DeviceVersion</a> <a href="get-hardware-version.html"><span class="token function">getHardwareVersion</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Hardware version of this device. The value is valid only after a connection has successfully been opened.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1633981133%2FFunctions%2F-343231423" anchor-label="getHasOptions" id="1633981133%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../-i-device-compat/get-has-options.html"><span>get</span><wbr></wbr><span>Has</span><wbr></wbr><span><span>Options</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1633981133%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="../-i-device-compat/get-has-options.html"><span class="token function">getHasOptions</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1792926041%2FFunctions%2F-343231423" anchor-label="getId" id="-1792926041%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-id.html"><span>get</span><wbr></wbr><span><span>Id</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1792926041%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> <a href="get-id.html"><span class="token function">getId</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1375057477%2FFunctions%2F-343231423" anchor-label="getInterfaceType" id="1375057477%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-interface-type.html"><span>get</span><wbr></wbr><span>Interface</span><wbr></wbr><span><span>Type</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1375057477%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="../-i-device-compat/-interface-type/index.html">IDeviceCompat.InterfaceType</a> <a href="get-interface-type.html"><span class="token function">getInterfaceType</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="374881222%2FFunctions%2F-343231423" anchor-label="getName" id="374881222%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../-i-device-compat/get-name.html"><span>get</span><wbr></wbr><span><span>Name</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="374881222%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> <a href="../-i-device-compat/get-name.html"><span class="token function">getName</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-948750736%2FFunctions%2F-343231423" anchor-label="getNote" id="-948750736%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-note.html"><span>get</span><wbr></wbr><span><span>Note</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-948750736%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> <a href="get-note.html"><span class="token function">getNote</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Factory note for this device, containing allocation code. The value is valid only after a connection has successfully been opened.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1414045354%2FFunctions%2F-343231423" anchor-label="getPowerState" id="-1414045354%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-power-state.html"><span>get</span><wbr></wbr><span>Power</span><wbr></wbr><span><span>State</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1414045354%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="get-power-state.html"><span class="token function">getPowerState</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Flag set to <code class="lang-kotlin">true</code> if sufficient power is available to complete a measurement, or <code class="lang-kotlin">false</code> if a measurement will be aborted (function of external power connection and battery level).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="416648499%2FFunctions%2F-343231423" anchor-label="getProvidesDensity" id="416648499%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../-i-device-compat/get-provides-density.html"><span>get</span><wbr></wbr><span>Provides</span><wbr></wbr><span><span>Density</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="416648499%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="../-i-device-compat/get-provides-density.html"><span class="token function">getProvidesDensity</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1245063483%2FFunctions%2F-343231423" anchor-label="getProvidesSpectral" id="1245063483%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../-i-device-compat/get-provides-spectral.html"><span>get</span><wbr></wbr><span>Provides</span><wbr></wbr><span><span>Spectral</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1245063483%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="../-i-device-compat/get-provides-spectral.html"><span class="token function">getProvidesSpectral</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-624263297%2FFunctions%2F-343231423" anchor-label="getReferenceDate" id="-624263297%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-reference-date.html"><span>get</span><wbr></wbr><span>Reference</span><wbr></wbr><span><span>Date</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-624263297%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/util/Date.html">Date</a> <a href="get-reference-date.html"><span class="token function">getReferenceDate</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Date that the last in-field normalization was last performed, or <code class="lang-kotlin">null</code> if this device does not support this feature.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1625540839%2FFunctions%2F-343231423" anchor-label="getReferenceTemperature" id="-1625540839%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-reference-temperature.html"><span>get</span><wbr></wbr><span>Reference</span><wbr></wbr><span><span>Temperature</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1625540839%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Float.html">Float</a> <a href="get-reference-temperature.html"><span class="token function">getReferenceTemperature</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Baseline temperature for this device. Corresponds to in-field normalization temperature for <a href="../-device-type/-s-p-e-c-t-r-o2/index.html">DeviceType.SPECTRO2</a> and <a href="../-device-type/-m-i-n-i3/index.html">DeviceType.MINI3</a>, or factory temperature for others. Value is <code class="lang-kotlin">null</code> if the device does not support this feature.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="60388563%2FFunctions%2F-343231423" anchor-label="getRgbFeedbackEnabled" id="60388563%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-rgb-feedback-enabled.html"><span>get</span><wbr></wbr><span>Rgb</span><wbr></wbr><span>Feedback</span><wbr></wbr><span><span>Enabled</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="60388563%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="get-rgb-feedback-enabled.html"><span class="token function">getRgbFeedbackEnabled</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Flag to indicate if device RGB feedback is enabled.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-32824917%2FFunctions%2F-343231423" anchor-label="getRssi" id="-32824917%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-rssi.html"><span>get</span><wbr></wbr><span><span>Rssi</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-32824917%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Integer.html">Integer</a> <a href="get-rssi.html"><span class="token function">getRssi</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Signal strength for this device</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="602100774%2FFunctions%2F-343231423" anchor-label="getScanCount" id="602100774%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-scan-count.html"><span>get</span><wbr></wbr><span>Scan</span><wbr></wbr><span><span>Count</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="602100774%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Integer.html">Integer</a> <a href="get-scan-count.html"><span class="token function">getScanCount</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Lifetime scan count for this device, or <code class="lang-kotlin">null</code> if this device does not support this feature.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1878009503%2FFunctions%2F-343231423" anchor-label="getScanTemperature" id="-1878009503%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-scan-temperature.html"><span>get</span><wbr></wbr><span>Scan</span><wbr></wbr><span><span>Temperature</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1878009503%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Float.html">Float</a> <a href="get-scan-temperature.html"><span class="token function">getScanTemperature</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Last known temperature of the device, corresponding to the most recently completed scan since the device was connected. Value is <code class="lang-kotlin">null</code> if the device does not support this feature. This value is only valid if the device is connected and a measurement has completed.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1327343796%2FFunctions%2F-343231423" anchor-label="getSdkId" id="1327343796%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../-i-device-compat/get-sdk-id.html"><span>get</span><wbr></wbr><span>Sdk</span><wbr></wbr><span><span>Id</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1327343796%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> <a href="../-i-device-compat/get-sdk-id.html"><span class="token function">getSdkId</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1242320539%2FFunctions%2F-343231423" anchor-label="getSerialNumber" id="-1242320539%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-serial-number.html"><span>get</span><wbr></wbr><span>Serial</span><wbr></wbr><span><span>Number</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1242320539%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> <a href="get-serial-number.html"><span class="token function">getSerialNumber</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Serial number for this device. The value is valid only after a connection has successfully been opened.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1571349543%2FFunctions%2F-343231423" anchor-label="getSoftwareVersion" id="1571349543%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-software-version.html"><span>get</span><wbr></wbr><span>Software</span><wbr></wbr><span><span>Version</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1571349543%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="../-device-version/index.html">DeviceVersion</a> <a href="get-software-version.html"><span class="token function">getSoftwareVersion</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Software version of this device. The value is valid only after a connection has successfully been opened.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1198034297%2FFunctions%2F-343231423" anchor-label="getState" id="-1198034297%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-state.html"><span>get</span><wbr></wbr><span><span>State</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1198034297%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="../-device-state/index.html">DeviceState</a> <a href="get-state.html"><span class="token function">getState</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Current state of this device</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1924534528%2FFunctions%2F-343231423" anchor-label="getSupportedModes" id="-1924534528%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-supported-modes.html"><span>get</span><wbr></wbr><span>Supported</span><wbr></wbr><span><span>Modes</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1924534528%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-array/index.html">Array</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../-scan-mode/index.html">ScanMode</a><span class="token operator">&gt;</span> <a href="get-supported-modes.html"><span class="token function">getSupportedModes</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">List of scan modes that are supported by this device. The list is valid only after a connection has successfully been opened.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="404447650%2FFunctions%2F-343231423" anchor-label="getSupportedReferences" id="404447650%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-supported-references.html"><span>get</span><wbr></wbr><span>Supported</span><wbr></wbr><span><span>References</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="404447650%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-array/index.html">Array</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="../-reference-white/index.html">ReferenceWhite</a><span class="token operator">&gt;</span> <a href="get-supported-references.html"><span class="token function">getSupportedReferences</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">List of supported reference white points for the colorimetry data available from the <a href="../-i-measurement-data/index.html">IMeasurementData</a> results provided by this device.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1512028398%2FFunctions%2F-343231423" anchor-label="getSupportsFieldCalibration" id="1512028398%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-supports-field-calibration.html"><span>get</span><wbr></wbr><span>Supports</span><wbr></wbr><span>Field</span><wbr></wbr><span><span>Calibration</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1512028398%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="get-supports-field-calibration.html"><span class="token function">getSupportsFieldCalibration</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Flag to indicate if this device supports in-field calibration using the provided reference tile.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-27646%2FFunctions%2F-343231423" anchor-label="getSupportsHapticFeedback" id="-27646%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-supports-haptic-feedback.html"><span>get</span><wbr></wbr><span>Supports</span><wbr></wbr><span>Haptic</span><wbr></wbr><span><span>Feedback</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-27646%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="get-supports-haptic-feedback.html"><span class="token function">getSupportsHapticFeedback</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Flag to indicate if the device supports built-in haptic feedback.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1728342998%2FFunctions%2F-343231423" anchor-label="getSupportsRgbFeedback" id="-1728342998%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-supports-rgb-feedback.html"><span>get</span><wbr></wbr><span>Supports</span><wbr></wbr><span>Rgb</span><wbr></wbr><span><span>Feedback</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1728342998%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="get-supports-rgb-feedback.html"><span class="token function">getSupportsRgbFeedback</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Flag to indicate if the device supports built-in RGB feedback.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="120675502%2FFunctions%2F-343231423" anchor-label="getSupportsTemperatureCompensation" id="120675502%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-supports-temperature-compensation.html"><span>get</span><wbr></wbr><span>Supports</span><wbr></wbr><span>Temperature</span><wbr></wbr><span><span>Compensation</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="120675502%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="get-supports-temperature-compensation.html"><span class="token function">getSupportsTemperatureCompensation</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Flag to indicate if this device supports automatic temperature compensation to correct for small changes in ambient temperature.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1193297457%2FFunctions%2F-343231423" anchor-label="getTemperatureCompensationEnabled" id="-1193297457%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-temperature-compensation-enabled.html"><span>get</span><wbr></wbr><span>Temperature</span><wbr></wbr><span>Compensation</span><wbr></wbr><span><span>Enabled</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1193297457%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="get-temperature-compensation-enabled.html"><span class="token function">getTemperatureCompensationEnabled</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Flag to indicate if ambient temperature compensation / correction is applied (<code class="lang-kotlin">true</code>) or bypassed (<code class="lang-kotlin">false</code>) when evaluating the final calibrated measurement. Value is <code class="lang-kotlin">true</code> by default if supported by the device. It is recommended to leave this set to <code class="lang-kotlin">true</code> if supported.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1111005224%2FFunctions%2F-343231423" anchor-label="getType" id="1111005224%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-type.html"><span>get</span><wbr></wbr><span><span>Type</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1111005224%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="../-device-type/index.html">DeviceType</a> <a href="get-type.html"><span class="token function">getType</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Type for this device.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1123935929%2FFunctions%2F-343231423" anchor-label="hashCode" id="-1123935929%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="hash-code.html"><span>hash</span><wbr></wbr><span><span>Code</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1123935929%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Integer.html">Integer</a> <a href="hash-code.html"><span class="token function">hashCode</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="652651594%2FFunctions%2F-343231423" anchor-label="invalidateFieldCalibration" id="652651594%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="invalidate-field-calibration.html"><span>invalidate</span><wbr></wbr><span>Field</span><wbr></wbr><span><span>Calibration</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="652651594%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-unit/index.html">Unit</a> <a href="invalidate-field-calibration.html"><span class="token function">invalidateFieldCalibration</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="../-on-device-result-listener/index.html">OnDeviceResultListener</a> listener</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Invalidates current field calibration date, so that <a href="index.html#1323649684%2FProperties%2F-343231423">fieldCalibrationDue</a> is reported as <code class="lang-kotlin">true</code>, if supported by the device.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1013802847%2FFunctions%2F-343231423" anchor-label="isFeatureSupported" id="-1013802847%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../-i-device-compat/is-feature-supported.html"><span>is</span><wbr></wbr><span>Feature</span><wbr></wbr><span><span>Supported</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1013802847%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="../-i-device-compat/is-feature-supported.html"><span class="token function">isFeatureSupported</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="../-license-feature/index.html">LicenseFeature</a> feature</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Helper to check if a particular <a href="../-license-feature/index.html">LicenseFeature</a> is supported by this device.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-675052991%2FFunctions%2F-343231423" anchor-label="isModeSupported" id="-675052991%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../-i-device-compat/is-mode-supported.html"><span>is</span><wbr></wbr><span>Mode</span><wbr></wbr><span><span>Supported</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-675052991%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="../-i-device-compat/is-mode-supported.html"><span class="token function">isModeSupported</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="../-scan-mode/index.html">ScanMode</a> scanMode</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Helper to check if a particular scan mode is supported by this device (i.e. - checks if the mode is present in the <span data-unresolved-link="com.nixsensor.universalsdk/IDeviceCompat/supportedModes/#/PointingToDeclaration/">supportedModes</span> list). This value is valid only after a connection has successfully been opened.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1882763777%2FFunctions%2F-343231423" anchor-label="isTileStringValid" id="-1882763777%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="is-tile-string-valid.html"><span>is</span><wbr></wbr><span>Tile</span><wbr></wbr><span>String</span><wbr></wbr><span><span>Valid</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1882763777%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="is-tile-string-valid.html"><span class="token function">isTileStringValid</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> tileString</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Used to check if a decoded string from the reference tile is valid. Returns <code class="lang-kotlin">null</code> if the string is not in the expected format, <code class="lang-kotlin">false</code> if the string is in a valid format but does not match this particular device, <code class="lang-kotlin">true</code> if the string is valid.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-363654714%2FFunctions%2F-343231423" anchor-label="ledTest" id="-363654714%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="led-test.html"><span>led</span><wbr></wbr><span><span>Test</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-363654714%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-unit/index.html">Unit</a> <a href="led-test.html"><span class="token function">ledTest</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="../-on-device-result-listener/index.html">OnDeviceResultListener</a> listener</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Manually run a LED test routine. On devices featuring RGB feedback, this will use the RGB LEDs. On other devices, this will flash the white LEDs. This method is asynchronous and will return immediately. Status of this operation is updated via the provided <a href="../-on-device-result-listener/index.html">OnDeviceResultListener</a> callback.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1502855673%2FFunctions%2F-343231423" anchor-label="measure" id="1502855673%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="measure.html"><span><span>measure</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1502855673%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-unit/index.html">Unit</a> <a href="measure.html"><span class="token function">measure</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="../-on-device-result-listener/index.html">OnDeviceResultListener</a> listener<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword"></span><a href="../-scan-mode/index.html">ScanMode</a> modes</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Run a measurement for the specified scan modes, or all supported scan modes if none are specified. If unsupported modes are selected, the measurement will fail with status code <a href="../-command-status/-e-r-r-o-r_-n-o-t_-s-u-p-p-o-r-t-e-d/index.html">CommandStatus.ERROR_NOT_SUPPORTED</a>. This method is asynchronous and will return immediately. Status of this operation is provided by the <a href="../-on-device-result-listener/index.html">OnDeviceResultListener</a> callback</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-311552599%2FFunctions%2F-343231423" anchor-label="providesColor" id="-311552599%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../-i-device-compat/provides-color.html"><span>provides</span><wbr></wbr><span><span>Color</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-311552599%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="../-i-device-compat/provides-color.html"><span class="token function">providesColor</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="../-reference-white/index.html">ReferenceWhite</a> reference</span></span><span class="token punctuation">)</span></div><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> <a href="../-i-device-compat/provides-color.html"><span class="token function">providesColor</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="../-illuminant/index.html">Illuminant</a> illuminant<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword"></span><a href="../-observer/index.html">Observer</a> observer</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Helper to check if a particular reference white point is supported by the colorimetry data from this device (i.e - checks if the reference is present in the <span data-unresolved-link="com.nixsensor.universalsdk/IDeviceCompat/supportedReferences/#/PointingToDeclaration/">supportedReferences</span> list`).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="598409897%2FFunctions%2F-343231423" anchor-label="runFieldCalibration" id="598409897%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="run-field-calibration.html"><span>run</span><wbr></wbr><span>Field</span><wbr></wbr><span><span>Calibration</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="598409897%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-unit/index.html">Unit</a> <a href="run-field-calibration.html"><span class="token function">runFieldCalibration</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="../-on-device-result-listener/index.html">OnDeviceResultListener</a> listener<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> tileString</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Start field calibration using provided reference tile, if supported. Upon executing this command, the scan of the reference tile will begin immediately. The user MUST be prompted to place the device onto the reference tile BEFORE this method is executed. This method is asynchronous and will return immediately. This command requires data from the reference tile QR code. As the format varies between different device types, the string data should be provided exactly as decoded from the QR code.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="8225942%2FFunctions%2F-343231423" anchor-label="setFieldCalibrationEnabled" id="8225942%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="set-field-calibration-enabled.html"><span>set</span><wbr></wbr><span>Field</span><wbr></wbr><span>Calibration</span><wbr></wbr><span><span>Enabled</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="8225942%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-unit/index.html">Unit</a> <a href="set-field-calibration-enabled.html"><span class="token function">setFieldCalibrationEnabled</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="../-on-device-result-listener/index.html">OnDeviceResultListener</a> listener<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> enabled</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Set the value for <a href="index.html#-516110233%2FProperties%2F-343231423">fieldCalibrationEnabled</a>. This method is asynchronous and will return immediately.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="604927314%2FFunctions%2F-343231423" anchor-label="setFieldCalibrationMaxDelta" id="604927314%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="set-field-calibration-max-delta.html"><span>set</span><wbr></wbr><span>Field</span><wbr></wbr><span>Calibration</span><wbr></wbr><span>Max</span><wbr></wbr><span><span>Delta</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="604927314%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-unit/index.html">Unit</a> <a href="set-field-calibration-max-delta.html"><span class="token function">setFieldCalibrationMaxDelta</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Double.html">Double</a> fieldCalibrationMaxDelta</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Maximum Delta E threshold used when performing in-field calibration (if supported), or NaN if the device does not support this operation. It is recommended to leave this set to its default value, which can vary by device type. If a difference from the reference greater than this value is detected during <a href="../-i-device-compat/run-field-calibration.html">runFieldCalibration</a>, the command will fail with status <a href="../-command-status/-e-r-r-o-r_-s-c-a-n_-d-e-l-t-a/index.html">CommandStatus.ERROR_SCAN_DELTA</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-673536766%2FFunctions%2F-343231423" anchor-label="setHapticFeedbackEnabled" id="-673536766%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="set-haptic-feedback-enabled.html"><span>set</span><wbr></wbr><span>Haptic</span><wbr></wbr><span>Feedback</span><wbr></wbr><span><span>Enabled</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-673536766%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-unit/index.html">Unit</a> <a href="set-haptic-feedback-enabled.html"><span class="token function">setHapticFeedbackEnabled</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="../-on-device-result-listener/index.html">OnDeviceResultListener</a> listener<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> enabled</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Set the value for <a href="index.html#1425513939%2FProperties%2F-343231423">hapticFeedbackEnabled</a>. This method is asynchronous and will return immediately.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-45934070%2FFunctions%2F-343231423" anchor-label="setRgbFeedbackEnabled" id="-45934070%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="set-rgb-feedback-enabled.html"><span>set</span><wbr></wbr><span>Rgb</span><wbr></wbr><span>Feedback</span><wbr></wbr><span><span>Enabled</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-45934070%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-unit/index.html">Unit</a> <a href="set-rgb-feedback-enabled.html"><span class="token function">setRgbFeedbackEnabled</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="../-on-device-result-listener/index.html">OnDeviceResultListener</a> listener<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> enabled</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Set the value for <a href="index.html#-1079769549%2FProperties%2F-343231423">rgbFeedbackEnabled</a>. This method is asynchronous and will return immediately.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="872267517%2FFunctions%2F-343231423" anchor-label="setRssi" id="872267517%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="set-rssi.html"><span>set</span><wbr></wbr><span><span>Rssi</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="872267517%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-unit/index.html">Unit</a> <a href="set-rssi.html"><span class="token function">setRssi</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Integer.html">Integer</a> rssi</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Signal strength for this device</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="64352518%2FFunctions%2F-343231423" anchor-label="setTemperatureCompensationEnabled" id="64352518%2FFunctions%2F-343231423" data-filterable-set=":universalsdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":universalsdk:dokkaHtml/release" data-filterable-set=":universalsdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="set-temperature-compensation-enabled.html"><span>set</span><wbr></wbr><span>Temperature</span><wbr></wbr><span>Compensation</span><wbr></wbr><span><span>Enabled</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="64352518%2FFunctions%2F-343231423"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":universalsdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-unit/index.html">Unit</a> <a href="set-temperature-compensation-enabled.html"><span class="token function">setTemperatureCompensationEnabled</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="../-on-device-result-listener/index.html">OnDeviceResultListener</a> listener<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Boolean.html">Boolean</a> enabled</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Set the value for <a href="index.html#1572551471%2FProperties%2F-343231423">temperatureCompensationEnabled</a>. This method is asynchronous and will return immediately.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2025 Copyright</span><span
+                class="pull-right"><span>Generated by </span><a
+                href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

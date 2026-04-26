@@ -1,0 +1,6 @@
+{
+  "name": "Quimresa Color Lab",
+  "description": "Professional colorimetry laboratory application for Nix Spectro Mini devices. Features include color formula consultation, sample comparison, and cloud sync.",
+  "requestFramePermissions": ["bluetooth"],
+  "majorCapabilities": []
+}

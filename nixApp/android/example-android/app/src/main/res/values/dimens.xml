@@ -1,0 +1,18 @@
+<resources>
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="bottom_button_height">48dp</dimen>
+    <dimen name="plot_button_size">48dp</dimen>
+    <dimen name="progress_bar_height">24dp</dimen>
+    <dimen name="progress_bar_height_visible">4dp</dimen>
+    <dimen name="swatch_height">120dp</dimen>
+    <dimen name="corner_radius">4dp</dimen>
+    <dimen name="bottom_sheet_corner_radius">16dp</dimen>
+    <dimen name="bottom_sheet_top_padding">8dp</dimen>
+    <dimen name="pill_corner_radius">2dp</dimen>
+    <dimen name="pill_width">24dp</dimen>
+    <dimen name="pill_height">4dp</dimen>
+    <dimen name="listview_vertical_fading_edge">32dp</dimen>
+    <dimen name="qr_code_window_padding">24dp</dimen>
+</resources>

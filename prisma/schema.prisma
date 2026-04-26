@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id         Int       @id @default(autoincrement())
+  name       String?
+  pass       String?
+  tiempo     Int?
+  typeuser   Int?
+  permisos   Int?
+  idcliente  Int?
+  autorizado Boolean?  @default(true)
+  cliente    Cliente?  @relation(fields: [idcliente], references: [CODIGO])
+
+  @@map("usuarios")
+}
+
+model Cliente {
+  CODIGO     Int       @id @default(autoincrement())
+  NOMBRE     String?
+  NIF        String?
+  PAIS       String?
+  DIRECCION  String?
+  POBLACION  String?
+  CP         String?
+  PROVINCIA  String?
+  TELEFONO   String?
+  FAX        String?
+  MOVIL      String?
+  CONTACTO   String?
+  LOGO       String?
+  OBS        String?
+  DESCUENTO  Float?    @db.Real
+  PORCENTAJE Decimal?  @db.Decimal
+  ACTIVO     Decimal?  @db.Decimal
+  autorizado Boolean?  @default(true)
+  usuarios   Usuario[]
+  formulas   FormPersonales[]
+
+  @@map("CLIENTES")
+}
+
+model FormPersonales {
+  ID                Int       @id @default(autoincrement())
+  CODIGO            String?   @db.VarChar(20)
+  IDCLIENTE         Int?
+  NOMBRECLI         String?   @db.VarChar(85)
+  IDPRODUCTO        Int?
+  NOMBREFORMULA     String?   @db.VarChar(45)
+  IDCARTA           String?
+  OBSERVACIONES     String?
+  ENVASE            Float?    @db.Real
+  UNIDAD            String?   @db.VarChar(2)
+  FECHA             String?
+  CBASE             String?   @db.VarChar(50)
+  QBASE             Float?    @db.Real
+  C1                String?   @db.VarChar(25)
+  Q1                Float?    @db.Real
+  C2                String?   @db.VarChar(25)
+  Q2                Float?    @db.Real
+  C3                String?   @db.VarChar(25)
+  Q3                Float?    @db.Real
+  C4                String?   @db.VarChar(25)
+  Q4                Float?    @db.Real
+  C5                String?   @db.VarChar(25)
+  Q5                Float?    @db.Real
+  C6                String?   @db.VarChar(25)
+  Q6                Float?    @db.Real
+  DESCCONVER        String?   @db.VarChar(255)
+  C7                String?   @db.VarChar(25)
+  Q7                Float?    @db.Real
+  C8                String?   @db.VarChar(25)
+  Q8                Float?    @db.Real
+  C9                String?   @db.VarChar(25)
+  Q9                Float?    @db.Real
+  C10               String?   @db.VarChar(25)
+  Q10               Float?    @db.Real
+  C11               String?   @db.VarChar(25)
+  Q11               Float?    @db.Real
+  C12               String?   @db.VarChar(25)
+  Q12               Float?    @db.Real
+  L                 String?   @db.VarChar(9)
+  A                 String?   @db.VarChar(9)
+  B                 String?   @db.VarChar(9)
+  R                 String?   @db.VarChar(3)
+  G                 String?   @db.VarChar(3)
+  RB                String?   @db.VarChar(3)
+  CANTIDAD          Float?    @db.Real
+  CGRUPO            String?   @db.VarChar(50)
+  A1                String?   @db.VarChar(9)
+  AQ1               Float?    @db.Real
+  A2                String?   @db.VarChar(9)
+  AQ2               Float?    @db.Real
+  A3                String?   @db.VarChar(9)
+  AQ3               Float?    @db.Real
+  A4                String?   @db.VarChar(9)
+  AQ4               Float?    @db.Real
+  A5                String?   @db.VarChar(9)
+  AQ5               Float?    @db.Real
+  A6                String?   @db.VarChar(9)
+  AQ6               Float?    @db.Real
+  IDFORMULA         Int?
+  VARIANTE          Int?
+  B1                String?   @db.VarChar(25)
+  BQ1               Float?    @db.Real
+  B2                String?   @db.VarChar(25)
+  BQ2               Float?    @db.Real
+  B3                String?   @db.VarChar(25)
+  BQ3               Float?    @db.Real
+  B4                String?   @db.VarChar(25)
+  BQ4               Float?    @db.Real
+  B5                String?   @db.VarChar(25)
+  BQ5               Float?    @db.Real
+  C13               String?   @db.VarChar(25)
+  Q13               Float?    @db.Real
+  PRECIOUNITARIO    Float?    @db.Real
+  DESCUENTO1        Int?
+  DESCUENTO2        Int?
+  DESCUENTO3        Int?
+  DESCUENTO4        Int?
+  DESCUENTO5        Int?
+  DESCUENTO6        Int?
+  DESCUENTO7        Int?
+  DESCUENTO8        Int?
+  DESCUENTO9        Int?
+  DESCUENTO10       Int?
+  DENSIDADMEZCLA    Float?    @db.Real
+  PORDESPERDICIO    Float?    @db.Real
+  LOTE              String?   @db.VarChar(20)
+  CODIGOPADRE       String?   @db.VarChar(20)
+  PROCESOS          String?
+  FECHACREADA       String?
+  SUSTRATO          String?   @db.VarChar(100)
+  IDSUSTRATO        Int?
+  COSTOUNITARIO     Float?    @db.Real
+  PROCESOS2         String?
+  PROCESOS3         String?
+  PROCESOS4         String?
+  COLORESANTES      String?   @db.VarChar(250)
+  COLORESANTESCOD   String?   @db.VarChar(250)
+  PROYECTO          String?   @db.VarChar(100)
+  VISCOSIDAD        String?   @db.VarChar(10)
+  DELTA             String?   @db.VarChar(10)
+  LO                String?   @db.VarChar(9)
+  AO                String?   @db.VarChar(9)
+  BO                String?   @db.VarChar(9)
+  RO                String?   @db.VarChar(9)
+  GO                String?   @db.VarChar(9)
+  RBO               String?   @db.VarChar(9)
+  C                 String?   @db.VarChar(9)
+  H                 String?   @db.VarChar(9)
+  D                 String?   @db.VarChar(9)
+  CO                String?   @db.VarChar(9)
+  HO                String?   @db.VarChar(9)
+  DO                String?   @db.VarChar(9)
+  JSONCOLORANTES    String?
+  CANTIDADFORMULA   Decimal?  @db.Decimal
+  cantidadexacta    Decimal?  @db.Decimal
+  PRODUCTO          String?
+  CARTA             String?
+  MARCA             String?
+  DELTAL            String?
+  DELTAA            String?
+  DELTAB            String?
+  LINEASETIQUETAS   String?
+  HISTORIALDOSIS    String?
+  HISTORIALDELTA    String?
+  COLORCALIBRE      String?
+  IDETIQUETA        Decimal?  @db.Decimal
+  IMPRIMIRDELTA     Decimal?  @db.Decimal
+  IMPRIMIRPRECIO    Decimal?  @db.Decimal
+  NROCOPIAS         Decimal?  @db.Decimal
+  NOMUESTRAS        Int?      @default(0)
+
+  cliente           Cliente?  @relation(fields: [IDCLIENTE], references: [CODIGO])
+
+  @@map("formpersonales")
+}

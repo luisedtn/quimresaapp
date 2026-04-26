@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "usuarios": {
+      "title": "Usuarios",
+      "description": "System users and clients",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "nombre": { "type": "string" },
+        "empresa": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "autorizado": { "type": "boolean" },
+        "role": { "type": "string", "enum": ["admin", "client"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "autorizado"]
+    },
+    "mediciones": {
+      "title": "Mediciones",
+      "description": "Spectral color measurements",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "clientEmail": { "type": "string" },
+        "deviceName": { "type": "string" },
+        "cielab": { "type": "string" },
+        "hex": { "type": "string" },
+        "srgb": { "type": "string" },
+        "spectralData": { "type": "array" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "sampleName": { "type": "string" }
+      },
+      "required": ["userId", "cielab", "timestamp"]
+    },
+    "formulas": {
+      "title": "Fórmulas de Color",
+      "description": "Customer color formulas",
+      "type": "object",
+      "properties": {
+        "clienteEmail": { "type": "string" },
+        "nombreColor": { "type": "string" },
+        "codigo": { "type": "string" },
+        "componentes": { "type": "array" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["clienteEmail", "nombreColor"]
+    }
+  },
+  "firestore": {
+    "usuarios": {
+      "schema": "usuarios",
+      "description": "Root collection for users"
+    },
+    "mediciones": {
+      "schema": "mediciones",
+      "description": "Root collection for all measurements"
+    },
+    "formulas": {
+      "schema": "formulas",
+      "description": "Root collection for color formulas"
+    }
+  }
+}

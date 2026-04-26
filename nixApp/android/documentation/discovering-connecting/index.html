@@ -1,0 +1,1077 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../activating-license/">
+      
+      
+        <link rel="next" href="../device-operations/">
+      
+      
+      <link rel="icon" href="../images/ic_nix_swatches.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.4.6">
+    
+    
+      
+        <title>Discovering and Connecting to Nix Devices - Nix Universal SDK</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.35e1ed30.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.356b1318.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#discovering-and-connecting-to-nix-devices" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Nix Universal SDK" class="md-header__button md-logo" aria-label="Nix Universal SDK" data-md-component="logo">
+      
+  <img src="../images/nix_logo_white.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Nix Universal SDK
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Discovering and Connecting to Nix Devices
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode\"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode\" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Nix Universal SDK" class="md-nav__button md-logo" aria-label="Nix Universal SDK" data-md-component="logo">
+      
+  <img src="../images/nix_logo_white.svg" alt="logo">
+
+    </a>
+    Nix Universal SDK
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../add-to-as/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Adding to Your Android Studio Project
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../activating-license/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Activating the SDK License
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Discovering and Connecting to Nix Devices
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Discovering and Connecting to Nix Devices
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#device-discovery" class="md-nav__link">
+    Device discovery
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recalling-a-known-nix-device" class="md-nav__link">
+    Recalling a known Nix device
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#opening-a-connection" class="md-nav__link">
+    Opening a connection
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    Next steps
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../device-operations/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Device Operations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../handling-measurements/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Handling Measurement Data
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../example-apps/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Example Application
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    API
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            API
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Kotlin
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Java
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-notes/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Release Notes
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#device-discovery" class="md-nav__link">
+    Device discovery
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recalling-a-known-nix-device" class="md-nav__link">
+    Recalling a known Nix device
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#opening-a-connection" class="md-nav__link">
+    Opening a connection
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    Next steps
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="discovering-and-connecting-to-nix-devices">Discovering and Connecting to Nix Devices</h1>
+<p>Regardless of device type, each unique Nix device can be represented by an object that conforms to the <code>IDeviceCompat</code> interface (see <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/">Java</a> APIs). To obtain instances of the device object, they need to first be discovered using the <code>DeviceScanner</code> (see <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-device-scanner/">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-device-scanner/">Java</a> APIs). They can also be recalled at a later time directly using their <code>id</code> property (for Bluetooth connected devices only).</p>
+<h2 id="device-discovery">Device discovery</h2>
+<p>The <code>DeviceScanner</code> implements the <code>IDeviceScanner</code> interface (see <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-scanner/">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-scanner/">Java</a> APIs) and searches for nearby Nix devices using Bluetooth. The <code>DeviceScanner</code> will also report devices connected via USB. Scanner events are reported via:</p>
+<ul>
+<li><code>OnScannerStateChangeListener</code>:<ul>
+<li>Optional callback interface which reports when the scanner starts and stops searching for devices.</li>
+<li>API reference: <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-scanner/-on-scanner-state-change-listener/">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-scanner/-on-scanner-state-change-listener/">Java</a>.</li>
+<li>This is set using <code>setOnScannerStateChangeListener()</code>.</li>
+</ul>
+</li>
+<li><code>OnDeviceFoundListener</code>:<ul>
+<li>Callback interface which is called by the scanner each time that an <code>IDeviceCompat</code> instance has been found.</li>
+<li>API reference: <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-scanner/-on-device-found-listener/">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-scanner/-on-device-found-listener/">Java</a>.</li>
+<li>Note that this will be called both when a new device is found and when the RSSI/signal strength of a previously discovered device has changed. It is possible to use the <code>id</code> parameter as a means to uniquely identify discovered devices.</li>
+</ul>
+</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Devices can only be discovered or recalled while your SDK licence is in an <code>LicenseManagerState/ACTIVE</code> state; see <code>LicenseManager.Shared.getState()</code> for <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-license-manager/-shared/state.html">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-license-manager/-shared/get-state.html">Java</a>. Only device types supported by your license can be discovered and connected; see <code>LicenseManager.Shared.getAllowedDeviceTypes()</code> for <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-license-manager/-shared/allowed-device-types.html">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-license-manager/-shared/get-allowed-device-types.html">Java</a>.</p>
+</div>
+<p>To use the <code>DeviceScanner</code>:</p>
+<ul>
+<li>Initialize a scanner instance</li>
+<li>Optionally set a <code>OnScannerStateChangeListener</code>, if it is desired to track when the scanner starts and stops a device search.</li>
+<li>Check the scanner state, which will be <code>DeviceScannerState/IDLE</code> if properly initialized.<ul>
+<li>The scanner state is available via <code>IDeviceScanner.getState()</code> (see <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-scanner/state.html">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-scanner/get-state.html">Java</a> APIs).</li>
+<li>See a list possible states for <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-scanner/-device-scanner-state/">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-scanner/-device-scanner-state/">Java</a>.</li>
+<li>If the state is <code>DeviceScannerState/ERROR_LICENSE</code>, check <code>LicenseManager.Shared.getState()</code> for further details. </li>
+</ul>
+</li>
+<li>Start the scanner using <code>start()</code> (see <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-scanner/start.html">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-scanner/start.html">Java</a> APIs).<ul>
+<li>By default, the scanner will search for a period <code>DEFAULT_GENERAL_SCAN_PERIOD_MS</code>, but this interval can be overridden by providing an argument for <code>scanPeriodMs</code>.</li>
+</ul>
+</li>
+<li>Observe discovered devices via the <code>onScanResult()</code> in the <code>OnDeviceFoundListener</code> interface. At this stage, it is valid to check a limited number of parameters on the device object:<ul>
+<li><code>getId()</code>: Device identifier string (see <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/id.html">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/get-id.html">Java</a> APIs).</li>
+<li><code>getRssi()</code>: Device signal strength (-127 to 0). Will be 0 for USB connected devices (see <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/rssi.html">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/get-rssi.html">Java</a> APIs).</li>
+<li><code>getInterfaceType()</code>: Indicates whether the device was found via Bluetooth or USB connection (see <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/interface-type.html">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/get-interface-type.html">Java</a> APIs).</li>
+<li><code>getType()</code>: Indicates the specific device type (see <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/type.html">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/get-type.html">Java</a> APIs).</li>
+<li><code>getName()</code>: Full name of the device (e.g. 'Nix Spectro 2', see <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/name.html">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/get-name.html">Java</a> APIs).</li>
+</ul>
+</li>
+<li>The device search will run for the specified duration, after which <code>onScannerStopped()</code> is called. The device search can also be manually stopped using <code>stop()</code>.</li>
+</ul>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Kotlin</label><label for="__tabbed_1_2">Java</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c1">// Define the OnScannerStateChangeListener</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">scannerStateListener</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">object</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="nc">OnScannerStateChangeListener</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">override</span><span class="w"> </span><span class="kd">fun</span><span class="w"> </span><span class="nf">onScannerStarted</span><span class="p">(</span><span class="n">sender</span><span class="p">:</span><span class="w"> </span><span class="n">IDeviceScanner</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Scanner has started ...</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">override</span><span class="w"> </span><span class="kd">fun</span><span class="w"> </span><span class="nf">onScannerStopped</span><span class="p">(</span><span class="n">sender</span><span class="p">:</span><span class="w"> </span><span class="n">IDeviceScanner</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Scanner has stopped ...</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Define the OnDeviceFoundListener</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">deviceFoundListener</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">object</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="nc">OnDeviceFoundListener</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">override</span><span class="w"> </span><span class="kd">fun</span><span class="w"> </span><span class="nf">onScanResult</span><span class="p">(</span><span class="n">sender</span><span class="p">:</span><span class="w"> </span><span class="n">IDeviceScanner</span><span class="p">,</span><span class="w"> </span><span class="n">device</span><span class="p">:</span><span class="w"> </span><span class="n">IDeviceCompat</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Nearby device found</span>
+<span class="w">        </span><span class="c1">// Handle discovery here ...</span>
+
+<span class="w">        </span><span class="c1">// Valid to query some parameters now:</span>
+<span class="w">        </span><span class="n">Log</span><span class="p">.</span><span class="na">d</span><span class="p">(</span><span class="n">TAG</span><span class="p">,</span><span class="w"> </span><span class="kt">String</span><span class="p">.</span><span class="na">format</span><span class="p">(</span>
+<span class="w">            </span><span class="s">&quot;Found %s (%s) at RSSI %d&quot;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">            </span><span class="n">device</span><span class="p">.</span><span class="na">id</span><span class="p">,</span><span class="w"> </span>
+<span class="w">            </span><span class="n">device</span><span class="p">.</span><span class="na">name</span><span class="p">,</span><span class="w"> </span>
+<span class="w">            </span><span class="n">device</span><span class="p">.</span><span class="na">rssi</span><span class="p">)</span>
+<span class="w">        </span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Application context, in a Fragment use getContext()</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">context</span><span class="p">:</span><span class="w"> </span><span class="n">Context</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span>
+
+<span class="c1">// Initialize the scanner</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">scanner</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DeviceScanner</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+<span class="n">scanner</span><span class="p">.</span><span class="na">setOnScannerStateChangeListener</span><span class="p">(</span><span class="n">scannerStateListener</span><span class="p">)</span>
+
+<span class="c1">// Start the scanner</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">scanner</span><span class="p">.</span><span class="na">state</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">IDeviceScanner</span><span class="p">.</span><span class="na">DeviceScannerState</span><span class="p">.</span><span class="na">IDLE</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">scanner</span><span class="p">.</span><span class="na">start</span><span class="p">(</span><span class="n">listener</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">deviceFoundListener</span><span class="p">)</span>
+<span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Check the error state and handle accordingly ...</span>
+<span class="p">}</span><span class="w">    </span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c1">// Define the OnScannerStateChangeListener</span>
+<span class="n">IDeviceScanner</span><span class="p">.</span><span class="na">OnScannerStateChangeListener</span><span class="w"> </span><span class="n">stateChangeListener</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>
+<span class="w">    </span><span class="k">new</span><span class="w"> </span><span class="n">IDeviceScanner</span><span class="p">.</span><span class="na">OnScannerStateChangeListener</span><span class="p">()</span><span class="w"> </span>
+<span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">onScannerStarted</span><span class="p">(</span><span class="nd">@NonNull</span><span class="w"> </span><span class="n">IDeviceScanner</span><span class="w"> </span><span class="n">sender</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Scanner has started</span>
+<span class="w">        </span><span class="c1">// ...</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">onScannerStopped</span><span class="p">(</span><span class="nd">@NonNull</span><span class="w"> </span><span class="n">IDeviceScanner</span><span class="w"> </span><span class="n">sender</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Scanner has stopped</span>
+<span class="w">        </span><span class="c1">// ...</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="c1">// Define the OnDeviceFoundListener</span>
+<span class="n">IDeviceScanner</span><span class="p">.</span><span class="na">OnDeviceFoundListener</span><span class="w"> </span><span class="n">deviceFoundListener</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>
+<span class="w">    </span><span class="k">new</span><span class="w"> </span><span class="n">IDeviceScanner</span><span class="p">.</span><span class="na">OnDeviceFoundListener</span><span class="p">()</span><span class="w"> </span>
+<span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">onScanResult</span><span class="p">(</span>
+<span class="w">        </span><span class="nd">@NonNull</span><span class="w"> </span><span class="n">IDeviceScanner</span><span class="w"> </span><span class="n">sender</span><span class="p">,</span>
+<span class="w">        </span><span class="nd">@NonNull</span><span class="w"> </span><span class="n">IDeviceCompat</span><span class="w"> </span><span class="n">device</span>
+<span class="w">    </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Nearby device found</span>
+<span class="w">        </span><span class="c1">// Handle discovery here ...</span>
+
+<span class="w">        </span><span class="c1">// Valid to query some parameters now:</span>
+<span class="w">        </span><span class="n">Log</span><span class="p">.</span><span class="na">d</span><span class="p">(</span><span class="n">TAG</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="p">.</span><span class="na">format</span><span class="p">(</span>
+<span class="w">            </span><span class="s">&quot;Found %s (%s) with RSSI %d&quot;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">            </span><span class="n">device</span><span class="p">.</span><span class="na">getId</span><span class="p">(),</span><span class="w"> </span>
+<span class="w">            </span><span class="n">device</span><span class="p">.</span><span class="na">getName</span><span class="p">(),</span><span class="w"> </span>
+<span class="w">            </span><span class="n">device</span><span class="p">.</span><span class="na">getRssi</span><span class="p">()));</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="c1">// Application context, in a Fragment use getContext()</span>
+<span class="n">Context</span><span class="w"> </span><span class="n">context</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getApplicationContext</span><span class="p">();</span>
+
+<span class="c1">// Initialize the scanner</span>
+<span class="n">IDeviceScanner</span><span class="w"> </span><span class="n">scanner</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">DeviceScanner</span><span class="p">(</span><span class="n">context</span><span class="p">);</span>
+<span class="n">scanner</span><span class="p">.</span><span class="na">setOnScannerStateChangeListener</span><span class="p">(</span><span class="n">scannerStateListener</span><span class="p">);</span><span class="w">    </span>
+
+<span class="c1">// Start the scanner</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">scanner</span><span class="p">.</span><span class="na">getState</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">IDeviceScanner</span><span class="p">.</span><span class="na">DeviceScannerState</span><span class="p">.</span><span class="na">IDLE</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">scanner</span><span class="p">.</span><span class="na">start</span><span class="p">(</span>
+<span class="w">        </span><span class="n">deviceFoundListener</span><span class="p">,</span>
+<span class="w">        </span><span class="n">IDeviceScanner</span><span class="p">.</span><span class="na">DEFAULT_GENERAL_SCAN_PERIOD_MS</span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Check the error state and handle accordingly ...</span>
+<span class="p">}</span><span class="w">    </span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="recalling-a-known-nix-device">Recalling a known Nix device</h2>
+<p>For Bluetooth connected devices only, it is possible to construct an <code>IDeviceCompat</code> instance directly if the hardware address and device type is known. The constructor takes the hardware address and device names as arguments.</p>
+<ul>
+<li>The device address <strong>must</strong> match the original value queried from <code>getId()</code>. Note that this corresponds to the hardware address of the advertising Bluetooth device</li>
+<li>The device name <strong>must</strong> match the original value queried from <code>getName()</code>. Note that this corresponds to the device name as advertised on Bluetooth. If the <code>DeviceType</code> enum is known, this also corresponds to <code>getFullName()</code> (see <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-device-type/full-name.html">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-device-type/get-full-name.html">Java</a> APIs for <code>DeviceType</code>).</li>
+</ul>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Kotlin</label><label for="__tabbed_2_2">Java</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c1">// Application context, in a Fragment use getContext()</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">context</span><span class="p">:</span><span class="w"> </span><span class="n">Context</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span>
+
+<span class="c1">// Hardware address of known device</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">exampleAddress</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;00:AA:11:BB:22:CC&quot;</span>
+
+<span class="c1">// Name of known device / type (must match advertised name)</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">exampleName</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Nix Spectro 2&quot;</span>
+
+<span class="c1">// Create IDeviceCompat instance</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">recalledDevice</span><span class="p">:</span><span class="w"> </span><span class="n">IDeviceCompat</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DeviceCompat</span><span class="p">(</span>
+<span class="w">    </span><span class="n">context</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">context</span><span class="p">,</span>
+<span class="w">    </span><span class="n">address</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">exampleAddress</span><span class="p">,</span>
+<span class="w">    </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">exampleName</span>
+<span class="p">)</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c1">// Application context, in a Fragment use getContext()</span>
+<span class="n">Context</span><span class="w"> </span><span class="n">context</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getApplicationContext</span><span class="p">();</span>
+
+<span class="c1">// Hardware address of known device</span>
+<span class="n">String</span><span class="w"> </span><span class="n">exampleAddress</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;00:AA:11:BB:22:CC&quot;</span><span class="p">;</span>
+
+<span class="c1">// Name of known device / type (must match advertised name)</span>
+<span class="n">String</span><span class="w"> </span><span class="n">exampleName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Nix Spectro 2&quot;</span><span class="p">;</span>
+
+<span class="c1">// Create IDeviceCompat instance</span>
+<span class="n">IDeviceCompat</span><span class="w"> </span><span class="n">recalledDevice</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">DeviceCompat</span><span class="p">(</span>
+<span class="w">    </span><span class="n">context</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="n">exampleAddress</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="n">exampleName</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="n">Integer</span><span class="p">.</span><span class="na">MIN_VALUE</span><span class="p">);</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="opening-a-connection">Opening a connection</h2>
+<p>Once an <code>IDeviceCompat</code> instance has been obtained, a connection can be opened by calling <code>connect()</code> (see <a href="../kotlin/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/connect.html">Kotlin</a> or <a href="../java/html/-nix%20-universal%20-s-d-k/com.nixsensor.universalsdk/-i-device-compat/connect.html">Java</a> APIs). Connection state changes are provided via an <code>OnDeviceStateChangeListener</code> interface. The connection can be cancelled or closed normally by later calling <code>disconnect()</code>.</p>
+<p>The steps necessary for connecting include:</p>
+<ol>
+<li>Implement the <code>OnDeviceStateChangeListener</code> interface in your class</li>
+<li>Stop the <code>DeviceScanner</code> before opening a connection, if still running.<ul>
+<li>It is safe to call <code>stop()</code> on the <code>DeviceScanner</code> at any time, even if already stopped.</li>
+</ul>
+</li>
+<li>Start the connection process by calling <code>connect()</code>.<ul>
+<li>The connection process is asynchronous and <code>connect()</code> will return immediately. If a connection activity indicator is shown, it can be shown immediately before calling this method.</li>
+<li>A call to <code>connect()</code> will always result in either the <code>onConnected()</code> or <code>onDisconnected()</code> callback being triggered.</li>
+<li>Device operations are not possible until the <code>onConnected()</code> callback is received (successful connection)</li>
+<li>If the connection process fails, the <code>onDisconnected()</code> callback will be invoked with an appropriate status code indicating the cause of the error.</li>
+<li><code>onDisconnected()</code> will also be called later whenever the device is disconnected. This can occur normally (i.e. - if the host application calls <code>disconnect()</code> on the <code>IDeviceCompat</code> instance), or abnormally (i.e. - if the connection is dropped due to an error or low Bluetooth signal strength).</li>
+<li>Your license is linked to a specific allocation of Nix devices and will not operate with devices from another allocation.<ul>
+<li>At connection time, the SDK will read an allocation code stored on the Nix device and compare to the license information.</li>
+<li>If this check does not pass, the SDK will contact a Nix authentication server to check if that device serial number is authorized.</li>
+<li>If the device cannot be authenticated (i.e. – an unknown allocation code was found and an internet connection is unavailable), the device will be disconnected with the status <code>ERROR_UNAUTHORIZED</code>.</li>
+<li>The internet connection is required only once every 30 days – once authorized, this status is saved, and connections can be made offline for this time period.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>When the user has finished using the device, the connection can be closed by calling <code>disconnect()</code>.</li>
+</ol>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Kotlin</label><label for="__tabbed_3_2">Java</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c1">// Define the OnDeviceStateChangeListener</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">deviceStateListener</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">object</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="nc">OnDeviceStateChangeListener</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">override</span><span class="w"> </span><span class="kd">fun</span><span class="w"> </span><span class="nf">onConnected</span><span class="p">(</span>
+<span class="w">        </span><span class="n">sender</span><span class="p">:</span><span class="w"> </span><span class="n">IDeviceCompat</span>
+<span class="w">    </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Device has connected successfully</span>
+<span class="w">        </span><span class="c1">// Device properties can now be queried</span>
+<span class="w">        </span><span class="c1">// Device commands/operations can now run</span>
+<span class="w">        </span><span class="c1">// ...</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">override</span><span class="w"> </span><span class="kd">fun</span><span class="w"> </span><span class="nf">onDisconnected</span><span class="p">(</span>
+<span class="w">        </span><span class="n">sender</span><span class="p">:</span><span class="w"> </span><span class="n">IDeviceCompat</span><span class="p">,</span>
+<span class="w">        </span><span class="n">status</span><span class="p">:</span><span class="w"> </span><span class="n">DeviceStatus</span>
+<span class="w">    </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Handle status codes here, if desired in your application</span>
+<span class="w">        </span><span class="c1">// At minimum, should check for ERROR_UNAUTHORIZED and </span>
+<span class="w">        </span><span class="c1">// ERROR_LICENSE cases</span>
+<span class="w">        </span><span class="k">when</span><span class="w"> </span><span class="p">(</span><span class="n">status</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// Device not authorized for this license UUID</span>
+<span class="w">            </span><span class="n">DeviceStatus</span><span class="p">.</span><span class="na">ERROR_UNAUTHORIZED</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="c1">// ...</span>
+<span class="w">            </span><span class="p">}</span>
+
+<span class="w">            </span><span class="c1">// There is an issue with the LicenseManager</span>
+<span class="w">            </span><span class="c1">// Check LicenseManager.state</span>
+<span class="w">            </span><span class="n">DeviceStatus</span><span class="p">.</span><span class="na">ERROR_LICENSE</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="c1">// ...</span>
+<span class="w">            </span><span class="p">}</span>
+
+<span class="w">            </span><span class="c1">// Normal disconnect, triggered by device.disconnect()</span>
+<span class="w">            </span><span class="n">DeviceStatus</span><span class="p">.</span><span class="na">SUCCESS</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="c1">// ...</span>
+<span class="w">            </span><span class="p">}</span>
+
+<span class="w">            </span><span class="c1">// Nix device dropped the connection</span>
+<span class="w">            </span><span class="n">DeviceStatus</span><span class="p">.</span><span class="na">ERROR_DROPPED_CONNECTION</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="c1">// ...</span>
+<span class="w">            </span><span class="p">}</span>
+
+<span class="w">            </span><span class="c1">// Connection to Nix device timed out</span>
+<span class="w">            </span><span class="n">DeviceStatus</span><span class="p">.</span><span class="na">ERROR_TIMEOUT</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span>
+<span class="w">                </span><span class="c1">// ...</span>
+<span class="w">            </span><span class="p">}</span>
+
+<span class="w">            </span><span class="c1">// Other internal errors</span>
+<span class="w">            </span><span class="n">DeviceStatus</span><span class="p">.</span><span class="na">ERROR_MAX_ATTEMPTS</span><span class="p">,</span>
+<span class="w">            </span><span class="n">DeviceStatus</span><span class="p">.</span><span class="na">ERROR_UNSUPPORTED_DEVICE</span><span class="p">,</span>
+<span class="w">            </span><span class="n">DeviceStatus</span><span class="p">.</span><span class="na">ERROR_INTERNAL</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span>
+<span class="w">                </span><span class="c1">// ...</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">override</span><span class="w"> </span><span class="kd">fun</span><span class="w"> </span><span class="nf">onBatteryStateChanged</span><span class="p">(</span>
+<span class="w">        </span><span class="n">sender</span><span class="p">:</span><span class="w"> </span><span class="n">IDeviceCompat</span><span class="p">,</span>
+<span class="w">        </span><span class="n">newState</span><span class="p">:</span><span class="w"> </span><span class="kt">Int</span>
+<span class="w">    </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">super</span><span class="p">.</span><span class="na">onBatteryStateChanged</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span><span class="w"> </span><span class="n">newState</span><span class="p">)</span>
+<span class="w">        </span><span class="c1">// Battery level has updated</span>
+<span class="w">        </span><span class="c1">// ...</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">override</span><span class="w"> </span><span class="kd">fun</span><span class="w"> </span><span class="nf">onExtPowerStateChanged</span><span class="p">(</span>
+<span class="w">        </span><span class="n">sender</span><span class="p">:</span><span class="w"> </span><span class="n">IDeviceCompat</span><span class="p">,</span>
+<span class="w">        </span><span class="n">newState</span><span class="p">:</span><span class="w"> </span><span class="kt">Boolean</span>
+<span class="w">    </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">super</span><span class="p">.</span><span class="na">onExtPowerStateChanged</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span><span class="w"> </span><span class="n">newState</span><span class="p">)</span>
+<span class="w">        </span><span class="c1">// External power has been connected or disconnected</span>
+<span class="w">        </span><span class="c1">// ...</span>
+<span class="w">    </span><span class="p">}</span><span class="w">        </span>
+<span class="p">}</span>
+
+<span class="c1">// Device instance that has already been found by the DeviceScanner</span>
+<span class="kd">var</span><span class="w"> </span><span class="nv">device</span><span class="p">:</span><span class="w"> </span><span class="n">IDeviceCompat</span>
+
+<span class="c1">// Initiate the connection</span>
+<span class="n">device</span><span class="p">.</span><span class="na">connect</span><span class="p">(</span><span class="n">deviceStateListener</span><span class="p">)</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="c1">// Define the OnDeviceStateChangeListener</span>
+<span class="n">IDeviceCompat</span><span class="p">.</span><span class="na">OnDeviceStateChangeListener</span><span class="w"> </span><span class="n">deviceStateListener</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>
+<span class="w">    </span><span class="k">new</span><span class="w"> </span><span class="n">IDeviceCompat</span><span class="p">.</span><span class="na">OnDeviceStateChangeListener</span><span class="p">()</span><span class="w"> </span>
+<span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">onConnected</span><span class="p">(</span><span class="nd">@NonNull</span><span class="w"> </span><span class="n">IDeviceCompat</span><span class="w"> </span><span class="n">sender</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Device has connected successfully</span>
+<span class="w">        </span><span class="c1">// Device properties can now be queried</span>
+<span class="w">        </span><span class="c1">// Device commands/operations can now run</span>
+<span class="w">        </span><span class="c1">// ...</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">onDisconnected</span><span class="p">(</span>
+<span class="w">        </span><span class="nd">@NonNull</span><span class="w"> </span><span class="n">IDeviceCompat</span><span class="w"> </span><span class="n">sender</span><span class="p">,</span><span class="w"> </span>
+<span class="w">        </span><span class="nd">@NonNull</span><span class="w"> </span><span class="n">DeviceStatus</span><span class="w"> </span><span class="n">status</span><span class="p">)</span><span class="w"> </span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Handle status codes here, if desired in your application</span>
+<span class="w">        </span><span class="c1">// At minimum, should check for ERROR_UNAUTHORIZED and </span>
+<span class="w">        </span><span class="c1">// ERROR_LICENSE cases</span>
+<span class="w">        </span><span class="k">switch</span><span class="w"> </span><span class="p">(</span><span class="n">status</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">case</span><span class="w"> </span><span class="n">ERROR_UNAUTHORIZED</span><span class="p">:</span>
+<span class="w">                </span><span class="c1">// Device not authorized for this license UUID</span>
+<span class="w">                </span><span class="c1">// ...</span>
+<span class="w">                </span><span class="k">break</span><span class="p">;</span>
+<span class="w">            </span><span class="k">case</span><span class="w"> </span><span class="n">ERROR_LICENSE</span><span class="p">:</span>
+<span class="w">                </span><span class="c1">// There is an issue with the LicenseManager</span>
+<span class="w">                </span><span class="c1">// Check LicenseManager.Shared.getState()</span>
+<span class="w">                </span><span class="k">break</span><span class="p">;</span>
+<span class="w">            </span><span class="k">case</span><span class="w"> </span><span class="n">SUCCESS</span><span class="p">:</span>
+<span class="w">                </span><span class="c1">// Normal disconnect, triggered by device.disconnect()</span>
+<span class="w">                </span><span class="c1">//...</span>
+<span class="w">                </span><span class="k">break</span><span class="p">;</span>
+<span class="w">            </span><span class="k">case</span><span class="w"> </span><span class="n">ERROR_DROPPED_CONNECTION</span><span class="p">:</span>
+<span class="w">                </span><span class="c1">// Nix device dropped the connection</span>
+<span class="w">                </span><span class="c1">// ...</span>
+<span class="w">                </span><span class="k">break</span><span class="p">;</span>
+<span class="w">            </span><span class="k">case</span><span class="w"> </span><span class="n">ERROR_TIMEOUT</span><span class="p">:</span>
+<span class="w">                </span><span class="c1">// Connection to Nix device timed out</span>
+<span class="w">                </span><span class="c1">// ...</span>
+<span class="w">                </span><span class="k">break</span><span class="p">;</span>
+<span class="w">            </span><span class="k">case</span><span class="w"> </span><span class="n">ERROR_MAX_ATTEMPTS</span><span class="p">:</span>
+<span class="w">            </span><span class="k">case</span><span class="w"> </span><span class="n">ERROR_UNSUPPORTED_DEVICE</span><span class="p">:</span>
+<span class="w">            </span><span class="k">case</span><span class="w"> </span><span class="n">ERROR_INTERNAL</span><span class="p">:</span>
+<span class="w">                </span><span class="c1">// Other internal errors</span>
+<span class="w">                </span><span class="c1">// ...</span>
+<span class="w">                </span><span class="k">break</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">onBatteryStateChanged</span><span class="p">(</span>
+<span class="w">        </span><span class="nd">@NonNull</span><span class="w"> </span><span class="n">IDeviceCompat</span><span class="w"> </span><span class="n">sender</span><span class="p">,</span><span class="w"> </span>
+<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">newState</span>
+<span class="w">    </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Battery level has updated</span>
+<span class="w">        </span><span class="c1">// ...</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">onExtPowerStateChanged</span><span class="p">(</span>
+<span class="w">        </span><span class="nd">@NonNull</span><span class="w"> </span><span class="n">IDeviceCompat</span><span class="w"> </span><span class="n">sender</span><span class="p">,</span><span class="w"> </span>
+<span class="w">        </span><span class="kt">boolean</span><span class="w"> </span><span class="n">newState</span>
+<span class="w">    </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// External power has been connected or disconnected</span>
+<span class="w">        </span><span class="c1">// ...</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="c1">// Device instance that has already been found by the DeviceScanner</span>
+<span class="n">IDeviceCompat</span><span class="w"> </span><span class="n">device</span><span class="p">;</span>
+
+<span class="c1">// Initiate the connection</span>
+<span class="n">device</span><span class="p">.</span><span class="na">connect</span><span class="p">(</span><span class="n">deviceStateListener</span><span class="p">);</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<h2 id="next-steps">Next steps</h2>
+<ul>
+<li><a href="../device-operations/">Device Operations</a> </li>
+</ul>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.aecac24b.min.js"></script>
+      
+    
+  </body>
+</html>

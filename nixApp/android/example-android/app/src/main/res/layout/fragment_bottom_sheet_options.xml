@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".fragment.BottomSheetListFragment">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <View
+            android:id="@+id/pill_view"
+            android:layout_width="@dimen/pill_width"
+            android:layout_height="@dimen/pill_height"
+            android:background="@drawable/drawer_edge_indicator"
+            android:layout_marginTop="@dimen/bottom_sheet_top_padding"
+            android:layout_centerHorizontal="true"/>
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/header_line_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"
+        android:textAppearance="@style/TextAppearance.AppCompat.Title"
+        android:textAlignment="center"
+        android:text="Placeholder line 1"/>
+
+    <TextView
+        android:id="@+id/subheader_line_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
+        android:textAlignment="center"
+        android:text="Placeholder line 2"
+        android:visibility="gone"/>
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:visibility="gone"/>
+
+        <ListView
+            android:id="@+id/options_list_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:divider="@null"
+            android:dividerHeight="0dp"
+            android:requiresFadingEdge="vertical"
+            android:fadingEdgeLength="@dimen/listview_vertical_fading_edge"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="@dimen/bottom_sheet_top_padding"
+            android:nestedScrollingEnabled="true"/>
+
+    </RelativeLayout>
+</LinearLayout>

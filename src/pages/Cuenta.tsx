@@ -1,0 +1,319 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'motion/react';
+import { ArrowLeft, User, Camera, UploadCloud, Save, Building2, MapPin, Phone } from 'lucide-react';
+import { API_BASE_URL } from '../config';
+
+import Sidebar from '../components/Sidebar';
+import { Country, State, City } from 'country-state-city';
+import { parsePhoneNumberFromString, CountryCode } from 'libphonenumber-js';
+
+interface Cliente {
+    NOMBRE: string;
+    NIF: string;
+    PAIS: string;
+    PROVINCIA: string;
+    POBLACION: string;
+    DIRECCION: string;
+    TELEFONO: string;
+    MOVIL: string;
+    CONTACTO: string;
+    LOGO: string;
+}
+
+export default function Cuenta({ userData, onLogout }: { userData: any; onLogout: () => void }) {
+    const navigate = useNavigate();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [message, setMessage] = useState({ type: '', text: '' });
+
+    const [formData, setFormData] = useState<Cliente>({
+        NOMBRE: '', NIF: '', PAIS: '', PROVINCIA: '', POBLACION: '',
+        DIRECCION: '', TELEFONO: '', MOVIL: '', CONTACTO: '', LOGO: ''
+    });
+
+    const [countries, setCountries] = useState<any[]>([]);
+    const [states, setStates] = useState<any[]>([]);
+    const [cities, setCities] = useState<any[]>([]);
+
+    // Selected ISO codes to query next level
+    const [selectedCountryCode, setSelectedCountryCode] = useState('');
+    const [selectedStateCode, setSelectedStateCode] = useState('');
+
+    useEffect(() => {
+        setCountries(Country.getAllCountries());
+        const fetchCliente = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${API_BASE_URL}/api/cliente`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setFormData({
+                        NOMBRE: data.NOMBRE || '', NIF: data.NIF || '', PAIS: data.PAIS || '',
+                        PROVINCIA: data.PROVINCIA || '', POBLACION: data.POBLACION || '',
+                        DIRECCION: data.DIRECCION || '', TELEFONO: data.TELEFONO || '',
+                        MOVIL: data.MOVIL || '', CONTACTO: data.CONTACTO || '', LOGO: data.LOGO || ''
+                    });
+
+                    // Preload states if country was saved
+                    if (data.PAIS) {
+                        const c = Country.getAllCountries().find(x => x.name === data.PAIS);
+                        if (c) {
+                            setSelectedCountryCode(c.isoCode);
+                            setStates(State.getStatesOfCountry(c.isoCode));
+                            // Preload cities if state was saved
+                            if (data.PROVINCIA) {
+                                const s = State.getStatesOfCountry(c.isoCode).find(x => x.name === data.PROVINCIA);
+                                if (s) {
+                                    setSelectedStateCode(s.isoCode);
+                                    setCities(City.getCitiesOfState(c.isoCode, s.isoCode));
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCliente();
+    }, []);
+
+    const handleCountryChange = (val: string) => {
+        const country = countries.find(c => c.name === val);
+        setFormData({ ...formData, PAIS: val, PROVINCIA: '', POBLACION: '' });
+        if (country) {
+            setSelectedCountryCode(country.isoCode);
+            setStates(State.getStatesOfCountry(country.isoCode));
+            setCities([]);
+        } else {
+            setSelectedCountryCode('');
+            setStates([]);
+            setCities([]);
+        }
+    };
+
+    const handleStateChange = (val: string) => {
+        const state = states.find(s => s.name === val);
+        setFormData({ ...formData, PROVINCIA: val, POBLACION: '' });
+        if (state && selectedCountryCode) {
+            setSelectedStateCode(state.isoCode);
+            setCities(City.getCitiesOfState(selectedCountryCode, state.isoCode));
+        } else {
+            setSelectedStateCode('');
+            setCities([]);
+        }
+    };
+
+    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            setMessage({ type: 'error', text: 'El logo es muy pesado. Máximo 5MB' });
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            if (ev.target?.result) {
+                setFormData({ ...formData, LOGO: ev.target.result as string });
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const validatePhones = () => {
+        const iso = (selectedCountryCode as CountryCode) || 'EC'; // Ecuador por defecto
+
+        if (formData.TELEFONO && formData.TELEFONO.trim() !== '') {
+            const tel = parsePhoneNumberFromString(formData.TELEFONO, iso);
+            if (!tel || !tel.isValid()) return { field: 'TELEFONO', msg: 'El Teléfono Fijo ingresado no es válido (Incluya su prefijo o revise su país).' };
+            if (tel.getType() === 'MOBILE') return { field: 'TELEFONO', msg: 'El campo Teléfono Fijo detectó un Celular. Por favor use solo fijos aquí.' };
+        }
+
+        if (formData.MOVIL && formData.MOVIL.trim() !== '') {
+            const mobile = parsePhoneNumberFromString(formData.MOVIL, iso);
+            if (!mobile || !mobile.isValid()) return { field: 'MOVIL', msg: 'El Celular / Móvil ingresado no es un número válido.' };
+            const t = mobile.getType();
+            if (t === 'FIXED_LINE') return { field: 'MOVIL', msg: 'El campo Móvil detectó un número Fijo. Use únicamente celulares.' };
+        }
+
+        return null;
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setMessage({ type: '', text: '' });
+
+        const phoneErr = validatePhones();
+        if (phoneErr) {
+            setMessage({ type: 'error', text: phoneErr.msg });
+            const errorElement = document.getElementById(phoneErr.field);
+            if (errorElement) {
+                errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                errorElement.focus();
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+            return;
+        }
+
+        setSaving(true);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_BASE_URL}/api/cliente`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
+            if (!res.ok) throw new Error('Error al actualizar registro');
+            setMessage({ type: 'success', text: '¡Datos de la empresa actualizados correctamente!' });
+        } catch (err: any) {
+            setMessage({ type: 'error', text: err.message });
+        } finally {
+            setSaving(false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col">
+            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onLogout={onLogout} userData={userData} />
+
+            {/* Header */}
+            <header className="fixed top-0 z-10 flex w-full items-center border-b border-slate-800 bg-[#0A0F14]/80 backdrop-blur-md px-6 py-4">
+                <button onClick={() => navigate('/')} className="p-2 text-slate-400 hover:text-white transition-colors hover:bg-slate-800/50 rounded-lg mr-2">
+                    <ArrowLeft className="h-5 w-5" />
+                </button>
+                <div>
+                    <h1 className="text-xl font-semibold tracking-tight text-white flex items-center gap-2">
+                        <User className="h-5 w-5 text-blue-400" /> Mi Cuenta
+                    </h1>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Configuración y datos de empresa</p>
+                </div>
+            </header>
+
+            <main className="pt-24 pb-12 px-6 flex-grow container mx-auto max-w-4xl">
+                {message.text && (
+                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className={`p-4 rounded-lg mb-6 text-sm font-semibold ${message.type === 'error' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-green-500/10 text-green-400 border border-green-500/20'}`}>
+                        {message.text}
+                    </motion.div>
+                )}
+
+                {loading ? (
+                    <div className="flex justify-center mt-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>
+                ) : (
+                    <motion.form
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                        onSubmit={handleSubmit}
+                        className="bg-slate-900 border border-slate-800 rounded-xl p-8 shadow-2xl relative"
+                    >
+                        <div className="flex flex-col md:flex-row gap-8">
+
+                            {/* Left Side: Logo */}
+                            <div className="flex flex-col items-center gap-4 w-full md:w-1/3">
+                                <div className="w-full aspect-square bg-slate-800 rounded-xl border-2 border-dashed border-slate-700 flex flex-col items-center justify-center p-4 relative group overflow-hidden">
+                                    {formData.LOGO ? (
+                                        <img src={formData.LOGO} alt="Logo" className="w-full h-full object-contain" />
+                                    ) : (
+                                        <div className="text-slate-500 flex flex-col items-center gap-2">
+                                            <Building2 className="w-12 h-12 opacity-50" />
+                                            <span className="text-xs font-bold uppercase tracking-widest">Sin Logo</span>
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <label className="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full transition-colors flex items-center gap-2">
+                                            <Camera className="w-5 h-5" />
+                                            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleLogoUpload} />
+                                        </label>
+                                    </div>
+                                </div>
+                                <p className="text-[10px] text-slate-500 text-center uppercase">Click para cambiar Logo<br />ó usar la cámara del teléfono</p>
+                            </div>
+
+                            {/* Right Side: Form */}
+                            <div className="w-full space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Nombre Comercial</label>
+                                        <input type="text" value={formData.NOMBRE} onChange={e => setFormData({ ...formData, NOMBRE: e.target.value })} required className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">RUC / NIF</label>
+                                        <input type="text" value={formData.NIF} onChange={e => setFormData({ ...formData, NIF: e.target.value })} required className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none" />
+                                    </div>
+                                </div>
+
+                                <h3 className="text-xs font-bold text-blue-400 flex items-center gap-2 border-b border-slate-800 pb-2 pt-2 uppercase tracking-wide">
+                                    <MapPin className="w-4 h-4" /> Ubicación
+                                </h3>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">País</label>
+                                        <input list="countries-list" value={formData.PAIS} onChange={(e) => handleCountryChange(e.target.value)} placeholder="Busca o selecciona..." className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none" />
+                                        <datalist id="countries-list">
+                                            {countries.map(c => <option key={c.isoCode} value={c.name} />)}
+                                        </datalist>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Provincia/Estado</label>
+                                        <input list="states-list" value={formData.PROVINCIA} onChange={(e) => handleStateChange(e.target.value)} disabled={!formData.PAIS} placeholder={!formData.PAIS ? "Elige País Primero" : "Elige..."} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none disabled:opacity-50" />
+                                        <datalist id="states-list">
+                                            {states.map(s => <option key={s.isoCode} value={s.name} />)}
+                                        </datalist>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Ciudad/Población</label>
+                                        <input list="cities-list" value={formData.POBLACION} onChange={e => setFormData({ ...formData, POBLACION: e.target.value })} disabled={!formData.PROVINCIA} placeholder={!formData.PROVINCIA ? "Elige Provincia..." : "Elige..."} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none disabled:opacity-50" />
+                                        <datalist id="cities-list">
+                                            {cities.map(cty => <option key={cty.name} value={cty.name} />)}
+                                        </datalist>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Dirección Exacta</label>
+                                    <input type="text" value={formData.DIRECCION} onChange={e => setFormData({ ...formData, DIRECCION: e.target.value })} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none" />
+                                </div>
+
+                                <h3 className="text-xs font-bold text-blue-400 flex items-center gap-2 border-b border-slate-800 pb-2 pt-2 uppercase tracking-wide">
+                                    <Phone className="w-4 h-4" /> Respaldo
+                                </h3>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Teléfono Fijo</label>
+                                        <input id="TELEFONO" type="tel" value={formData.TELEFONO} onChange={e => setFormData({ ...formData, TELEFONO: e.target.value })} placeholder="Ej. +34 91..." className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Móvil (Celular)</label>
+                                        <input id="MOVIL" type="tel" value={formData.MOVIL} onChange={e => setFormData({ ...formData, MOVIL: e.target.value })} placeholder="Ej. +34 6..." className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none" />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Representante/Contacto</label>
+                                        <input type="text" value={formData.CONTACTO} onChange={e => setFormData({ ...formData, CONTACTO: e.target.value })} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none" />
+                                    </div>
+                                </div>
+
+                                <div className="pt-6 border-t border-slate-800">
+                                    <button type="submit" disabled={saving} className="flex items-center justify-center gap-2 w-full md:w-auto ml-auto px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold uppercase tracking-widest text-sm transition-all shadow-lg shadow-blue-900/20 disabled:bg-slate-700">
+                                        {saving ? 'Guardando...' : <><Save className="w-5 h-5" /> Guardar Cambios</>}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.form>
+                )}
+            </main>
+        </div>
+    );
+}

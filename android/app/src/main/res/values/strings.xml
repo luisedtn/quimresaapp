@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Quimresa Color</string>
+    <string name="title_activity_main">Quimresa Color</string>
+    <string name="package_name">com.quimresa.colorapp</string>
+    <string name="custom_url_scheme">com.quimresa.colorapp</string>
+</resources>
