@@ -2,7 +2,8 @@ version: '3.8'
 
 services:
   quimresa-app:
-    image: tu-registro/quimresa-app:latest # Cambia esto si subes la imagen a un registro
+    image: nluistorres/quimresa-app:latest
+
     # build: . # Portainer Swarm no soporta builds locales fácilmente, mejor subir imagen o usar git
     environment:
       - DATABASE_URL=postgresql://postgres:9db5e5a64387efaa96264ebd79551fd9@postgres:5432/quimresa?schema=public
