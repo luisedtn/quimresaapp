@@ -1,7 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, ChevronRight, User, Settings, ShoppingBag, Wrench, Mail, Bug, FileText, Shield, Lock, LogOut, Users } from 'lucide-react';
+import { X, ChevronRight, User, Settings, ShoppingBag, Wrench, Mail, Bug, FileText, Shield, Lock, LogOut, Users, BluetoothConnected, BluetoothOff, Power } from 'lucide-react';
+import { useNixDevice } from '../hooks/useNixDevice';
+import { App } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -12,6 +15,8 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose, onLogout, userData }: SidebarProps) {
   const navigate = useNavigate();
+  const { isConnected, deviceInfo, disconnect } = useNixDevice();
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -34,7 +39,7 @@ export default function Sidebar({ isOpen, onClose, onLogout, userData }: Sidebar
             className="fixed inset-y-0 left-0 z-50 w-full max-w-[300px] bg-[#0A0F14] border-r border-slate-800 flex flex-col shadow-2xl"
           >
             <div className="flex items-center justify-between p-6 border-b border-slate-800">
-              <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest italic">Menú Lateral</h2>
+              <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest italic">Menú</h2>
               <button onClick={onClose} className="p-2 text-slate-400 hover:text-white transition-colors">
                 <X className="h-5 w-5" />
               </button>
@@ -61,18 +66,52 @@ export default function Sidebar({ isOpen, onClose, onLogout, userData }: Sidebar
                   <div className="h-[1px] bg-slate-800 w-full mt-2"></div>
                 </div>
                 <div className="px-6 py-3">
-                  <p className="text-slate-600 text-sm italic">--</p>
+                  {isConnected && deviceInfo ? (
+                    <div className="flex items-center justify-between group bg-slate-900/50 p-2 rounded-xl border border-slate-800/50">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-green-500/10 rounded-lg">
+                          <BluetoothConnected className="h-4 w-4 text-green-400" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-white truncate">{deviceInfo.name}</p>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-widest">{deviceInfo.type}</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          disconnect();
+                        }}
+                        className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
+                        title="Desconectar"
+                      >
+                        <BluetoothOff className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-4 bg-slate-900/20 rounded-xl border border-dashed border-slate-800">
+                      <p className="text-slate-600 text-sm italic">Sin dispositivos</p>
+                      <button
+                        onClick={() => {
+                          onClose();
+                          navigate('/colorimetro');
+                        }}
+                        className="mt-2 text-[10px] font-bold text-blue-400 uppercase tracking-widest hover:text-blue-300 transition-colors"
+                      >
+                        Conectar ahora
+                      </button>
+                    </div>
+                  )}
                 </div>
               </section>
 
               {/* Nix Resources */}
               <section className="mb-8">
                 <div className="px-6 mb-2">
-                  <h3 className="text-lg font-bold text-white tracking-tight">Recursos Nix</h3>
+                  <h3 className="text-lg font-bold text-white tracking-tight">Quimresa</h3>
                   <div className="h-[1px] bg-slate-800 w-full mt-2"></div>
                 </div>
                 <div className="space-y-1">
-                  <SidebarItem icon={ShoppingBag} label="Comprar dispositivos Nix" showChevron />
+                  {/* <SidebarItem icon={ShoppingBag} label="Comprar dispositivos Nix" showChevron /> */}
                   <SidebarItem icon={Wrench} label="Resolución de problemas" showChevron />
                   <SidebarItem icon={Mail} label="Contáctanos" showChevron />
                   <SidebarItem icon={Bug} label="Reportar un error" showChevron />

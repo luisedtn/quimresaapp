@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
     ArrowLeft, Bluetooth, BluetoothSearching, BluetoothConnected, BluetoothOff,
@@ -13,9 +13,12 @@ import { NixBluetoothService, deltaE2000, NixMeasurement } from '../services/Nix
 
 export default function Colorimetro({ userData, onLogout }: { userData: any; onLogout: () => void }) {
     const navigate = useNavigate();
+    const location = useLocation();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [savingId, setSavingId] = useState<string | null>(null);
     const [saveMessage, setSaveMessage] = useState({ type: '', text: '' });
+
+    const returnTo = location.state?.returnTo;
 
     const {
         isSupported,
@@ -34,6 +37,16 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
         clearMeasurements,
         clearError,
     } = useNixDevice();
+
+    // Auto-return logic when connected if we came from Scan
+    useEffect(() => {
+        if (isConnected && returnTo) {
+            const timer = setTimeout(() => {
+                navigate(returnTo);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [isConnected, returnTo, navigate]);
 
     const handleSaveMeasurement = async (m: NixMeasurement) => {
         setSavingId(m.timestamp);
@@ -68,7 +81,7 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
 
             {/* Header */}
             <header className="fixed top-0 z-10 flex w-full items-center border-b border-slate-800 bg-[#0A0F14]/80 backdrop-blur-md px-6 py-4">
-                <button onClick={() => navigate('/')} className="p-2 text-slate-400 hover:text-white transition-colors hover:bg-slate-800/50 rounded-lg mr-2">
+                <button onClick={() => navigate(returnTo || '/')} className="p-2 text-slate-400 hover:text-white transition-colors hover:bg-slate-800/50 rounded-lg mr-2">
                     <ArrowLeft className="h-5 w-5" />
                 </button>
                 <div className="flex-grow">

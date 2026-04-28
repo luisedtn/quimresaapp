@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Scan,
   Layers,
@@ -13,8 +13,11 @@ import {
   PaintBucket,
   LogOut,
   ChevronRight,
-  Menu
+  Menu,
+  Power
 } from 'lucide-react';
+import { App } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 import Sidebar from '../components/Sidebar';
 
 interface DashboardProps {
@@ -25,6 +28,15 @@ interface DashboardProps {
 export default function Dashboard({ userData, onLogout }: DashboardProps) {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+
+  const handleExitApp = () => {
+    if (Capacitor.isNativePlatform()) {
+      App.exitApp();
+    } else {
+      window.close();
+    }
+  };
 
   const menuItems = [
     { id: 'formulas', icon: PaintBucket, title: 'Fórmulas de Color', desc: 'Ver tus formulaciones de color específicas.', path: '/formulas' },
@@ -46,6 +58,51 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
         onLogout={onLogout}
         userData={userData}
       />
+
+      {/* Confirmation Modal */}
+      <AnimatePresence>
+        {showExitConfirm && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowExitConfirm(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 p-8 opacity-5">
+                <Power className="w-32 h-32 text-white" />
+              </div>
+              <div className="relative">
+                <h3 className="text-xl font-bold text-white mb-2 tracking-tight">¿Salir de la aplicación?</h3>
+                <p className="text-slate-400 text-sm mb-8 leading-relaxed">
+                  Estás a punto de cerrar el laboratorio de color de Quimresa. ¿Deseas continuar?
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowExitConfirm(false)}
+                    className="flex-1 px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold uppercase tracking-widest transition-all active:scale-95"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleExitApp}
+                    className="flex-1 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-red-900/20"
+                  >
+                    Salir
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Top Navigation / Header */}
       <header className="fixed top-0 z-10 flex w-full items-center justify-between border-b border-slate-800 bg-[#0A0F14]/80 backdrop-blur-md px-6 py-4">
@@ -70,8 +127,12 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
             <p className="text-xs font-medium text-slate-300">{userData?.email || 'usuario@quimresa.com'}</p>
             <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest">Acceso Autorizado</p>
           </div>
-          <button onClick={onLogout} className="p-2 text-slate-500 hover:text-white transition-colors bg-slate-800/30 rounded-lg">
-            <LogOut className="h-5 w-5" />
+          <button
+            onClick={() => setShowExitConfirm(true)}
+            className="p-2 text-slate-500 hover:text-red-400 transition-colors bg-slate-800/30 rounded-lg"
+            title="Salir de la aplicación"
+          >
+            <Power className="h-5 w-5" />
           </button>
         </div>
       </header>

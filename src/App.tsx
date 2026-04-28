@@ -46,7 +46,7 @@ export default function App() {
         />
         <Route
           path="/scan"
-          element={isAuthenticated ? <Scan userData={userData} /> : <Navigate to="/login" />}
+          element={isAuthenticated ? <Scan userData={userData} onLogout={handleLogout} /> : <Navigate to="/login" />}
         />
         <Route
           path="/quality-control"
