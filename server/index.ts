@@ -115,7 +115,7 @@ app.get('/api/usuarios', authenticateToken, async (req: Request, res: Response):
         const { idcliente } = (req as any).user;
         const usuarios = await prisma.usuario.findMany({
             where: { idcliente },
-            select: { id: true, name: true, tiempo: true, typeuser: true, permisos: true, autorizado: true, idcliente: true }
+            select: { id: true, name: true, photo: true, tiempo: true, typeuser: true, permisos: true, autorizado: true, idcliente: true }
         });
         res.json(usuarios);
     } catch (error) {
@@ -127,7 +127,7 @@ app.get('/api/usuarios', authenticateToken, async (req: Request, res: Response):
 app.post('/api/usuarios', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
         const { idcliente } = (req as any).user;
-        const { name, pass, tiempo, typeuser, permisos, autorizado } = req.body;
+        const { name, pass, photo, tiempo, typeuser, permisos, autorizado } = req.body;
 
         let passToSave = pass;
         if (pass && pass.trim() !== '') {
@@ -138,6 +138,7 @@ app.post('/api/usuarios', authenticateToken, async (req: Request, res: Response)
             data: {
                 name,
                 pass: passToSave,
+                photo,
                 tiempo,
                 typeuser,
                 permisos,
@@ -158,13 +159,13 @@ app.put('/api/usuarios/:id', authenticateToken, async (req: Request, res: Respon
     try {
         const { idcliente } = (req as any).user;
         const { id } = req.params;
-        const { name, pass, tiempo, typeuser, permisos, autorizado } = req.body;
+        const { name, pass, photo, tiempo, typeuser, permisos, autorizado } = req.body;
 
         // Comprobar que pertenece al mismo cliente
         const existing = await prisma.usuario.findFirst({ where: { id: Number(id), idcliente } });
         if (!existing) return res.status(404).json({ error: 'Usuario no encontrado' });
 
-        const dataUpdate: any = { name, tiempo, typeuser, permisos, autorizado };
+        const dataUpdate: any = { name, photo, tiempo, typeuser, permisos, autorizado };
         if (pass && pass.trim() !== '') {
             dataUpdate.pass = await bcrypt.hash(pass, 10);
         }

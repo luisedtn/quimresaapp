@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Fondo blanco total -->
+    <item>
+        <color android:color="#ffffff" />
+    </item>
+
+    <!-- Logo centrado, escalado para ocupar el ancho de pantalla -->
+    <item
+        android:gravity="center"
+        android:width="280dp"
+        android:height="280dp">
+        <bitmap
+            android:src="@drawable/splash"
+            android:gravity="center"
+            android:scaleType="fitCenter" />
+    </item>
+
+</layer-list>

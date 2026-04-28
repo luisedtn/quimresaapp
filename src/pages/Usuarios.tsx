@@ -14,6 +14,7 @@ interface Usuario {
     permisos: number | null;
     autorizado: boolean | null;
     idcliente: number | null;
+    photo?: string | null;
 }
 
 export default function Usuarios({ userData, onLogout }: { userData: any; onLogout: () => void }) {
@@ -29,6 +30,7 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
     const [formData, setFormData] = useState({
         name: '',
         pass: '',
+        photo: '',
         permisos: 1,
         typeuser: 1,
         autorizado: true,
@@ -64,6 +66,7 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
             setFormData({
                 name: user.name || '',
                 pass: '',
+                photo: user.photo || '',
                 permisos: user.permisos || 1,
                 typeuser: user.typeuser || 1,
                 autorizado: user.autorizado || false,
@@ -73,6 +76,7 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
             setFormData({
                 name: '',
                 pass: '',
+                photo: '',
                 permisos: 1,
                 typeuser: 1,
                 autorizado: true,
@@ -81,8 +85,20 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
         setIsModalOpen(true);
     };
 
+    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData(prev => ({ ...prev, photo: reader.result as string }));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (editingUser && !confirm('¿Estás seguro de guardar estas modificaciones?')) return;
         try {
             const token = localStorage.getItem('token');
             const url = editingUser
@@ -113,7 +129,7 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
     };
 
     const handleDelete = async (id: number) => {
-        if (!confirm('¿Seguro quieres eliminar a este usuario?')) return;
+        if (!confirm('Advertencia: El usuario se borrará permanentemente y se quedará sin acceso al sistema. ¿Seguro quieres eliminar a este usuario?')) return;
         try {
             const token = localStorage.getItem('token');
             const res = await fetch(`${API_BASE_URL}/api/usuarios/${id}`, {
@@ -164,7 +180,7 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
                 </div>
             </header>
 
-            <main className="pt-24 pb-12 px-6 flex-grow container mx-auto max-w-6xl">
+            <main className="pt-36 md:pt-28 pb-12 px-6 flex-grow container mx-auto max-w-6xl">
                 {error && <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-lg mb-6">{error}</div>}
 
                 {loading ? (
@@ -178,23 +194,28 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 key={user.id}
-                                className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl relative group hover:border-slate-700 transition-colors"
+                                onClick={() => handleOpenModal(user)}
+                                className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl relative group hover:border-slate-700 transition-colors cursor-pointer"
                             >
-                                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => handleOpenModal(user)} className="p-2 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 rounded-lg">
+                                <div className="absolute top-4 right-4 flex gap-2">
+                                    <button onClick={(e) => { e.stopPropagation(); handleOpenModal(user); }} className="p-2 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 rounded-lg">
                                         <Edit2 className="h-4 w-4" />
                                     </button>
-                                    <button onClick={() => handleDelete(user.id)} className="p-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg">
+                                    <button onClick={(e) => { e.stopPropagation(); handleDelete(user.id); }} className="p-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg">
                                         <Trash2 className="h-4 w-4" />
                                     </button>
                                 </div>
 
                                 <div className="flex items-center gap-4 mb-4">
-                                    <div className="h-12 w-12 bg-slate-800 rounded-full flex items-center justify-center text-slate-400 border border-slate-700">
-                                        <User className="h-6 w-6" />
+                                    <div className="h-12 w-12 bg-slate-800 rounded-full flex items-center justify-center text-slate-400 border border-slate-700 shrink-0 overflow-hidden">
+                                        {user.photo ? (
+                                            <img src={user.photo} alt={user.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <User className="h-6 w-6" />
+                                        )}
                                     </div>
-                                    <div>
-                                        <h3 className="font-bold text-white text-lg">{user.name}</h3>
+                                    <div className="min-w-0">
+                                        <h3 className="font-bold text-white text-lg truncate">{user.name}</h3>
                                         <div className="flex items-center gap-2 mt-1">
                                             <div className={`w-2 h-2 rounded-full ${user.autorizado ? 'bg-green-500' : 'bg-red-500'}`}></div>
                                             <p className="text-xs text-slate-400 uppercase">{user.autorizado ? 'Habilitado' : 'Bloqueado'}</p>
@@ -238,6 +259,26 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
                             </div>
 
                             <form onSubmit={handleSubmit} className="space-y-4">
+                                <div className="flex justify-center mb-6">
+                                    <div
+                                        className="h-24 w-24 bg-slate-800 rounded-full flex flex-col items-center justify-center text-slate-400 border border-slate-700 overflow-hidden relative cursor-pointer"
+                                        onClick={(e) => { e.stopPropagation(); document.getElementById('photoInput')?.click() }}
+                                    >
+                                        {formData.photo ? (
+                                            <img src={formData.photo} alt="Preview" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <>
+                                                <User className="h-8 w-8 mb-1" />
+                                                <span className="text-[9px] uppercase font-semibold">Foto</span>
+                                            </>
+                                        )}
+                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                            <span className="text-xs text-white font-bold">Cambiar</span>
+                                        </div>
+                                    </div>
+                                    <input id="photoInput" type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+                                </div>
+
                                 <div>
                                     <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Email / Nombre</label>
                                     <input
