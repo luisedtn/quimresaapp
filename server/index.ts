@@ -268,8 +268,18 @@ app.get('/api/formulas', authenticateToken, async (req: Request, res: Response):
         const sortBy = (req.query.sortBy as string) || 'FECHA';
         const skip = (page - 1) * limit;
 
+        const idClienteNum = typeof idcliente === 'string' ? parseInt(idcliente) : idcliente;
+
+        console.log(`[DEBUG] GET /api/formulas - IDCLIENTE: ${idClienteNum} (${typeof idClienteNum})`);
+        console.log(`[DEBUG] Params - page: ${page}, limit: ${limit}, search: "${search}", sortBy: "${sortBy}"`);
+
+        if (!idClienteNum) {
+            console.error('[ERROR] IDCLIENTE missing in token');
+            return res.status(400).json({ error: 'ID de cliente no encontrado en el token' });
+        }
+
         const where: any = {
-            IDCLIENTE: idcliente
+            IDCLIENTE: idClienteNum
         };
 
         if (search) {
@@ -280,6 +290,8 @@ app.get('/api/formulas', authenticateToken, async (req: Request, res: Response):
                 { LOTE: { contains: search, mode: 'insensitive' } },
             ];
         }
+
+        console.log(`[DEBUG] Prisma where clause:`, JSON.stringify(where, null, 2));
 
         const formulas = await prisma.formPersonales.findMany({
             where,
@@ -301,6 +313,12 @@ app.get('/api/formulas', authenticateToken, async (req: Request, res: Response):
             skip: skip,
             take: limit
         });
+
+        console.log(`[DEBUG] Formulas found: ${formulas.length}`);
+        if (formulas.length > 0) {
+            // console.log(`[DEBUG] First result sample:`, JSON.stringify(formulas[0], null, 2));
+        }
+
         res.json(formulas);
     } catch (error) {
         console.error('API GET FORMULAS ERROR:', error);
@@ -313,7 +331,12 @@ const distPath = path.join(__dirname, '../dist');
 app.use(express.static(distPath));
 
 // For any request that doesn't match an API route, send index.html
+// EXCEPT for /api routes which should return 404 JSON
 app.get('*', (req, res) => {
+    if (req.path.startsWith('/api/')) {
+        console.log(`[404] API Route not found: ${req.method} ${req.path}`);
+        return res.status(404).json({ error: `Ruta de API no encontrada: ${req.path}` });
+    }
     res.sendFile(path.join(distPath, 'index.html'));
 });
 

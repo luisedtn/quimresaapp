@@ -40,7 +40,10 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
             const res = await fetch(`${API_BASE_URL}/api/usuarios`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            if (!res.ok) throw new Error('Error al cargar usuarios');
+            if (!res.ok) {
+                if (res.status === 401 || res.status === 403) onLogout();
+                throw new Error('Error al cargar usuarios');
+            }
             const data = await res.json();
             setUsuarios(data);
         } catch (err: any) {
@@ -98,6 +101,7 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
 
             if (!res.ok) {
                 const d = await res.json();
+                if (res.status === 401 || res.status === 403) onLogout();
                 throw new Error(d.error || 'Error al persistir usuario');
             }
 
@@ -116,7 +120,10 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` }
             });
-            if (!res.ok) throw new Error('Falló al eliminar');
+            if (!res.ok) {
+                if (res.status === 401 || res.status === 403) onLogout();
+                throw new Error('Falló al eliminar');
+            }
             fetchUsuarios();
         } catch (err: any) {
             setError(err.message);

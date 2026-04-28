@@ -49,7 +49,10 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                     FECHA: m.timestamp,
                 }),
             });
-            if (!res.ok) throw new Error('Error al guardar');
+            if (!res.ok) {
+                if (res.status === 401 || res.status === 403) onLogout();
+                throw new Error('Error al guardar');
+            }
             setSaveMessage({ type: 'success', text: '¡Medición guardada correctamente!' });
         } catch (err: any) {
             setSaveMessage({ type: 'error', text: err.message });

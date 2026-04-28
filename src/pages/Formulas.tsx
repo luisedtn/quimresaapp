@@ -6,9 +6,10 @@ import { API_BASE_URL } from '../config';
 
 interface FormulasProps {
   email: string | null | undefined;
+  onLogout: () => void;
 }
 
-export default function Formulas({ email }: FormulasProps) {
+export default function Formulas({ email, onLogout }: FormulasProps) {
   const navigate = useNavigate();
   const [formulas, setFormulas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,17 +57,27 @@ export default function Formulas({ email }: FormulasProps) {
       else setLoadingMore(true);
 
       try {
+        const url = `${API_BASE_URL}/api/formulas?page=${page}&limit=25&q=${encodeURIComponent(debouncedSearchTerm)}&sortBy=${sortBy}`;
+        console.log(`[FRONTEND] Fetching formulas from URL: ${url}`);
         const response = await fetch(
-          `${API_BASE_URL}/api/formulas?page=${page}&limit=25&q=${encodeURIComponent(debouncedSearchTerm)}&sortBy=${sortBy}`,
+          url,
           {
             headers: { 'Authorization': `Bearer ${token}` },
             signal: abortController.signal
           }
         );
 
-        if (!response.ok) throw new Error('Error al obtener fórmulas');
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('[FRONTEND] Server responded with error:', errorData);
+          if (response.status === 401 || response.status === 403) {
+            onLogout();
+          }
+          throw new Error('Error al obtener fórmulas');
+        }
 
         const data = await response.json();
+        console.log(`[FRONTEND] Received ${data.length} formulas`, data);
 
         if (page === 1) {
           setFormulas(data);

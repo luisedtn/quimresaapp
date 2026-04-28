@@ -37,13 +37,16 @@ export function useNixDevice(): UseNixDeviceReturn {
     const [isSupported] = useState(() => NixBluetoothService.isSupported());
     const [isScanning, setIsScanning] = useState(false);
     const [isConnecting, setIsConnecting] = useState(false);
-    const [isConnected, setIsConnected] = useState(false);
+    const [isConnected, setIsConnected] = useState(() => nixService.getDeviceInfo().connected);
     const [isMeasuring, setIsMeasuring] = useState(false);
-    const [deviceInfo, setDeviceInfo] = useState<NixDeviceInfo | null>(null);
+    const [deviceInfo, setDeviceInfo] = useState<NixDeviceInfo | null>(() => {
+        const info = nixService.getDeviceInfo();
+        return info.connected ? info : null;
+    });
     const [lastMeasurement, setLastMeasurement] = useState<NixMeasurement | null>(null);
     const [measurements, setMeasurements] = useState<NixMeasurement[]>([]);
     const [error, setError] = useState<string | null>(null);
-    const [status, setStatus] = useState('Desconectado');
+    const [status, setStatus] = useState(() => nixService.getDeviceInfo().connected ? `Conectado a ${nixService.getDeviceInfo().name}` : 'Desconectado');
 
     const unsubscribeRef = useRef<(() => void) | null>(null);
 

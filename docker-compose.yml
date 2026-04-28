@@ -18,7 +18,7 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.docker.network=traefik_public"
-        - "traefik.http.routers.quimresa.rule=Host(`lab.quimresa.com`)" # CAMBIA ESTO por tu dominio
+        - "traefik.http.routers.quimresa.rule=Host(`api.quimresa.com`)"
         - "traefik.http.routers.quimresa.entrypoints=websecure"
         - "traefik.http.routers.quimresa.tls=true"
         - "traefik.http.routers.quimresa.tls.certresolver=le"

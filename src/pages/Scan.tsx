@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Settings, Bluetooth, Check, RefreshCcw, Scan as ScanIcon } from 'lucide-react';
-import { db, auth, handleFirestoreError, OperationType } from '../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 interface ScanProps {
   userData?: any;
@@ -20,7 +18,7 @@ export default function Scan({ userData }: ScanProps) {
     setIsScanning(true);
     // Simulate spectral capture
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
+
     const mockResult = {
       cielab: '67.45, 5.33, 47.99',
       hex: '#c0a04b',
@@ -28,21 +26,9 @@ export default function Scan({ userData }: ScanProps) {
       deviceName: 'Nix Spectro Mini',
       timestamp: new Date().toISOString()
     };
-    
+
     setResult(mockResult);
     setIsScanning(false);
-
-    // Auto-save to cloud
-    try {
-      await addDoc(collection(db, 'mediciones'), {
-        ...mockResult,
-        userId: auth.currentUser?.uid || userData?.email || 'guest',
-        clientEmail: auth.currentUser?.email || userData?.email || 'guest@quimresa.com',
-        timestamp: serverTimestamp()
-      });
-    } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'mediciones');
-    }
   };
 
   const handleConnect = async () => {
@@ -68,10 +54,10 @@ export default function Scan({ userData }: ScanProps) {
       <main className="flex flex-col items-center pt-24 px-6 max-w-lg mx-auto w-full flex-grow">
         {!connected && !isConnecting ? (
           <div className="flex w-full flex-col items-center gap-8 text-center mt-12">
-            <motion.div 
-               initial={{ opacity: 0, scale: 0.9 }}
-               animate={{ opacity: 1, scale: 1 }}
-               className="flex h-64 w-full items-center justify-center rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl relative overflow-hidden"
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex h-64 w-full items-center justify-center rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl relative overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-blue-900/10 to-transparent"></div>
               <div className="relative">
@@ -84,8 +70,8 @@ export default function Scan({ userData }: ScanProps) {
               <p className="mt-2 text-slate-500 text-sm">Coloca tu dispositivo Nix cerca de tu smartphone y presiona 'Conectar a Nix' para comenzar.</p>
             </div>
             <button
-               onClick={handleConnect}
-               className="w-full rounded-lg bg-[#004A99] hover:bg-blue-600 py-4 font-bold transition-all active:scale-95 shadow-lg shadow-blue-900/20 uppercase tracking-widest text-sm"
+              onClick={handleConnect}
+              className="w-full rounded-lg bg-[#004A99] hover:bg-blue-600 py-4 font-bold transition-all active:scale-95 shadow-lg shadow-blue-900/20 uppercase tracking-widest text-sm"
             >
               Conectar a Nix
             </button>
@@ -115,52 +101,52 @@ export default function Scan({ userData }: ScanProps) {
         ) : (
           <div className="flex w-full flex-col gap-6">
             {/* Color Result Card */}
-            <motion.div 
-               initial={{ opacity: 0, y: 10 }}
-               animate={{ opacity: 1, y: 0 }}
-               className="h-80 w-full rounded-2xl overflow-hidden shadow-2xl relative border-4 border-slate-900" 
-               style={{ backgroundColor: result?.hex || '#1a1a1a' }}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="h-80 w-full rounded-2xl overflow-hidden shadow-2xl relative border-4 border-slate-900"
+              style={{ backgroundColor: result?.hex || '#1a1a1a' }}
             >
-               <div className="absolute top-4 right-4 flex gap-2">
-                  <div className="px-2 py-1 bg-black/30 backdrop-blur-md rounded text-[10px] font-bold text-white/70 tracking-widest uppercase">
-                    Modo Espectral
-                  </div>
-               </div>
-               
-               {isScanning && (
-                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-md">
-                   <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent mb-4"></div>
-                   <p className="text-xs font-bold uppercase tracking-widest text-blue-400 animate-pulse">Capturando Datos</p>
-                 </div>
-               )}
+              <div className="absolute top-4 right-4 flex gap-2">
+                <div className="px-2 py-1 bg-black/30 backdrop-blur-md rounded text-[10px] font-bold text-white/70 tracking-widest uppercase">
+                  Modo Espectral
+                </div>
+              </div>
+
+              {isScanning && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-md">
+                  <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent mb-4"></div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-blue-400 animate-pulse">Capturando Datos</p>
+                </div>
+              )}
             </motion.div>
 
             <div className="mt-4 space-y-2">
-               <div className="flex items-center gap-2 mb-4">
-                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                 <p className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Iluminante: D50, Observador: 2°, M2</p>
-               </div>
-               
-               <div className="bg-slate-900/50 border border-slate-800 rounded-xl px-4 divide-y divide-slate-800">
-                  <div className="py-4 flex justify-between items-center">
-                     <span className="text-slate-500 text-xs font-bold uppercase tracking-widest">CIELAB</span>
-                     <span className="font-mono text-lg text-white">{result?.cielab || '--'}</span>
-                  </div>
-                  <div className="py-4 flex justify-between items-center">
-                     <span className="text-slate-500 text-xs font-bold uppercase tracking-widest">HEX</span>
-                     <span className="font-mono text-lg text-white uppercase">{result?.hex || '--'}</span>
-                  </div>
-                  <div className="py-4 flex justify-between items-center">
-                     <span className="text-slate-500 text-xs font-bold uppercase tracking-widest">sRGB</span>
-                     <span className="font-mono text-lg text-white">{result?.srgb || '--'}</span>
-                  </div>
-               </div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                <p className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Iluminante: D50, Observador: 2°, M2</p>
+              </div>
+
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl px-4 divide-y divide-slate-800">
+                <div className="py-4 flex justify-between items-center">
+                  <span className="text-slate-500 text-xs font-bold uppercase tracking-widest">CIELAB</span>
+                  <span className="font-mono text-lg text-white">{result?.cielab || '--'}</span>
+                </div>
+                <div className="py-4 flex justify-between items-center">
+                  <span className="text-slate-500 text-xs font-bold uppercase tracking-widest">HEX</span>
+                  <span className="font-mono text-lg text-white uppercase">{result?.hex || '--'}</span>
+                </div>
+                <div className="py-4 flex justify-between items-center">
+                  <span className="text-slate-500 text-xs font-bold uppercase tracking-widest">sRGB</span>
+                  <span className="font-mono text-lg text-white">{result?.srgb || '--'}</span>
+                </div>
+              </div>
             </div>
 
             <button
-               disabled={isScanning}
-               onClick={simulateScan}
-               className="mt-8 flex w-full items-center justify-center gap-3 rounded-xl bg-white hover:bg-slate-200 py-4 font-bold text-black transition-all active:scale-95 disabled:bg-slate-700 disabled:text-slate-400 group overflow-hidden relative shadow-xl shadow-white/5"
+              disabled={isScanning}
+              onClick={simulateScan}
+              className="mt-8 flex w-full items-center justify-center gap-3 rounded-xl bg-white hover:bg-slate-200 py-4 font-bold text-black transition-all active:scale-95 disabled:bg-slate-700 disabled:text-slate-400 group overflow-hidden relative shadow-xl shadow-white/5"
             >
               {isScanning ? (
                 <RefreshCcw className="h-5 w-5 animate-spin" />

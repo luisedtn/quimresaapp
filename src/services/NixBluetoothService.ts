@@ -19,7 +19,7 @@ interface NixSensorPlugin {
     addListener(eventName: string, listenerFunc: (data: any) => void): any;
 }
 
-const NixSensor = registerPlugin<NixSensorPlugin>('NixSensor');
+const NixSensor = registerPlugin<NixSensorPlugin>('NixSensorPlugin');
 
 // ============================================================
 // INTERFACES DE DATOS DE COLOR
@@ -140,6 +140,10 @@ export class NixBluetoothService {
     }
 
     async scanAndConnect(): Promise<NixDeviceInfo> {
+        if (this._deviceInfo.connected) {
+            return this._deviceInfo;
+        }
+
         if (isNativePlatform()) {
             return this.scanAndConnectNative();
         } else {
@@ -186,6 +190,11 @@ export class NixBluetoothService {
         return new Promise((resolve, reject) => {
             // Escuchar cuando se encuentre un dispositivo
             const deviceFoundHandler = NixSensor.addListener('deviceFound', (device: any) => {
+                console.log(`¡Dispositivo Nix encontrado!: ${device.name} [${device.id}]`);
+
+                // Detener el listener de búsqueda de inmediato para evitar múltiples intentos de conexión
+                deviceFoundHandler.remove();
+
                 this._deviceInfo.id = device.id;
                 this._deviceInfo.name = device.name;
                 this._deviceInfo.type = this.detectDeviceType(device.name);
@@ -195,10 +204,17 @@ export class NixBluetoothService {
                 // Conectar automáticamente al primero por ahora (o implementar selector en UI)
                 this.emit({ type: 'connecting', data: this._deviceInfo });
 
-                NixSensor.connect({ id: device.id }).then((connectedInfo) => {
-                    this._deviceInfo.connected = true;
-                    this.emit({ type: 'connected', data: this._deviceInfo });
-                    resolve(this._deviceInfo);
+                NixSensor.connect({ id: device.id }).then(() => {
+                    // Esperar al evento de conexión real para mayor seguridad
+                    const connectedHandler = NixSensor.addListener('deviceConnected', (data: any) => {
+                        this._deviceInfo.connected = true;
+                        if (data.batteryLevel !== undefined) {
+                            this._deviceInfo.batteryLevel = data.batteryLevel;
+                        }
+                        this.emit({ type: 'connected', data: this._deviceInfo });
+                        connectedHandler.remove();
+                        resolve(this._deviceInfo);
+                    });
                 }).catch(err => {
                     this.emit({ type: 'error', error: err.message });
                     reject(err);

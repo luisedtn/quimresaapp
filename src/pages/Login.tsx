@@ -1,7 +1,4 @@
 import React, { useState } from 'react';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { auth, db } from '../firebase';
-import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
 import { motion } from 'motion/react';
 import { Mail, Lock, LogIn, ChevronRight } from 'lucide-react';
 import { API_BASE_URL } from '../config';

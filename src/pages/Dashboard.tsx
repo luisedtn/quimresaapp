@@ -15,7 +15,6 @@ import {
   ChevronRight,
   Menu
 } from 'lucide-react';
-import { auth, db } from '../firebase';
 import Sidebar from '../components/Sidebar';
 
 interface DashboardProps {
@@ -109,7 +108,6 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
       {/* Footer Status Bar */}
       <footer className="mt-auto flex justify-between items-center text-[10px] text-slate-600 border-t border-slate-800 p-6 uppercase tracking-tighter bg-slate-900/20">
         <div className="flex gap-4">
-          <span>Instancia DB: {db.app.options.projectId}</span>
           <span>Estado: Protegido</span>
         </div>
         <div>

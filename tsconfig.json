@@ -21,6 +21,12 @@
       ]
     },
     "allowImportingTsExtensions": true,
-    "noEmit": true
-  }
+    "noEmit": true,
+    "esModuleInterop": true,
+    "strict": true
+  },
+  "include": [
+    "src",
+    "server"
+  ]
 }

@@ -74,6 +74,8 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
                             }
                         }
                     }
+                } else if (res.status === 401 || res.status === 403) {
+                    onLogout();
                 }
             } catch (err) {
                 console.error(err);
@@ -175,7 +177,10 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
                 },
                 body: JSON.stringify(formData)
             });
-            if (!res.ok) throw new Error('Error al actualizar registro');
+            if (!res.ok) {
+                if (res.status === 401 || res.status === 403) onLogout();
+                throw new Error('Error al actualizar registro');
+            }
             setMessage({ type: 'success', text: '¡Datos de la empresa actualizados correctamente!' });
         } catch (err: any) {
             setMessage({ type: 'error', text: err.message });
