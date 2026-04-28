@@ -1,10 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, handleFirestoreError, OperationType } from '../firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { ArrowLeft, Search, Beaker } from 'lucide-react';
-
+import { ArrowLeft, Search, Beaker, Calendar, User, Tag, ChevronUp } from 'lucide-react';
 import { motion } from 'motion/react';
+import { API_BASE_URL } from '../config';
 
 interface FormulasProps {
   email: string | null | undefined;
@@ -15,59 +13,106 @@ export default function Formulas({ email }: FormulasProps) {
   const [formulas, setFormulas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<'FECHA' | 'NOMBREFORMULA'>('FECHA');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const observer = useRef<IntersectionObserver | null>(null);
+  const lastFormulaElementRef = useCallback((node: any) => {
+    if (loading || loadingMore) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage(prevPage => prevPage + 1);
+      }
+    });
+    if (node) observer.current.observe(node);
+  }, [loading, loadingMore, hasMore]);
 
   useEffect(() => {
-    const fetchFormulas = async () => {
-      // For prototype: show mock formulas if no email or no results
-      const mockFormulas = [
-        { 
-          id: '1', 
-          nombreColor: 'Andean Studio Gold', 
-          codigo: 'QR-7728-SG', 
-          componentes: [
-            { base: 'TITANIUM WHITE PW6', cantidad: 68.20 },
-            { base: 'ORGANIC YELLOW PY83', cantidad: 24.15 },
-            { base: 'TRANS. OXIDE RED PR101', cantidad: 7.65 }
-          ]
-        },
-        { 
-          id: '2', 
-          nombreColor: 'Industrial Slate Grey', 
-          codigo: 'QR-9901-SL', 
-          componentes: [
-            { base: 'CARBON BLACK PBK7', cantidad: 12.40 },
-            { base: 'TITANIUM WHITE PW6', cantidad: 85.10 },
-            { base: 'PHTHALO BLUE PB15', cantidad: 2.50 }
-          ]
-        }
-      ];
+    // Reset state when filters change
+    setFormulas([]);
+    setPage(1);
+    setHasMore(true);
+  }, [debouncedSearchTerm, sortBy]);
 
-      if (!email) {
-        setFormulas(mockFormulas);
-        setLoading(false);
-        return;
-      }
-      
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    const fetchFormulas = async () => {
+      const token = localStorage.getItem('token');
+      if (page === 1) setLoading(true);
+      else setLoadingMore(true);
+
       try {
-        const q = query(collection(db, 'formulas'), where('clienteEmail', '==', email));
-        const querySnapshot = await getDocs(q);
-        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setFormulas(data.length > 0 ? data : mockFormulas);
-      } catch (error) {
-        console.error('Firestore Error (Formulas):', error);
-        setFormulas(mockFormulas); // Graceful fallback
+        const response = await fetch(
+          `${API_BASE_URL}/api/formulas?page=${page}&limit=25&q=${encodeURIComponent(debouncedSearchTerm)}&sortBy=${sortBy}`,
+          {
+            headers: { 'Authorization': `Bearer ${token}` },
+            signal: abortController.signal
+          }
+        );
+
+        if (!response.ok) throw new Error('Error al obtener fórmulas');
+
+        const data = await response.json();
+
+        if (page === 1) {
+          setFormulas(data);
+        } else {
+          setFormulas(prev => [...prev, ...data]);
+        }
+
+        setHasMore(data.length === 25);
+      } catch (error: any) {
+        if (error.name === 'AbortError') return;
+        console.error('Fetch Error (Formulas):', error);
       } finally {
-        setLoading(false);
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+          setLoadingMore(false);
+        }
       }
     };
 
     fetchFormulas();
-  }, [email]);
+    return () => abortController.abort();
+  }, [page, debouncedSearchTerm, sortBy]);
 
-  const filteredFormulas = formulas.filter(f => 
-    f.nombreColor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    f.codigo.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Helper to format date string
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col">
@@ -75,82 +120,166 @@ export default function Formulas({ email }: FormulasProps) {
         <button onClick={() => navigate(-1)} className="p-2 text-slate-400 hover:text-white transition-colors">
           <ArrowLeft className="h-6 w-6" />
         </button>
-        <h1 className="text-lg font-semibold uppercase tracking-tight">Fórmulas de Color</h1>
+        <h1 className="text-lg font-semibold uppercase tracking-tight">Fórmulas Personales</h1>
         <div className="w-10"></div>
       </header>
 
-      <main className="pt-24 px-4 max-w-lg mx-auto w-full flex-grow">
+      <main className="pt-24 px-4 max-w-2xl mx-auto w-full flex-grow">
         {/* Search Bar */}
-        <div className="relative mb-8">
+        <div className="relative mb-4">
           <Search className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-slate-500" />
           <input
             type="text"
-            placeholder="Buscar por nombre o código de lote..."
+            placeholder="Buscar por nombre, lote, cliente o código..."
             className="w-full rounded-xl bg-slate-900 border border-slate-800 py-3 pr-4 pl-11 text-sm text-white focus:ring-2 focus:ring-[#004A99]/50 focus:border-[#004A99] outline-none transition-all placeholder:text-slate-600"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
+        {/* Sorting Toggles */}
+        <div className="flex gap-2 mb-8 items-center">
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mr-2">Ordenar por:</span>
+          <button
+            onClick={() => setSortBy('FECHA')}
+            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${sortBy === 'FECHA'
+              ? 'bg-[#c07204] border-[#c07204] text-white'
+              : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-600'
+              }`}
+          >
+            Más Reciente
+          </button>
+          <button
+            onClick={() => setSortBy('NOMBREFORMULA')}
+            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${sortBy === 'NOMBREFORMULA'
+              ? 'bg-[#c07204] border-[#c07204] text-white'
+              : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-600'
+              }`}
+          >
+            Nombre
+          </button>
+        </div>
+
         {loading ? (
           <div className="flex justify-center py-20">
-             <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#004A99] border-t-transparent"></div>
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#c07204] border-t-transparent"></div>
           </div>
-        ) : filteredFormulas.length > 0 ? (
-          <div className="grid gap-6">
-            {filteredFormulas.map((formula) => (
-              <motion.div 
-                key={formula.id} 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="elegant-card p-6 transition-all hover:border-slate-700 bg-slate-900/40 relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 p-4">
-                  <Beaker className="h-5 w-5 text-slate-800" />
-                </div>
-                
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h3 className="text-lg font-bold text-white tracking-tight">{formula.nombreColor}</h3>
-                    <p className="text-[10px] text-blue-400 font-bold uppercase tracking-[0.2em] mt-1">{formula.codigo}</p>
+        ) : formulas.length > 0 ? (
+          <>
+            <div className="grid gap-4">
+              {formulas.map((formula, index) => (
+                <motion.div
+                  key={`${formula.ID}-${index}`}
+                  ref={formulas.length === index + 1 ? lastFormulaElementRef : null}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="elegant-card p-0 transition-all hover:border-slate-700 bg-slate-900/40 relative overflow-hidden flex"
+                >
+                  {/* Color Square on the Left */}
+                  <div
+                    className="w-24 min-w-[6rem] border-r border-slate-800 shadow-inner"
+                    style={{
+                      backgroundColor: formula.L && formula.A && formula.B
+                        ? `lab(${formula.L} ${formula.A} ${formula.B})`
+                        : '#1e293b'
+                    }}
+                  >
+                    <div className="h-full w-full flex flex-col items-center justify-end p-2 bg-gradient-to-t from-black/40 to-transparent">
+                      <span className="text-[9px] font-bold text-white uppercase tracking-tighter">Vista Color</span>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="space-y-3">
-                   <div className="flex items-center gap-2 mb-2">
-                      <div className="w-1 h-3 bg-blue-500 rounded-full"></div>
-                      <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Protocolo de Fórmula (Estándar 1kg)</p>
-                   </div>
-                   
-                   <div className="bg-slate-950/50 rounded-lg p-2 divide-y divide-slate-900">
-                     {formula.componentes?.map((comp: any, idx: number) => (
-                       <div key={idx} className="flex justify-between items-center text-xs py-2 px-2 hover:bg-slate-800/30 transition-colors">
-                         <span className="text-slate-400 italic font-medium">{comp.base}</span>
-                         <span className="font-mono text-emerald-400 font-bold">{comp.cantidad}g</span>
-                       </div>
-                     ))}
-                   </div>
-                </div>
 
-                <div className="mt-6 flex justify-between items-center">
-                   <p className="text-[10px] text-slate-600 uppercase tracking-tighter">Última calibración: hace 24h</p>
-                   <button className="text-[10px] font-bold text-blue-400 uppercase tracking-widest hover:text-blue-300 transition-colors">
-                     Descargar SDS
-                   </button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                  {/* Content */}
+                  <div className="flex-grow p-4 md:p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Tag className="h-3 w-3 text-[#c07204]" />
+                          <span className="text-[10px] font-bold text-[#c07204] uppercase tracking-widest">{formula.CODIGO || 'SIN CÓDIGO'}</span>
+                          {formula.LOTE && (
+                            <>
+                              <span className="text-slate-700">•</span>
+                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">LOTE: {formula.LOTE}</span>
+                            </>
+                          )}
+                        </div>
+                        <h3 className="text-lg font-bold text-white tracking-tight leading-tight">{formula.NOMBREFORMULA}</h3>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <User className="h-3 w-3 text-slate-500" />
+                          <p className="text-xs text-slate-400 font-medium">{formula.NOMBRECLI}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="flex items-center gap-1 text-slate-500 justify-end mb-1">
+                          <Calendar className="h-3 w-3" />
+                          <span className="text-[10px] font-medium">{formatDate(formula.FECHA)}</span>
+                        </div>
+                        <div className="text-[10px] font-bold text-slate-600 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+                          BASE: {formula.CBASE || 'N/A'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* LAB Values */}
+                    <div className="grid grid-cols-3 gap-2 mt-4">
+                      <div className="bg-slate-950/50 rounded-lg p-2 border border-slate-800/50 text-center">
+                        <p className="text-[9px] text-slate-500 uppercase font-bold tracking-widest mb-1">L*</p>
+                        <p className="font-mono text-sm text-white font-bold">{parseFloat(formula.L || '0').toFixed(2)}</p>
+                      </div>
+                      <div className="bg-slate-950/50 rounded-lg p-2 border border-slate-800/50 text-center">
+                        <p className="text-[9px] text-slate-500 uppercase font-bold tracking-widest mb-1">a*</p>
+                        <p className="font-mono text-sm text-emerald-400 font-bold">{parseFloat(formula.A || '0').toFixed(2)}</p>
+                      </div>
+                      <div className="bg-slate-950/50 rounded-lg p-2 border border-slate-800/50 text-center">
+                        <p className="text-[9px] text-slate-500 uppercase font-bold tracking-widest mb-1">b*</p>
+                        <p className="font-mono text-sm text-amber-400 font-bold">{parseFloat(formula.B || '0').toFixed(2)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            {loadingMore && (
+              <div className="flex justify-center py-8">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#c07204] border-t-transparent"></div>
+              </div>
+            )}
+            {!hasMore && formulas.length > 0 && (
+              <p className="text-center py-8 text-[10px] text-slate-600 uppercase tracking-widest">Fin de los resultados</p>
+            )}
+          </>
         ) : (
-          <div className="text-center py-20 text-slate-600">
-             <p className="text-sm italic">No hay registros que coincidan con su búsqueda.</p>
+          <div className="text-center py-20 text-slate-600 bg-slate-900/20 rounded-2xl border border-dashed border-slate-800">
+            <Beaker className="h-10 w-10 mx-auto mb-4 text-slate-800" />
+            <p className="text-sm italic">No se encontraron fórmulas personales.</p>
           </div>
         )}
       </main>
 
-      <footer className="p-6 text-center">
-        <p className="text-[10px] text-slate-700 uppercase tracking-widest">Repositorio Digital de Pigmentos Quimresa S.A.</p>
+      <footer className="p-6 text-center mt-auto">
+        <p className="text-[10px] text-slate-700 uppercase tracking-widest">Base de Datos de Colorimetría Personalizada • Quimresa S.A.</p>
       </footer>
+
+      {/* Draggable FAB Scroll to Top */}
+      {showScrollTop && (
+        <motion.div
+          drag
+          dragMomentum={false}
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9, cursor: 'grabbing' }}
+          className="fixed bottom-8 right-8 z-50 cursor-grab active:cursor-grabbing"
+          style={{ touchAction: 'none' }}
+        >
+          <button
+            onClick={scrollToTop}
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-[#c07204] text-white shadow-lg shadow-[#c07204]/30 hover:bg-[#a16004] transition-colors border-2 border-white/10"
+          >
+            <ChevronUp className="h-7 w-7" />
+          </button>
+        </motion.div>
+      )}
     </div>
   );
 }

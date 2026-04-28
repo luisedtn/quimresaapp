@@ -258,6 +258,56 @@ app.post('/api/mediciones', authenticateToken, async (req: Request, res: Respons
     }
 });
 
+// Obtener fórmulas para el cliente logueado con paginación, búsqueda y ordenamiento
+app.get('/api/formulas', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { idcliente } = (req as any).user;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 25;
+        const search = (req.query.q as string) || '';
+        const sortBy = (req.query.sortBy as string) || 'FECHA';
+        const skip = (page - 1) * limit;
+
+        const where: any = {
+            IDCLIENTE: idcliente
+        };
+
+        if (search) {
+            where.OR = [
+                { NOMBREFORMULA: { contains: search, mode: 'insensitive' } },
+                { CODIGO: { contains: search, mode: 'insensitive' } },
+                { NOMBRECLI: { contains: search, mode: 'insensitive' } },
+                { LOTE: { contains: search, mode: 'insensitive' } },
+            ];
+        }
+
+        const formulas = await prisma.formPersonales.findMany({
+            where,
+            select: {
+                ID: true,
+                CODIGO: true,
+                NOMBRECLI: true,
+                NOMBREFORMULA: true,
+                CBASE: true,
+                L: true,
+                A: true,
+                B: true,
+                FECHA: true,
+                LOTE: true
+            },
+            orderBy: sortBy === 'NOMBREFORMULA'
+                ? [{ NOMBREFORMULA: 'asc' }]
+                : [{ FECHA: 'desc' }, { NOMBREFORMULA: 'asc' }],
+            skip: skip,
+            take: limit
+        });
+        res.json(formulas);
+    } catch (error) {
+        console.error('API GET FORMULAS ERROR:', error);
+        res.status(500).json({ error: 'Error al obtener fórmulas' });
+    }
+});
+
 // Serve static files from the React app in production
 const distPath = path.join(__dirname, '../dist');
 app.use(express.static(distPath));
