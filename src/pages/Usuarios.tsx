@@ -5,6 +5,7 @@ import { ArrowLeft, UserPlus, Trash2, Edit2, Shield, User, X, Check } from 'luci
 import { API_BASE_URL } from '../config';
 
 import Sidebar from '../components/Sidebar';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
 interface Usuario {
     id: number;
@@ -85,14 +86,28 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
         setIsModalOpen(true);
     };
 
-    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setFormData(prev => ({ ...prev, photo: reader.result as string }));
-            };
-            reader.readAsDataURL(file);
+    const handlePhotoChange = async () => {
+        try {
+            const image = await Camera.getPhoto({
+                quality: 80,
+                allowEditing: true,
+                resultType: CameraResultType.DataUrl,
+                source: CameraSource.Prompt,
+                promptLabelHeader: 'Foto de Perfil',
+                promptLabelCancel: 'Cancelar',
+                promptLabelPhoto: 'Elegir de la Galería',
+                promptLabelPicture: 'Tomar Foto'
+            });
+
+            if (image.dataUrl) {
+                if (image.dataUrl.length > 5 * 1024 * 1024 * 1.37) {
+                    setError('La imagen es muy pesada. Máximo ~5MB');
+                    return;
+                }
+                setFormData(prev => ({ ...prev, photo: image.dataUrl as string }));
+            }
+        } catch (error) {
+            console.log('User cancelled camera/gallery or error: ', error);
         }
     };
 
@@ -262,7 +277,7 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
                                 <div className="flex justify-center mb-6">
                                     <div
                                         className="h-24 w-24 bg-slate-800 rounded-full flex flex-col items-center justify-center text-slate-400 border border-slate-700 overflow-hidden relative cursor-pointer"
-                                        onClick={(e) => { e.stopPropagation(); document.getElementById('photoInput')?.click() }}
+                                        onClick={(e) => { e.stopPropagation(); handlePhotoChange() }}
                                     >
                                         {formData.photo ? (
                                             <img src={formData.photo} alt="Preview" className="w-full h-full object-cover" />
@@ -276,7 +291,6 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
                                             <span className="text-xs text-white font-bold">Cambiar</span>
                                         </div>
                                     </div>
-                                    <input id="photoInput" type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
                                 </div>
 
                                 <div>

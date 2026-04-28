@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { ArrowLeft, User, Camera, UploadCloud, Save, Building2, MapPin, Phone } from 'lucide-react';
+import { ArrowLeft, User, Camera as CameraIcon, UploadCloud, Save, Building2, MapPin, Phone } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
 import Sidebar from '../components/Sidebar';
 import { Country, State, City } from 'country-state-city';
 import { parsePhoneNumberFromString, CountryCode } from 'libphonenumber-js';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
 interface Cliente {
     NOMBRE: string;
@@ -112,22 +113,30 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
         }
     };
 
-    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+    const handleLogoUpload = async () => {
+        try {
+            const image = await Camera.getPhoto({
+                quality: 80,
+                allowEditing: true,
+                resultType: CameraResultType.DataUrl,
+                source: CameraSource.Prompt,
+                promptLabelHeader: 'Foto del Logo',
+                promptLabelCancel: 'Cancelar',
+                promptLabelPhoto: 'Elegir de la Galería',
+                promptLabelPicture: 'Tomar Foto'
+            });
 
-        if (file.size > 5 * 1024 * 1024) {
-            setMessage({ type: 'error', text: 'El logo es muy pesado. Máximo 5MB' });
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            if (ev.target?.result) {
-                setFormData({ ...formData, LOGO: ev.target.result as string });
+            if (image.dataUrl) {
+                // Check aproximate size to avoid big payloads > 5MB
+                if (image.dataUrl.length > 5 * 1024 * 1024 * 1.37) {
+                    setMessage({ type: 'error', text: 'La imagen es muy pesada. Máximo ~5MB' });
+                    return;
+                }
+                setFormData({ ...formData, LOGO: image.dataUrl });
             }
-        };
-        reader.readAsDataURL(file);
+        } catch (error) {
+            console.log('User cancelled camera/gallery or an error occurred:', error);
+        }
     };
 
     const validatePhones = () => {
@@ -236,10 +245,9 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
                                         </div>
                                     )}
                                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <label className="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full transition-colors flex items-center gap-2">
-                                            <Camera className="w-5 h-5" />
-                                            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleLogoUpload} />
-                                        </label>
+                                        <button type="button" onClick={handleLogoUpload} className="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full transition-colors flex items-center gap-2">
+                                            <CameraIcon className="w-5 h-5" />
+                                        </button>
                                     </div>
                                 </div>
                                 <p className="text-[10px] text-slate-500 text-center uppercase">Click para cambiar Logo<br />ó usar la cámara del teléfono</p>

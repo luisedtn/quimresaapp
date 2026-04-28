@@ -151,8 +151,8 @@ public class NixSensorPlugin extends Plugin {
                     ret.put("connected", true);
 
                     // Enviar nivel de batería inicial
-                    int batteryLevel = sender.getBatteryLevel();
-                    ret.put("batteryLevel", batteryLevel);
+                    Integer batteryLevel = sender.getBatteryLevel();
+                    ret.put("batteryLevel", batteryLevel != null ? batteryLevel : -1);
 
                     notifyListeners("deviceConnected", ret);
                 }
