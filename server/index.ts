@@ -150,6 +150,7 @@ app.post('/api/usuarios', authenticateToken, async (req: Request, res: Response)
         const { pass: _, ...userWithoutPass } = nuevoUsuario;
         res.json(userWithoutPass);
     } catch (error) {
+        console.error('API POST USUARIOS ERROR:', error);
         res.status(500).json({ error: 'Error al crear usuario' });
     }
 });
@@ -178,6 +179,7 @@ app.put('/api/usuarios/:id', authenticateToken, async (req: Request, res: Respon
         const { pass: _, ...userWithoutPass } = actualizado;
         res.json(userWithoutPass);
     } catch (error) {
+        console.error('API PUT USUARIOS ERROR:', error);
         res.status(500).json({ error: 'Error al actualizar usuario' });
     }
 });
@@ -346,5 +348,5 @@ app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
 
-// Restart tsx
-
+// Restart dev server
+// Trigger backend refresh

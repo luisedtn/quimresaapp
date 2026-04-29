@@ -89,7 +89,8 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
     const handlePhotoChange = async () => {
         try {
             const image = await Camera.getPhoto({
-                quality: 80,
+                quality: 60,
+                width: 800,
                 allowEditing: true,
                 resultType: CameraResultType.DataUrl,
                 source: CameraSource.Prompt,
