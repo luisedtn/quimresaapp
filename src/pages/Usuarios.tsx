@@ -88,11 +88,12 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
 
     const handlePhotoChange = async () => {
         try {
+            console.log("Abriendo cámara...");
             const image = await Camera.getPhoto({
                 quality: 60,
                 width: 800,
                 allowEditing: true,
-                resultType: CameraResultType.DataUrl,
+                resultType: CameraResultType.Base64,
                 source: CameraSource.Prompt,
                 promptLabelHeader: 'Foto de Perfil',
                 promptLabelCancel: 'Cancelar',
@@ -100,20 +101,31 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
                 promptLabelPicture: 'Tomar Foto'
             });
 
-            if (image.dataUrl) {
-                if (image.dataUrl.length > 5 * 1024 * 1024 * 1.37) {
+            if (image.base64String) {
+                const finalBase64 = `data:${image.format ? `image/${image.format}` : 'image/jpeg'};base64,${image.base64String}`;
+                console.log("Foto capturada con éxito, tamaño base64 aprox:", finalBase64.length, "bytes");
+
+                if (finalBase64.length > 5 * 1024 * 1024 * 1.37) {
                     setError('La imagen es muy pesada. Máximo ~5MB');
                     return;
                 }
-                setFormData(prev => ({ ...prev, photo: image.dataUrl as string }));
+                setFormData(prev => ({ ...prev, photo: finalBase64 }));
+            } else {
+                console.log("Error: Capacitor devolvió un objeto de imagen vacío", image);
             }
         } catch (error) {
-            console.log('User cancelled camera/gallery or error: ', error);
+            console.log('Cancelado o Error al tomar la foto:', error);
         }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        console.log("Iniciando guardado de formulario...");
+        console.log("Datos que se enviarán:", {
+            ...formData,
+            photo: formData.photo ? `[Base64_Presente_Longitud:${formData.photo.length}]` : '[SIN_FOTO]'
+        });
+
         if (editingUser && !confirm('¿Estás seguro de guardar estas modificaciones?')) return;
         try {
             const token = localStorage.getItem('token');
@@ -121,7 +133,7 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
                 ? `${API_BASE_URL}/api/usuarios/${editingUser.id}`
                 : `${API_BASE_URL}/api/usuarios`;
 
-
+            console.log("Haciendo llamada Fetch hacia:", url);
             const res = await fetch(url, {
                 method: editingUser ? 'PUT' : 'POST',
                 headers: {
@@ -132,14 +144,18 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
             });
 
             if (!res.ok) {
+                console.log("Respuesta del backend con error, código:", res.status);
                 const d = await res.json();
+                console.log("Detalles del servidor:", d);
                 if (res.status === 401 || res.status === 403) onLogout();
                 throw new Error(d.error || 'Error al persistir usuario');
             }
 
+            console.log("¡Usuario guardado exitosamente!");
             setIsModalOpen(false);
             fetchUsuarios();
         } catch (err: any) {
+            console.error("Excepción detectada al hacer fetch:", err);
             setError(err.message);
         }
     };
