@@ -128,6 +128,7 @@ app.post('/api/usuarios', authenticateToken, async (req: Request, res: Response)
     try {
         const { idcliente } = (req as any).user;
         const { name, pass, photo, tiempo, typeuser, permisos, autorizado } = req.body;
+        console.log(`[BACKEND] Intentando crear usuario: ${name}. Foto recibida: ${photo ? photo.length : 0} bytes`);
 
         let passToSave = pass;
         if (pass && pass.trim() !== '') {
@@ -175,6 +176,7 @@ app.put('/api/usuarios/:id', authenticateToken, async (req: Request, res: Respon
             where: { id: Number(id) },
             data: dataUpdate
         });
+        console.log(`[BACKEND] Usuario ${id} actualizado con éxito. Foto guardada: ${actualizado.photo ? actualizado.photo.length : 0} bytes`);
 
         const { pass: _, ...userWithoutPass } = actualizado;
         res.json(userWithoutPass);
