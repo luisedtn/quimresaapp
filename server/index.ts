@@ -186,7 +186,11 @@ app.post('/api/mediciones', authenticateToken, async (req: Request, res: Respons
     }
 });
 
-app.post('/api/chat', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+app.all('/api/chat', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    if (req.method === 'GET') {
+        console.warn(`[WARNING] Recibida petición GET en /api/chat desde ${req.ip}. Se esperaba POST. Esto sugiere una redirección Nginx/SSL.`);
+        return res.status(405).json({ error: 'Se requiere método POST para el chat. Si ves esto, revisa tus redirecciones Nginx/SSL.' });
+    }
     try {
         const { message, history } = req.body;
         if (!process.env.GEMINI_API_KEY) {
