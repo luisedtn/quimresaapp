@@ -120,6 +120,12 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!/^[a-zA-Z0-9]{8,}$/.test(formData.name)) {
+            setError('El nombre de usuario debe tener al menos 8 caracteres y solo letras y números.');
+            return;
+        }
+
         console.log("Iniciando guardado de formulario...");
         console.log("Datos que se enviarán:", {
             ...formData,
@@ -311,9 +317,12 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
                                 </div>
 
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Email / Nombre</label>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Nombre de Usuario</label>
                                     <input
                                         type="text" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                        minLength={8}
+                                        pattern="[a-zA-Z0-9]{8,}"
+                                        title="Solo se permiten letras y números. Mínimo 8 caracteres."
                                         className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none"
                                     />
                                 </div>

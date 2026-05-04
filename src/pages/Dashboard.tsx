@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -20,6 +21,8 @@ import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import Sidebar from '../components/Sidebar';
 
+import IconoAjustes from '../assets/iconSpectro.svg';
+
 interface DashboardProps {
   userData: any;
   onLogout: () => void;
@@ -29,6 +32,28 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchLogo = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const res = await fetch(`${API_BASE_URL}/api/cliente`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.LOGO) {
+            setLogoUrl(data.LOGO);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching logo:", err);
+      }
+    };
+    fetchLogo();
+  }, []);
 
   const handleExitApp = () => {
     if (Capacitor.isNativePlatform()) {
@@ -40,14 +65,14 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
 
   const menuItems = [
     { id: 'formulas', icon: PaintBucket, title: 'Fórmulas de Color', desc: 'Ver tus formulaciones de color específicas.', path: '/formulas' },
-    { id: 'colorimetro', icon: Scan, title: 'Colorímetro Bluetooth', desc: 'Conecta tu Nix para escanear y capturar colores.', path: '/colorimetro' },
-    { id: 'scan', icon: Scan, title: 'Escaneo único', desc: 'Obtén datos espectrales, RGB, HEX, CIELAB y más.', path: '/scan' },
-    { id: 'match', icon: Layers, title: 'Búsqueda de color', desc: 'Encuentra la coincidencia más cercana en bibliotecas de pintura.' },
     { id: 'qc', icon: Layers, title: 'Control de calidad', desc: 'Compara muestras contra un estándar e identifica si pasan o fallan.', path: '/quality-control' },
     { id: 'qc-history', icon: History, title: 'Historial de control', desc: 'Tu registro de sesiones de control de calidad.' },
+    // { id: 'colorimetro', icon: Scan, title: 'Colorímetro Bluetooth', desc: 'Conecta tu Nix para escanear y capturar colores.', path: '/colorimetro' },
+    { id: 'scan', icon: Scan, title: 'Escaneo único', desc: 'Obtén datos espectrales, RGB, HEX, CIELAB y más.', path: '/scan' },
+    { id: 'match', icon: Layers, title: 'Búsqueda de color', desc: 'Encuentra la coincidencia más cercana en bibliotecas de pintura.' },
     { id: 'libraries', icon: Library, title: 'Gestionar bibliotecas', desc: 'Crea, adquiere y explora bibliotecas de color.' },
     { id: 'favorites', icon: Heart, title: 'Colores favoritos', desc: 'Accede, descarga y edita tus colores favoritos.' },
-    { id: 'cloud', icon: Cloud, title: 'Panel en la nube', desc: 'Comparte colores, ve analíticas y gestiona usuarios.' },
+    // { id: 'cloud', icon: Cloud, title: 'Panel en la nube', desc: 'Comparte colores, ve analíticas y gestiona usuarios.' },
   ];
 
   return (
@@ -113,12 +138,14 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
           >
             <Menu className="h-6 w-6" />
           </button>
-          <div className="w-10 h-10 bg-[#004A99] rounded flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-blue-900/20">Q</div>
+          <div className="w-10 h-10 bg-[#004A99] overflow-hidden rounded flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-blue-900/20">
+            {logoUrl ? <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" /> : 'Q'}
+          </div>
           <div>
-            <h1 className="text-lg font-semibold tracking-tight text-white uppercase leading-none">Quimresa Color Lab</h1>
+            <h1 className="text-lg font-semibold tracking-tight text-white uppercase leading-none">{userData?.empresa || 'Quimresa'}</h1>
             <div className="flex items-center gap-2 mt-1">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              <p className="text-[10px] text-slate-400">Cliente: <span className="text-slate-200 uppercase tracking-wider">{userData?.empresa || 'Industrial Polymers S.A.'}</span></p>
+              <p className="text-[10px] text-slate-400"><span className="text-slate-200 uppercase tracking-wider">Quimresa Color Lab</span></p>
             </div>
           </div>
         </div>
@@ -127,6 +154,13 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
             <p className="text-xs font-medium text-slate-300">{userData?.email || 'usuario@quimresa.com'}</p>
             <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest">Acceso Autorizado</p>
           </div>
+          <button
+            onClick={() => navigate('/colorimetro')}
+            className="p-2 text-slate-500 hover:text-blue-400 transition-colors bg-slate-800/30 rounded-lg"
+            title="Colorímetro y Escáner"
+          >
+            <img src={IconoAjustes} alt="Icono" className="h-5 w-5" />
+          </button>
           <button
             onClick={() => setShowExitConfirm(true)}
             className="p-2 text-slate-500 hover:text-red-400 transition-colors bg-slate-800/30 rounded-lg"
@@ -172,7 +206,7 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
           <span>Estado: Protegido</span>
         </div>
         <div>
-          Quimresa Digital Color System v4.0.12 © 2024
+          Quimresa Digital Color System v0.0.1 © 2026
         </div>
       </footer>
     </div>

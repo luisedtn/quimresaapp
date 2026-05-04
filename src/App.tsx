@@ -8,6 +8,7 @@ import Formulas from './pages/Formulas';
 import Usuarios from './pages/Usuarios';
 import Cuenta from './pages/Cuenta';
 import Colorimetro from './pages/Colorimetro';
+import ColorAiChat from './components/ColorAiChat';
 
 export default function App() {
   const [userData, setUserData] = useState<any>(() => {
@@ -69,6 +70,7 @@ export default function App() {
           element={isAuthenticated ? <Colorimetro userData={userData} onLogout={handleLogout} /> : <Navigate to="/login" />}
         />
       </Routes>
+      {isAuthenticated && <ColorAiChat />}
     </BrowserRouter>
   );
 }

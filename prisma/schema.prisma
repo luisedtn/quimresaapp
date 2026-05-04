@@ -40,6 +40,8 @@ model Cliente {
   DESCUENTO  Float?    @db.Real
   PORCENTAJE Decimal?  @db.Decimal
   ACTIVO     Decimal?  @db.Decimal
+  LATITUD    String?
+  LONGITUD   String?
   autorizado Boolean?  @default(true)
   usuarios   Usuario[]
   formulas   FormPersonales[]

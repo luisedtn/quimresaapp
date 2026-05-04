@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, ChevronRight, User, Settings, ShoppingBag, Wrench, Mail, Bug, FileText, Shield, Lock, LogOut, Users, BluetoothConnected, BluetoothOff, Power } from 'lucide-react';
@@ -45,26 +45,18 @@ export default function Sidebar({ isOpen, onClose, onLogout, userData }: Sidebar
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto py-6">
+            <div className="flex-1 overflow-y-auto py-6 space-y-2">
               {/* My Account */}
-              <section className="mb-8">
-                <div className="px-6 mb-2">
-                  <h3 className="text-lg font-bold text-white tracking-tight">Mi cuenta</h3>
-                  <div className="h-[1px] bg-slate-800 w-full mt-2"></div>
-                </div>
+              <AccordionSection title="Mi cuenta" defaultOpen={false}>
                 <div className="space-y-1">
                   <SidebarItem icon={User} label="Información de la cuenta" onClick={() => navigate('/cuenta')} />
                   <SidebarItem icon={Users} label="Usuarios de mi empresa" onClick={() => navigate('/usuarios')} />
                   <SidebarItem icon={Settings} label="Ajustes globales de la app" />
                 </div>
-              </section>
+              </AccordionSection>
 
               {/* Devices */}
-              <section className="mb-8">
-                <div className="px-6 mb-2">
-                  <h3 className="text-lg font-bold text-white tracking-tight">Dispositivos</h3>
-                  <div className="h-[1px] bg-slate-800 w-full mt-2"></div>
-                </div>
+              <AccordionSection title="Dispositivos" defaultOpen={false}>
                 <div className="px-6 py-3">
                   {isConnected && deviceInfo ? (
                     <div className="flex items-center justify-between group bg-slate-900/50 p-2 rounded-xl border border-slate-800/50">
@@ -102,37 +94,29 @@ export default function Sidebar({ isOpen, onClose, onLogout, userData }: Sidebar
                     </div>
                   )}
                 </div>
-              </section>
+              </AccordionSection>
 
               {/* Nix Resources */}
-              <section className="mb-8">
-                <div className="px-6 mb-2">
-                  <h3 className="text-lg font-bold text-white tracking-tight">Quimresa</h3>
-                  <div className="h-[1px] bg-slate-800 w-full mt-2"></div>
-                </div>
-                <div className="space-y-1">
+              <AccordionSection title="Quimresa" defaultOpen={false}>
+                <div className="space-y-1 mt-2">
                   {/* <SidebarItem icon={ShoppingBag} label="Comprar dispositivos Nix" showChevron /> */}
                   <SidebarItem icon={Wrench} label="Resolución de problemas" showChevron />
                   <SidebarItem icon={Mail} label="Contáctanos" showChevron />
                   <SidebarItem icon={Bug} label="Reportar un error" showChevron />
                 </div>
-              </section>
+              </AccordionSection>
 
               {/* Resources */}
-              <section className="mb-8">
-                <div className="px-6 mb-2">
-                  <h3 className="text-lg font-bold text-white tracking-tight">Recursos</h3>
-                  <div className="h-[1px] bg-slate-800 w-full mt-2"></div>
-                </div>
-                <div className="space-y-1">
+              <AccordionSection title="Recursos" defaultOpen={false}>
+                <div className="space-y-1 mt-2">
                   <SidebarItem icon={FileText} label="Información regulatoria" />
                   <SidebarItem icon={Shield} label="Descargos de responsabilidad" />
                   <SidebarItem icon={Lock} label="Política de privacidad" showChevron />
                 </div>
-              </section>
+              </AccordionSection>
 
               {/* Account Actions */}
-              <section className="mb-8">
+              <section className="mt-8 mb-4">
                 <div className="px-6 mb-2">
                   <h3 className="text-lg font-bold text-white tracking-tight">Sesión</h3>
                   <div className="h-[1px] bg-slate-800 w-full mt-2"></div>
@@ -160,11 +144,60 @@ export default function Sidebar({ isOpen, onClose, onLogout, userData }: Sidebar
   );
 }
 
+function AccordionSection({
+  title,
+  children,
+  defaultOpen = false
+}: {
+  title: string,
+  children: React.ReactNode,
+  defaultOpen?: boolean
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <section className="mb-2">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full text-left px-6 py-2 flex items-center justify-between group focus:outline-none"
+      >
+        <h3 className="text-lg font-bold text-white tracking-tight group-hover:text-blue-400 transition-colors">{title}</h3>
+        <motion.div
+          initial={false}
+          animate={{ rotate: isOpen ? 90 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronRight className="h-5 w-5 text-slate-500 group-hover:text-blue-400 transition-colors" />
+        </motion.div>
+      </button>
+      <div className="px-6 mb-2">
+        <div className="h-[1px] bg-slate-800 w-full"></div>
+      </div>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            key="content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div>
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </section>
+  );
+}
+
 function SidebarItem({ icon: Icon, label, showChevron, onClick }: { icon: any, label: string, showChevron?: boolean, onClick?: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-900/50 transition-colors group text-left"
+      className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-900/50 transition-colors group text-left focus:outline-none"
     >
       <div className="flex items-center gap-4">
         <Icon className="h-4 w-4 text-slate-500 group-hover:text-blue-400 transition-colors" />

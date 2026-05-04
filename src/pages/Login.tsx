@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Mail, Lock, LogIn, ChevronRight } from 'lucide-react';
+import { User, Lock, LogIn, ChevronRight } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
 
@@ -9,7 +9,7 @@ interface LoginProps {
 }
 
 export default function Login({ onLogin }: LoginProps) {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,13 +19,19 @@ export default function Login({ onLogin }: LoginProps) {
     setLoading(true);
     setError('');
 
+    if (username.length < 8) {
+      setError('El nombre de usuario debe tener al menos 8 caracteres.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ correo: email, password }),
+        body: JSON.stringify({ correo: username, password }),
       });
 
       const data = await response.json();
@@ -67,8 +73,8 @@ export default function Login({ onLogin }: LoginProps) {
             referrerPolicy="no-referrer"
           />
           <div className="text-center text-xs text-slate-400 space-y-1">
-            <p className="font-bold text-slate-800 uppercase tracking-widest text-[10px]">Quimresa S.A. Laboratory</p>
-            <p>ISO 9001:2015 Certified System</p>
+            <p className="font-bold text-slate-800 uppercase tracking-widest text-[10px]">Quimresa Laboratorio</p>
+            {/* <p>ISO 9001:2015 Certified System</p> */}
             <p className="hidden md:block">Quito - Ecuador</p>
           </div>
         </div>
@@ -82,15 +88,16 @@ export default function Login({ onLogin }: LoginProps) {
 
           <form onSubmit={handleLogin} className="space-y-4 md:space-y-6">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Email de Usuario</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Nombre de usuario</label>
               <div className="relative">
-                <Mail className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-slate-300" />
+                <User className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-slate-300" />
                 <input
-                  type="email"
-                  placeholder="ejemplo@quimresa.com"
+                  type="text"
+                  placeholder="ej. usuario123"
+                  minLength={8}
                   className="w-full rounded-lg border border-slate-200 bg-white py-3 pr-4 pl-10 focus:border-[#c07204] focus:ring-4 focus:ring-[#c07204]/5 outline-none transition-all text-slate-700"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   required
                 />
               </div>

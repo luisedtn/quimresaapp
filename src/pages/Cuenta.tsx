@@ -1,13 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { ArrowLeft, User, Camera as CameraIcon, UploadCloud, Save, Building2, MapPin, Phone } from 'lucide-react';
+import { ArrowLeft, User, Camera as CameraIcon, UploadCloud, Save, Building2, MapPin, Phone, Crosshair } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
 import Sidebar from '../components/Sidebar';
 import { Country, State, City } from 'country-state-city';
 import { parsePhoneNumberFromString, CountryCode } from 'libphonenumber-js';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Geolocation } from '@capacitor/geolocation';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix leaflet marker icon issue
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
 
 interface Cliente {
     NOMBRE: string;
@@ -20,6 +32,67 @@ interface Cliente {
     MOVIL: string;
     CONTACTO: string;
     LOGO: string;
+    LATITUD?: string;
+    LONGITUD?: string;
+}
+
+function LocationMarker({ position, setPosition }: { position: L.LatLng | null, setPosition: (pos: L.LatLng) => void }) {
+    const map = useMapEvents({
+        click(e) {
+            setPosition(e.latlng);
+            map.flyTo(e.latlng, map.getZoom());
+        },
+    });
+
+    return position === null ? null : (
+        <Marker
+            position={position}
+            draggable={true}
+            eventHandlers={{
+                dragend: (e) => {
+                    const marker = e.target;
+                    setPosition(marker.getLatLng());
+                    map.flyTo(marker.getLatLng(), map.getZoom());
+                }
+            }}
+        />
+    );
+}
+
+function LocateControl({ setPosition }: { setPosition: (pos: L.LatLng) => void }) {
+    const map = useMap();
+    const [locating, setLocating] = useState(false);
+
+    const handleLocate = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setLocating(true);
+        try {
+            const coordinates = await Geolocation.getCurrentPosition();
+            const newPos = L.latLng(coordinates.coords.latitude, coordinates.coords.longitude);
+            setPosition(newPos);
+            map.flyTo(newPos, 16);
+        } catch (error) {
+            console.error('Error getting location', error);
+            alert('Asegúrate de conceder permisos de ubicación.');
+        } finally {
+            setLocating(false);
+        }
+    };
+
+    return (
+        <div className="absolute top-3 right-3 z-[400]">
+            <button
+                type="button"
+                onClick={handleLocate}
+                disabled={locating}
+                className="bg-white px-3 py-2 text-slate-800 text-xs font-bold uppercase rounded-lg shadow-xl hover:bg-slate-100 flex items-center justify-center gap-2 border border-slate-200 transition-colors disabled:opacity-75"
+                title="Mi ubicación actual"
+            >
+                {locating ? 'Buscando...' : <><Crosshair className="w-4 h-4 text-blue-500" /> Mi Ubicación</>}
+            </button>
+        </div>
+    );
 }
 
 export default function Cuenta({ userData, onLogout }: { userData: any; onLogout: () => void }) {
@@ -31,7 +104,8 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
 
     const [formData, setFormData] = useState<Cliente>({
         NOMBRE: '', NIF: '', PAIS: '', PROVINCIA: '', POBLACION: '',
-        DIRECCION: '', TELEFONO: '', MOVIL: '', CONTACTO: '', LOGO: ''
+        DIRECCION: '', TELEFONO: '', MOVIL: '', CONTACTO: '', LOGO: '',
+        LATITUD: '', LONGITUD: ''
     });
 
     const [countries, setCountries] = useState<any[]>([]);
@@ -56,7 +130,8 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
                         NOMBRE: data.NOMBRE || '', NIF: data.NIF || '', PAIS: data.PAIS || '',
                         PROVINCIA: data.PROVINCIA || '', POBLACION: data.POBLACION || '',
                         DIRECCION: data.DIRECCION || '', TELEFONO: data.TELEFONO || '',
-                        MOVIL: data.MOVIL || '', CONTACTO: data.CONTACTO || '', LOGO: data.LOGO || ''
+                        MOVIL: data.MOVIL || '', CONTACTO: data.CONTACTO || '', LOGO: data.LOGO || '',
+                        LATITUD: data.LATITUD || '', LONGITUD: data.LONGITUD || ''
                     });
 
                     // Preload states if country was saved
@@ -199,6 +274,18 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
         }
     };
 
+    const mapPosition = formData.LATITUD && formData.LONGITUD
+        ? L.latLng(parseFloat(formData.LATITUD), parseFloat(formData.LONGITUD))
+        : L.latLng(-0.180653, -78.467834); // Default to Quito, Ecuador if missing.
+
+    const updatePosition = (pos: L.LatLng) => {
+        setFormData(prev => ({
+            ...prev,
+            LATITUD: pos.lat.toString(),
+            LONGITUD: pos.lng.toString()
+        }));
+    };
+
     return (
         <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col">
             <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onLogout={onLogout} userData={userData} />
@@ -261,7 +348,7 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
                                         <input type="text" value={formData.NOMBRE} onChange={e => setFormData({ ...formData, NOMBRE: e.target.value })} required className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none" />
                                     </div>
                                     <div>
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">RUC / NIF</label>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">RUC</label>
                                         <input type="text" value={formData.NIF} onChange={e => setFormData({ ...formData, NIF: e.target.value })} required className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none" />
                                     </div>
                                 </div>
@@ -298,8 +385,30 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
                                     <input type="text" value={formData.DIRECCION} onChange={e => setFormData({ ...formData, DIRECCION: e.target.value })} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none" />
                                 </div>
 
+                                <div className="mt-4">
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-2">Mapa (Arrastra el pin o usa tu ubicación actual)</label>
+                                    <div className="h-64 sm:h-80 w-full rounded-xl overflow-hidden border border-slate-700 relative z-0">
+                                        <MapContainer center={mapPosition} zoom={13} style={{ height: '100%', width: '100%', zIndex: 0 }}>
+                                            <TileLayer
+                                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                                            />
+                                            <LocationMarker position={formData.LATITUD && formData.LONGITUD ? mapPosition : null} setPosition={updatePosition} />
+                                            <LocateControl setPosition={updatePosition} />
+                                        </MapContainer>
+                                    </div>
+                                    <div className="flex gap-4 mt-2 mb-4">
+                                        <div className="flex-1 hidden">
+                                            <input type="text" value={formData.LATITUD || ''} readOnly placeholder="Latitud" className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-xs text-slate-400 outline-none" />
+                                        </div>
+                                        <div className="flex-1 hidden">
+                                            <input type="text" value={formData.LONGITUD || ''} readOnly placeholder="Longitud" className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-xs text-slate-400 outline-none" />
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <h3 className="text-xs font-bold text-blue-400 flex items-center gap-2 border-b border-slate-800 pb-2 pt-2 uppercase tracking-wide">
-                                    <Phone className="w-4 h-4" /> Respaldo
+                                    <Phone className="w-4 h-4" /> Contacto
                                 </h3>
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -312,7 +421,7 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
                                         <input id="MOVIL" type="tel" value={formData.MOVIL} onChange={e => setFormData({ ...formData, MOVIL: e.target.value })} placeholder="Ej. +34 6..." className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none" />
                                     </div>
                                     <div>
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Representante/Contacto</label>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Encargado de cuenta</label>
                                         <input type="text" value={formData.CONTACTO} onChange={e => setFormData({ ...formData, CONTACTO: e.target.value })} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none" />
                                     </div>
                                 </div>

@@ -1,0 +1,10 @@
+AIzaSyBnKJcCSYvar2FcszPCxz_Nn7pRiIDugAw
+
+Clave de API
+AIzaSyBnKJcCSYvar2FcszPCxz_Nn7pRiIDugAw
+Nombre
+Gemini API Key
+Nombre del proyecto
+projects/438765953304
+Número del proyecto
+438765953304

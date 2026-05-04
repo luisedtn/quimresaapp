@@ -220,13 +220,13 @@ app.get('/api/cliente', authenticateToken, async (req: Request, res: Response): 
 app.put('/api/cliente', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
         const { idcliente } = (req as any).user;
-        const { NOMBRE, NIF, PAIS, PROVINCIA, POBLACION, DIRECCION, TELEFONO, MOVIL, CONTACTO, LOGO } = req.body;
+        const { NOMBRE, NIF, PAIS, PROVINCIA, POBLACION, DIRECCION, TELEFONO, MOVIL, CONTACTO, LOGO, LATITUD, LONGITUD } = req.body;
 
         const actualizado = await prisma.cliente.update({
             where: { CODIGO: idcliente },
             data: {
-                NOMBRE, NIF, PAIS, PROVINCIA, POBLACION, DIRECCION, TELEFONO, MOVIL, CONTACTO, LOGO
-            }
+                NOMBRE, NIF, PAIS, PROVINCIA, POBLACION, DIRECCION, TELEFONO, MOVIL, CONTACTO, LOGO, LATITUD, LONGITUD
+            } as any
         });
         res.json(actualizado);
     } catch (error) {
@@ -260,6 +260,74 @@ app.post('/api/mediciones', authenticateToken, async (req: Request, res: Respons
     } catch (error) {
         console.error('API POST MEDICION ERROR:', error);
         res.status(500).json({ error: 'Error al guardar medición' });
+    }
+});
+
+// --- AI Chat Support Integration ---
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+const SYSTEM_PROMPT = `
+Eres el Asistente Experto de Quimresa, especializado en colorimetría, medición de color y Laboratorio de Pinturas.
+Tu objetivo es ayudar a los operadores de la planta con dudas técnicas, cálculos y mezclas.
+
+REGLAS DE RESPUESTA:
+1. Sé extremadamente breve y directo. Máximo 2-3 frases por respuesta.
+2. Si el usuario pide cálculos (ej. Delta E, conversiones, mezclas porcentuales), realízalos con precisión matemática.
+3. El tono debe ser profesional pero servicial.
+4. Habla siempre en español.
+5. Si no sabes algo de colorimetría específica, sugiere consultar al jefe de laboratorio.
+
+CONTEXTO TÉCNICO:
+- Trabajamos con espacios de color CIELAB (L*, a*, b*).
+- Delta E (ΔE) < 1.0 suele ser el estándar de aprobación en Quimresa.
+- Ayuda con reglas de mezcla: si falta rojo, añadir pigmento magenta o rojo respectivo; si el color es muy claro, ajustar bases.
+
+OPERACIONES MATEMÁTICAS:
+- Eres capaz de resolver ecuaciones de mezclas de pigmentos y cálculos de rendimiento.
+`;
+
+app.post('/api/chat', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { message, history } = req.body;
+
+        if (!process.env.GEMINI_API_KEY) {
+            console.error('[AI CHAT] Error: GEMINI_API_KEY no configurada en el .env');
+            return res.status(500).json({ error: 'AI Error: API Key no configurada' });
+        }
+
+        const chat = model.startChat({
+            history: [
+                { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
+                { role: "model", parts: [{ text: "Entendido. Soy el asistente experto de Quimresa. ¿En qué puedo ayudarte hoy?" }] },
+                ...(history || []).map((h: any) => ({
+                    role: h.role === 'user' ? 'user' : 'model',
+                    parts: [{ text: h.text }]
+                }))
+            ],
+        });
+
+        const result = await chat.sendMessage(message);
+        const response = await result.response;
+        const text = response.text();
+
+        if (!text) {
+            throw new Error('Respuesta de IA vacía');
+        }
+
+        res.json({ text });
+
+    } catch (error: any) {
+        console.error('[AI CHAT ERROR DETALLADO]:', error);
+
+        // Handle specific Gemini errors
+        const errorMessage = error.message || 'Error desconocido en la IA';
+        res.status(500).json({
+            error: 'Error al procesar la consulta de IA',
+            details: errorMessage
+        });
     }
 });
 
