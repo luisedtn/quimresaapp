@@ -30,6 +30,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-quimresa-lab-2026
 
 // AI Initialization
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+if (process.env.GEMINI_API_KEY) {
+    console.log(`[DEBUG] API Key cargada. Comienza por: ${process.env.GEMINI_API_KEY.substring(0, 5)}...`);
+} else {
+    console.warn("[DEBUG] No se detectó GEMINI_API_KEY en el entorno.");
+}
 // We'll initialize the model inside the handler or cautiously to avoid blocking route registration
 let model: any;
 try {
