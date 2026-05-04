@@ -6,268 +6,42 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
 const app = express();
 const prisma = new PrismaClient();
 
+// Global Logging Middleware
+app.use((req, res, next) => {
+    console.log(`[DEBUG LOG] ${new Date().toISOString()} - ${req.method} ${req.path}`);
+    next();
+});
+
 app.use(cors());
-app.use(express.json({ limit: '50mb' })); // Increased to upload LOGO
+app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-quimresa-lab-2026';
 
-app.post('/api/login', async (req: Request, res: Response): Promise<any> => {
-    const { correo, password } = req.body;
-
-    if (!correo || !password) {
-        return res.status(400).json({ error: 'Correo y contraseña son requeridos' });
-    }
-
-    try {
-        // 1. Check if user exists by name (assuming name is the email/login)
-        const usuario = await prisma.usuario.findFirst({
-            where: {
-                name: correo,
-            },
-            include: {
-                cliente: true // Include client info
-            }
-        });
-
-        if (!usuario) {
-            return res.status(401).json({ error: 'Credenciales inválidas' });
-        }
-
-        // 2. Verificar que el usuario tenga un idcliente asigando y que el cliente exista
-        if (!usuario.idcliente || !usuario.cliente) {
-            return res.status(403).json({ error: 'El usuario no tiene un cliente válido asignado' });
-        }
-
-        // 3. Verificar que el cliente esté autorizado
-        if (usuario.cliente.autorizado !== true) {
-            return res.status(403).json({ error: 'El cliente asignado a su cuenta no está autorizado' });
-        }
-
-        // 4. Check if user itself is authorized
-        if (!usuario.autorizado) {
-            return res.status(403).json({ error: 'Usuario no autorizado' });
-        }
-
-        // 3. Verify password usando bcrypt.
-        const passwordMatch = await bcrypt.compare(password, usuario.pass || '');
-
-        if (!passwordMatch) {
-            return res.status(401).json({ error: 'Credenciales inválidas' });
-        }
-
-        // 4. Create JWT Token
-        const token = jwt.sign(
-            {
-                id: usuario.id,
-                email: usuario.name,
-                typeuser: usuario.typeuser,
-                permisos: usuario.permisos,
-                idcliente: usuario.idcliente
-            },
-            JWT_SECRET,
-            { expiresIn: '8h' }
-        );
-
-        // 5. Send successful response
-        res.json({
-            message: 'Login exitoso',
-            token,
-            user: {
-                id: usuario.id,
-                name: usuario.name,
-                empresa: usuario.cliente?.NOMBRE || 'Desconocida'
-            }
-        });
-
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
-
-export const authenticateToken = (req: Request, res: Response, next: any) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (token == null) return res.status(401).json({ error: 'Token requerido' });
-
-    jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
-        if (err) return res.status(403).json({ error: 'Token inválido o expirado' });
-        (req as any).user = user;
-        next();
-    });
-};
-
-// Obtener usuarios del cliente actual
-app.get('/api/usuarios', authenticateToken, async (req: Request, res: Response): Promise<any> => {
-    try {
-        const { idcliente } = (req as any).user;
-        const usuarios = await prisma.usuario.findMany({
-            where: { idcliente },
-            select: { id: true, name: true, photo: true, tiempo: true, typeuser: true, permisos: true, autorizado: true, idcliente: true }
-        });
-        res.json(usuarios);
-    } catch (error) {
-        res.status(500).json({ error: 'Error al obtener usuarios' });
-    }
-});
-
-// Crear usuario (usará la misma idcliente del admin que lo crea)
-app.post('/api/usuarios', authenticateToken, async (req: Request, res: Response): Promise<any> => {
-    try {
-        const { idcliente } = (req as any).user;
-        const { name, pass, photo, tiempo, typeuser, permisos, autorizado } = req.body;
-        console.log(`[BACKEND] Intentando crear usuario: ${name}. Foto recibida: ${photo ? photo.length : 0} bytes`);
-
-        let passToSave = pass;
-        if (pass && pass.trim() !== '') {
-            passToSave = await bcrypt.hash(pass, 10);
-        }
-
-        const nuevoUsuario = await prisma.usuario.create({
-            data: {
-                name,
-                pass: passToSave,
-                photo,
-                tiempo,
-                typeuser,
-                permisos,
-                autorizado,
-                idcliente
-            }
-        });
-        // Remove password before sending
-        const { pass: _, ...userWithoutPass } = nuevoUsuario;
-        res.json(userWithoutPass);
-    } catch (error) {
-        console.error('API POST USUARIOS ERROR:', error);
-        res.status(500).json({ error: 'Error al crear usuario' });
-    }
-});
-
-// Actualizar usuario
-app.put('/api/usuarios/:id', authenticateToken, async (req: Request, res: Response): Promise<any> => {
-    try {
-        const { idcliente } = (req as any).user;
-        const { id } = req.params;
-        const { name, pass, photo, tiempo, typeuser, permisos, autorizado } = req.body;
-
-        // Comprobar que pertenece al mismo cliente
-        const existing = await prisma.usuario.findFirst({ where: { id: Number(id), idcliente } });
-        if (!existing) return res.status(404).json({ error: 'Usuario no encontrado' });
-
-        const dataUpdate: any = { name, photo, tiempo, typeuser, permisos, autorizado };
-        if (pass && pass.trim() !== '') {
-            dataUpdate.pass = await bcrypt.hash(pass, 10);
-        }
-
-        const actualizado = await prisma.usuario.update({
-            where: { id: Number(id) },
-            data: dataUpdate
-        });
-        console.log(`[BACKEND] Usuario ${id} actualizado con éxito. Foto guardada: ${actualizado.photo ? actualizado.photo.length : 0} bytes`);
-
-        const { pass: _, ...userWithoutPass } = actualizado;
-        res.json(userWithoutPass);
-    } catch (error) {
-        console.error('API PUT USUARIOS ERROR:', error);
-        res.status(500).json({ error: 'Error al actualizar usuario' });
-    }
-});
-
-// Eliminar usuario
-app.delete('/api/usuarios/:id', authenticateToken, async (req: Request, res: Response): Promise<any> => {
-    try {
-        const { idcliente } = (req as any).user;
-        const { id } = req.params;
-
-        const existing = await prisma.usuario.findFirst({ where: { id: Number(id), idcliente } });
-        if (!existing) return res.status(404).json({ error: 'Usuario no encontrado' });
-
-        await prisma.usuario.delete({ where: { id: Number(id) } });
-        res.json({ message: 'Usuario eliminado correctamente' });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al eliminar usuario' });
-    }
-});
-
-// Obtener datos del cliente del usuario logueado
-app.get('/api/cliente', authenticateToken, async (req: Request, res: Response): Promise<any> => {
-    try {
-        const { idcliente } = (req as any).user;
-        const cliente = await prisma.cliente.findUnique({
-            where: { CODIGO: idcliente }
-        });
-        if (!cliente) return res.status(404).json({ error: 'Cliente no encontrado' });
-        res.json(cliente);
-    } catch (error) {
-        res.status(500).json({ error: 'Error al obtener cliente' });
-    }
-});
-
-// Actualizar datos del cliente
-app.put('/api/cliente', authenticateToken, async (req: Request, res: Response): Promise<any> => {
-    try {
-        const { idcliente } = (req as any).user;
-        const { NOMBRE, NIF, PAIS, PROVINCIA, POBLACION, DIRECCION, TELEFONO, MOVIL, CONTACTO, LOGO, LATITUD, LONGITUD } = req.body;
-
-        const actualizado = await prisma.cliente.update({
-            where: { CODIGO: idcliente },
-            data: {
-                NOMBRE, NIF, PAIS, PROVINCIA, POBLACION, DIRECCION, TELEFONO, MOVIL, CONTACTO, LOGO, LATITUD, LONGITUD
-            } as any
-        });
-        res.json(actualizado);
-    } catch (error) {
-        console.error('API PUT CLIENTE ERROR:', error);
-        res.status(500).json({ error: 'Error al actualizar cliente' });
-    }
-});
-
-// Guardar medición del colorímetro
-app.post('/api/mediciones', authenticateToken, async (req: Request, res: Response): Promise<any> => {
-    try {
-        const { idcliente } = (req as any).user;
-        const { L, A, B, R, G, RB, C, H, FECHA } = req.body;
-
-        const medicion = await prisma.formPersonales.create({
-            data: {
-                IDCLIENTE: idcliente,
-                L: L?.toString(),
-                A: A?.toString(),
-                B: B?.toString(),
-                R: R?.toString(),
-                G: G?.toString(),
-                RB: RB?.toString(),
-                C: C?.toString(),
-                H: H?.toString(),
-                FECHA: FECHA || new Date().toISOString(),
-            }
-        });
-
-        res.status(201).json(medicion);
-    } catch (error) {
-        console.error('API POST MEDICION ERROR:', error);
-        res.status(500).json({ error: 'Error al guardar medición' });
-    }
-});
-
-// --- AI Chat Support Integration ---
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
+// AI Initialization
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+// We'll initialize the model inside the handler or cautiously to avoid blocking route registration
+let model: any;
+try {
+    model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+} catch (e) {
+    console.error("[CRITICAL] Failed to initialize Gemini model:", e);
+}
+
+// Test route to verify deployment
+app.get('/api/test-chat', (req, res) => {
+    res.json({ message: 'Servidor actualizado correctamente', model: "gemini-2.5-flash" });
+});
 
 const SYSTEM_PROMPT = `
 Eres el Asistente Experto de Quimresa, especializado en colorimetría, medición de color y Laboratorio de Pinturas.
@@ -289,13 +63,142 @@ OPERACIONES MATEMÁTICAS:
 - Eres capaz de resolver ecuaciones de mezclas de pigmentos y cálculos de rendimiento.
 `;
 
+// --- ROUTES ---
+
+app.post('/api/login', async (req: Request, res: Response): Promise<any> => {
+    const { correo, password } = req.body;
+    if (!correo || !password) return res.status(400).json({ error: 'Correo y contraseña son requeridos' });
+    try {
+        const usuario = await prisma.usuario.findFirst({ where: { name: correo }, include: { cliente: true } });
+        if (!usuario || !usuario.idcliente || !usuario.cliente) return res.status(401).json({ error: 'Credenciales inválidas' });
+        if (usuario.cliente.autorizado !== true || !usuario.autorizado) return res.status(403).json({ error: 'Acceso no autorizado' });
+        const passwordMatch = await bcrypt.compare(password, usuario.pass || '');
+        if (!passwordMatch) return res.status(401).json({ error: 'Credenciales inválidas' });
+        const token = jwt.sign({ id: usuario.id, email: usuario.name, typeuser: usuario.typeuser, permisos: usuario.permisos, idcliente: usuario.idcliente }, JWT_SECRET, { expiresIn: '8h' });
+        res.json({ message: 'Login exitoso', token, user: { id: usuario.id, name: usuario.name, empresa: usuario.cliente?.NOMBRE || 'Desconocida' } });
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+export const authenticateToken = (req: Request, res: Response, next: any) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token == null) return res.status(401).json({ error: 'Token requerido' });
+    jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
+        if (err) return res.status(403).json({ error: 'Token inválido o expirado' });
+        (req as any).user = user;
+        next();
+    });
+};
+
+app.get('/api/usuarios', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { idcliente } = (req as any).user;
+        const usuarios = await prisma.usuario.findMany({ where: { idcliente } });
+        res.json(usuarios);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener usuarios' });
+    }
+});
+
+app.post('/api/usuarios', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { idcliente } = (req as any).user;
+        const { name, pass, photo, tiempo, typeuser, permisos, autorizado } = req.body;
+        const passToSave = pass ? await bcrypt.hash(pass, 10) : undefined;
+        const nuevoUsuario = await prisma.usuario.create({ data: { name, pass: passToSave, photo, tiempo, typeuser, permisos, autorizado, idcliente } });
+        const { pass: _, ...userWithoutPass } = nuevoUsuario;
+        res.json(userWithoutPass);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al crear usuario' });
+    }
+});
+
+app.put('/api/usuarios/:id', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { idcliente } = (req as any).user;
+        const { id } = req.params;
+        const { name, pass, photo, tiempo, typeuser, permisos, autorizado } = req.body;
+        const existing = await prisma.usuario.findFirst({ where: { id: Number(id), idcliente } });
+        if (!existing) return res.status(404).json({ error: 'Usuario no encontrado' });
+        const dataUpdate: any = { name, photo, tiempo, typeuser, permisos, autorizado };
+        if (pass) dataUpdate.pass = await bcrypt.hash(pass, 10);
+        const actualizado = await prisma.usuario.update({ where: { id: Number(id) }, data: dataUpdate });
+        const { pass: _, ...userWithoutPass } = actualizado;
+        res.json(userWithoutPass);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al actualizar usuario' });
+    }
+});
+
+app.delete('/api/usuarios/:id', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { idcliente } = (req as any).user;
+        const { id } = req.params;
+        const existing = await prisma.usuario.findFirst({ where: { id: Number(id), idcliente } });
+        if (!existing) return res.status(404).json({ error: 'Usuario no encontrado' });
+        await prisma.usuario.delete({ where: { id: Number(id) } });
+        res.json({ message: 'Usuario eliminado correctamente' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al eliminar usuario' });
+    }
+});
+
+app.get('/api/cliente', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { idcliente } = (req as any).user;
+        const cliente = await prisma.cliente.findUnique({ where: { CODIGO: idcliente } });
+        if (!cliente) return res.status(404).json({ error: 'Cliente no encontrado' });
+        res.json(cliente);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener cliente' });
+    }
+});
+
+app.put('/api/cliente', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { idcliente } = (req as any).user;
+        const body = req.body;
+        const actualizado = await prisma.cliente.update({ where: { CODIGO: idcliente }, data: body as any });
+        res.json(actualizado);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al actualizar cliente' });
+    }
+});
+
+app.post('/api/mediciones', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { idcliente } = (req as any).user;
+        const { L, A, B, R, G, RB, C, H, FECHA } = req.body;
+        const medicion = await prisma.formPersonales.create({
+            data: {
+                IDCLIENTE: idcliente,
+                L: L?.toString(), A: A?.toString(), B: B?.toString(),
+                R: R?.toString(), G: G?.toString(), RB: RB?.toString(),
+                C: C?.toString(), H: H?.toString(), FECHA: FECHA || new Date().toISOString(),
+            }
+        });
+        res.status(201).json(medicion);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al guardar medición' });
+    }
+});
+
 app.post('/api/chat', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
         const { message, history } = req.body;
-
         if (!process.env.GEMINI_API_KEY) {
-            console.error('[AI CHAT] Error: GEMINI_API_KEY no configurada en el .env');
             return res.status(500).json({ error: 'AI Error: API Key no configurada' });
+        }
+        if (!model) {
+            // Try to re-initialize if it failed at startup
+            try {
+                model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+            } catch (e: any) {
+                return res.status(500).json({ error: 'AI Error: Fallo al inicializar el modelo ' + (e.message || '') });
+            }
         }
 
         const chat = model.startChat({
@@ -311,112 +214,43 @@ app.post('/api/chat', authenticateToken, async (req: Request, res: Response): Pr
 
         const result = await chat.sendMessage(message);
         const response = await result.response;
-        const text = response.text();
-
-        if (!text) {
-            throw new Error('Respuesta de IA vacía');
-        }
-
-        res.json({ text });
-
+        res.json({ text: response.text() });
     } catch (error: any) {
-        console.error('[AI CHAT ERROR DETALLADO]:', error);
-
-        // Handle specific Gemini errors
-        const errorMessage = error.message || 'Error desconocido en la IA';
-        res.status(500).json({
-            error: 'Error al procesar la consulta de IA',
-            details: errorMessage
-        });
+        console.error('[AI CHAT ERROR]:', error);
+        res.status(500).json({ error: 'Error en la IA', details: error.message });
     }
 });
 
-// Obtener fórmulas para el cliente logueado con paginación, búsqueda y ordenamiento
 app.get('/api/formulas', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
         const { idcliente } = (req as any).user;
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 25;
         const search = (req.query.q as string) || '';
-        const sortBy = (req.query.sortBy as string) || 'FECHA';
         const skip = (page - 1) * limit;
 
-        const idClienteNum = typeof idcliente === 'string' ? parseInt(idcliente) : idcliente;
-
-        console.log(`[DEBUG] GET /api/formulas - IDCLIENTE: ${idClienteNum} (${typeof idClienteNum})`);
-        console.log(`[DEBUG] Params - page: ${page}, limit: ${limit}, search: "${search}", sortBy: "${sortBy}"`);
-
-        if (!idClienteNum) {
-            console.error('[ERROR] IDCLIENTE missing in token');
-            return res.status(400).json({ error: 'ID de cliente no encontrado en el token' });
-        }
-
-        const where: any = {
-            IDCLIENTE: idClienteNum
-        };
-
-        if (search) {
-            where.OR = [
-                { NOMBREFORMULA: { contains: search, mode: 'insensitive' } },
-                { CODIGO: { contains: search, mode: 'insensitive' } },
-                { NOMBRECLI: { contains: search, mode: 'insensitive' } },
-                { LOTE: { contains: search, mode: 'insensitive' } },
-            ];
-        }
-
-        console.log(`[DEBUG] Prisma where clause:`, JSON.stringify(where, null, 2));
-
         const formulas = await prisma.formPersonales.findMany({
-            where,
-            select: {
-                ID: true,
-                CODIGO: true,
-                NOMBRECLI: true,
-                NOMBREFORMULA: true,
-                CBASE: true,
-                L: true,
-                A: true,
-                B: true,
-                FECHA: true,
-                LOTE: true
-            },
-            orderBy: sortBy === 'NOMBREFORMULA'
-                ? [{ NOMBREFORMULA: 'asc' }]
-                : [{ FECHA: 'desc' }, { NOMBREFORMULA: 'asc' }],
-            skip: skip,
-            take: limit
+            where: { IDCLIENTE: idcliente, OR: search ? [{ NOMBREFORMULA: { contains: search, mode: 'insensitive' } }, { CODIGO: { contains: search, mode: 'insensitive' } }] : undefined },
+            orderBy: [{ FECHA: 'desc' }],
+            skip, take: limit
         });
-
-        console.log(`[DEBUG] Formulas found: ${formulas.length}`);
-        if (formulas.length > 0) {
-            // console.log(`[DEBUG] First result sample:`, JSON.stringify(formulas[0], null, 2));
-        }
-
         res.json(formulas);
     } catch (error) {
-        console.error('API GET FORMULAS ERROR:', error);
         res.status(500).json({ error: 'Error al obtener fórmulas' });
     }
 });
 
-// Serve static files from the React app in production
 const distPath = path.join(__dirname, '../dist');
 app.use(express.static(distPath));
 
-// For any request that doesn't match an API route, send index.html
-// EXCEPT for /api routes which should return 404 JSON
-app.get('*', (req, res) => {
+app.use((req, res, next) => {
     if (req.path.startsWith('/api/')) {
         console.log(`[404] API Route not found: ${req.method} ${req.path}`);
-        return res.status(404).json({ error: `Ruta de API no encontrada: ${req.path}` });
+        return res.status(404).json({ error: `Ruta de API no encontrada: ${req.method} ${req.path}` });
     }
-    res.sendFile(path.join(distPath, 'index.html'));
+    if (req.method === 'GET') return res.sendFile(path.join(distPath, 'index.html'));
+    next();
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
-
-// Restart dev server
-// Trigger backend refresh
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
