@@ -6,7 +6,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { VertexAI } from '@google-cloud/vertexai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 dotenv.config();
 console.log(`[DEBUG] JWT_SECRET cargado: ${process.env.JWT_SECRET ? 'SÍ' : 'NO'}`);
@@ -30,16 +30,13 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-quimresa-lab-2026';
 
-// AI ADC/Vertex Initialization
-const project = process.env.GOOGLE_PROJECT_ID || 'quimresa-lab';
-const location = process.env.GOOGLE_LOCATION || 'us-east1';
-const vertexAI = new VertexAI({ project: project, location: location });
-
+// AI Initialization (Usando API Key para compatibilidad con VPS externo)
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 let model: any;
 try {
-    model = vertexAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 } catch (e) {
-    console.error("[CRITICAL] Failed to initialize Vertex AI model:", e);
+    console.error("[CRITICAL] Failed to initialize Gemini model:", e);
 }
 
 // Test route to verify deployment
@@ -197,15 +194,14 @@ app.all('/api/chat', authenticateToken, async (req: Request, res: Response): Pro
     }
     try {
         const { message, history } = req.body;
-        if (!process.env.GOOGLE_PROJECT_ID) {
-            return res.status(500).json({ error: 'AI Error: Google Project ID no configurado para ADC' });
+        if (!process.env.GEMINI_API_KEY) {
+            return res.status(500).json({ error: 'AI Error: GEMINI_API_KEY no configurado' });
         }
         if (!model) {
-            // Try to re-initialize if it failed at startup
             try {
-                model = vertexAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
             } catch (e: any) {
-                return res.status(500).json({ error: 'AI Error: Fallo al inicializar el modelo ' + (e.message || '') });
+                return res.status(500).json({ error: 'AI Error: Fallo al inicializar el modelo' });
             }
         }
 
@@ -222,9 +218,7 @@ app.all('/api/chat', authenticateToken, async (req: Request, res: Response): Pro
 
         const result = await chat.sendMessage(message);
         const response = await result.response;
-        // El SDK de Vertex AI estructurará la respuesta ligeramente diferente
-        const responseText = response.candidates?.[0]?.content?.parts?.[0]?.text || "No se recibió respuesta de la IA.";
-        res.json({ text: responseText });
+        res.json({ text: response.text() });
     } catch (error: any) {
         console.error('--- [AI CHAT ERROR DETAIL] ---');
         console.error('Message:', error.message);
