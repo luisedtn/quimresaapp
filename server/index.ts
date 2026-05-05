@@ -34,7 +34,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-quimresa-lab-2026
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 let model: any;
 try {
-    model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 } catch (e) {
     console.error("[CRITICAL] Failed to initialize Gemini model:", e);
 }
