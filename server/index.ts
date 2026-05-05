@@ -6,9 +6,11 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { VertexAI } from '@google-cloud/vertexai';
 
 dotenv.config();
+console.log(`[DEBUG] JWT_SECRET cargado: ${process.env.JWT_SECRET ? 'SÍ' : 'NO'}`);
+console.log(`[DEBUG] GOOGLE_PROJECT_ID cargado: ${process.env.GOOGLE_PROJECT_ID}`);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,19 +30,16 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-quimresa-lab-2026';
 
-// AI Initialization
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-if (process.env.GEMINI_API_KEY) {
-    console.log(`[DEBUG] API Key cargada. Comienza por: ${process.env.GEMINI_API_KEY.substring(0, 5)}...`);
-} else {
-    console.warn("[DEBUG] No se detectó GEMINI_API_KEY en el entorno.");
-}
-// We'll initialize the model inside the handler or cautiously to avoid blocking route registration
+// AI ADC/Vertex Initialization
+const project = process.env.GOOGLE_PROJECT_ID || 'quimresa-lab';
+const location = process.env.GOOGLE_LOCATION || 'us-east1';
+const vertexAI = new VertexAI({ project: project, location: location });
+
 let model: any;
 try {
-    model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    model = vertexAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 } catch (e) {
-    console.error("[CRITICAL] Failed to initialize Gemini model:", e);
+    console.error("[CRITICAL] Failed to initialize Vertex AI model:", e);
 }
 
 // Test route to verify deployment
@@ -198,13 +197,13 @@ app.all('/api/chat', authenticateToken, async (req: Request, res: Response): Pro
     }
     try {
         const { message, history } = req.body;
-        if (!process.env.GEMINI_API_KEY) {
-            return res.status(500).json({ error: 'AI Error: API Key no configurada' });
+        if (!process.env.GOOGLE_PROJECT_ID) {
+            return res.status(500).json({ error: 'AI Error: Google Project ID no configurado para ADC' });
         }
         if (!model) {
             // Try to re-initialize if it failed at startup
             try {
-                model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+                model = vertexAI.getGenerativeModel({ model: "gemini-1.5-flash" });
             } catch (e: any) {
                 return res.status(500).json({ error: 'AI Error: Fallo al inicializar el modelo ' + (e.message || '') });
             }
@@ -223,9 +222,15 @@ app.all('/api/chat', authenticateToken, async (req: Request, res: Response): Pro
 
         const result = await chat.sendMessage(message);
         const response = await result.response;
-        res.json({ text: response.text() });
+        // El SDK de Vertex AI estructurará la respuesta ligeramente diferente
+        const responseText = response.candidates?.[0]?.content?.parts?.[0]?.text || "No se recibió respuesta de la IA.";
+        res.json({ text: responseText });
     } catch (error: any) {
-        console.error('[AI CHAT ERROR]:', error);
+        console.error('--- [AI CHAT ERROR DETAIL] ---');
+        console.error('Message:', error.message);
+        console.error('Stack:', error.stack);
+        if (error.details) console.error('Details:', error.details);
+        console.error('------------------------------');
         res.status(500).json({ error: 'Error en la IA', details: error.message });
     }
 });
