@@ -52,7 +52,7 @@ const vertexAI = new VertexAI({ project: project, location: location });
 let model: any;
 try {
     // IMPORTANTE: gemini-2.5-flash NO EXISTE. Usamos 1.5-flash.
-    model = vertexAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    model = vertexAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 } catch (e) {
     console.error("[CRITICAL] Failed to initialize Vertex AI model:", e);
 }
@@ -217,7 +217,7 @@ app.all('/api/chat', authenticateToken, async (req: Request, res: Response): Pro
         }
         if (!model) {
             try {
-                model = vertexAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                model = vertexAI.getGenerativeModel({ model: "gemini-2.5-flash" });
             } catch (e: any) {
                 return res.status(500).json({ error: 'AI Error: Fallo al inicializar el modelo' });
             }
@@ -236,8 +236,15 @@ app.all('/api/chat', authenticateToken, async (req: Request, res: Response): Pro
 
         const result = await chat.sendMessage(message);
         const response = await result.response;
+
+        // Registro de tokens consumidos (Vertex AI)
+        const usage = response.usageMetadata;
+        if (usage) {
+            console.log(`[AI TOKEN USAGE] Prompt: ${usage.promptTokenCount} | Output: ${usage.candidatesTokenCount} | Total: ${usage.totalTokenCount}`);
+        }
+
         const responseText = response.candidates?.[0]?.content?.parts?.[0]?.text || "No se recibió respuesta.";
-        res.json({ text: responseText });
+        res.json({ text: responseText, usage: usage });
     } catch (error: any) {
         console.error('--- [AI CHAT ERROR DETAIL] ---');
         console.error('Message:', error.message);
