@@ -52,7 +52,7 @@ const vertexAI = new VertexAI({ project: project, location: location });
 let model: any;
 try {
     // IMPORTANTE: gemini-2.5-flash NO EXISTE. Usamos 1.5-flash.
-    model = vertexAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    model = vertexAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 } catch (e) {
     console.error("[CRITICAL] Failed to initialize Vertex AI model:", e);
 }
