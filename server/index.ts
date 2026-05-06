@@ -8,9 +8,23 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { VertexAI } from '@google-cloud/vertexai';
 
+import fs from 'fs';
+
 dotenv.config();
 console.log(`[DEBUG] JWT_SECRET cargado: ${process.env.JWT_SECRET ? 'SÍ' : 'NO'}`);
-console.log(`[DEBUG] GOOGLE_PROJECT_ID cargado: ${process.env.GOOGLE_PROJECT_ID}`);
+console.log(`[DEBUG] GOOGLE_PROJECT_ID: ${process.env.GOOGLE_PROJECT_ID}`);
+
+// Verificación de credenciales ADC
+const credsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+if (credsPath) {
+    if (fs.existsSync(credsPath)) {
+        console.log(`[DEBUG] Archivo de credenciales ENCONTRADO en: ${credsPath}`);
+    } else {
+        console.error(`[ERROR] Archivo de credenciales NO ENCONTRADO en: ${credsPath}`);
+    }
+} else {
+    console.warn("[DEBUG] GOOGLE_APPLICATION_CREDENTIALS no definida. Usando ADC del sistema.");
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,7 +51,7 @@ const vertexAI = new VertexAI({ project: project, location: location });
 
 let model: any;
 try {
-    // Modelos válidos: gemini-1.5-flash o gemini-1.5-pro
+    // IMPORTANTE: gemini-2.5-flash NO EXISTE. Usamos 1.5-flash.
     model = vertexAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 } catch (e) {
     console.error("[CRITICAL] Failed to initialize Vertex AI model:", e);
