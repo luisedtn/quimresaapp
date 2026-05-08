@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, Beaker, Calendar, User, Tag, ChevronUp } from 'lucide-react';
 import { motion } from 'motion/react';
 import { API_BASE_URL } from '../config';
+import DetalleFormula from '../components/DetalleFormula';
 
 interface FormulasProps {
   email: string | null | undefined;
@@ -20,6 +21,8 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [selectedFormula, setSelectedFormula] = useState<any>(null);
+  const [showDetail, setShowDetail] = useState(false);
 
   // Debounce search term
   useEffect(() => {
@@ -113,6 +116,11 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleFormulaClick = (formula: any) => {
+    setSelectedFormula(formula);
+    setShowDetail(true);
+  };
+
   // Helper to format date string
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
@@ -184,7 +192,8 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
                   ref={formulas.length === index + 1 ? lastFormulaElementRef : null}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="elegant-card p-0 transition-all hover:border-slate-700 bg-slate-900/40 relative overflow-hidden flex"
+                  onClick={() => handleFormulaClick(formula)}
+                  className="elegant-card p-0 transition-all hover:border-slate-700 bg-slate-900/40 relative overflow-hidden flex cursor-pointer active:scale-[0.98]"
                 >
                   {/* Color Square on the Left */}
                   <div
@@ -291,6 +300,12 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
           </button>
         </motion.div>
       )}
+
+      <DetalleFormula
+        formula={selectedFormula}
+        isOpen={showDetail}
+        onClose={() => setShowDetail(false)}
+      />
     </div>
   );
 }
