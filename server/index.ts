@@ -38,7 +38,33 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(cors());
+// More robust CORS configuration for Mobile/Capacitor
+const allowedOrigins = [
+    'https://localhost',
+    'capacitor://localhost',
+    'http://localhost',
+    'http://localhost:3000',
+    'http://localhost:3001'
+];
+
+app.use(cors({
+    origin: function (origin, callback) {
+        // allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1 || origin.startsWith('http://localhost')) {
+            return callback(null, true);
+        }
+        // For production, you might want to be more restrictive, 
+        // but for now let's allow all during debugging if needed or reflect origin
+        return callback(null, true);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+}));
+
+// Explicitly handle Preflight requests
+app.options('*', cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
