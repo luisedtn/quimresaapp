@@ -42,7 +42,7 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
     useEffect(() => {
         if (isConnected && returnTo) {
             const timer = setTimeout(() => {
-                navigate(returnTo);
+                navigate(returnTo, { state: location.state });
             }, 1000);
             return () => clearTimeout(timer);
         }
@@ -81,7 +81,7 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
 
             {/* Header */}
             <header className="fixed top-0 z-10 flex w-full items-center border-b border-slate-800 bg-[#0A0F14]/80 backdrop-blur-md px-6 py-4">
-                <button onClick={() => navigate(returnTo || '/')} className="p-2 text-slate-400 hover:text-white transition-colors hover:bg-slate-800/50 rounded-lg mr-2">
+                <button onClick={() => navigate(returnTo || '/', { state: location.state })} className="p-2 text-slate-400 hover:text-white transition-colors hover:bg-slate-800/50 rounded-lg mr-2">
                     <ArrowLeft className="h-5 w-5" />
                 </button>
                 <div className="flex-grow">
