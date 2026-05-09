@@ -202,21 +202,34 @@ export default function QualityControl() {
   const { isConnected, measure, isMeasuring } = useNixDevice();
   const initialStandardSet = useRef(false);
 
-  // Auto-set standard from formula navigation state
-  useEffect(() => {
-    const state = location.state as { standardFromFormula?: { l: number; a: number; b: number; name?: string } } | null;
-    if (state?.standardFromFormula && !initialStandardSet.current) {
-      initialStandardSet.current = true;
-      const std = state.standardFromFormula;
-      setStandard({
-        l: std.l,
-        a: std.a,
-        b: std.b,
-        hex: labToHex(std.l, std.a, std.b),
-        name: std.name || 'Patrón de Fórmula'
-      });
-    }
-  }, [location.state]);
+   // Auto-set standard from formula navigation state or from Colorimetro return
+   useEffect(() => {
+     const state = location.state as { 
+       standardFromFormula?: { l: number; a: number; b: number; name?: string };
+       standardFromQC?: { l: number; a: number; b: number; hex: string; name?: string };
+     } | null;
+     
+     if (state && !initialStandardSet.current) {
+       initialStandardSet.current = true;
+       
+       // Priority 1: standard from formulas (when navigating from formula card)
+       if (state.standardFromFormula) {
+         const std = state.standardFromFormula;
+         setStandard({
+           l: std.l,
+           a: std.a,
+           b: std.b,
+           hex: labToHex(std.l, std.a, std.b),
+           name: std.name || 'Patrón de Fórmula'
+         });
+       } 
+       // Priority 2: standard from QC (when returning from Colorimetro)
+       else if (state.standardFromQC) {
+         const std = state.standardFromQC;
+         setStandard(std);
+       }
+     }
+   }, [location.state]);
 
   useEffect(() => {
     if (standard && sample) {
@@ -251,22 +264,27 @@ export default function QualityControl() {
     name: 'Fórmula'
   };
 
-  const handleCaptureStandard = async () => {
-    if (!isConnected) {
-      navigate('/colorimetro', { state: { returnTo: '/quality-control' } });
-      return;
-    }
-    const result = await measure();
-    if (result) {
-      setStandard({
-        l: result.color.L,
-        a: result.color.a,
-        b: result.color.b,
-        hex: result.color.hex,
-        name: 'Patrón (Detectado)'
-      });
-    }
-  };
+   const handleCaptureStandard = async () => {
+     if (!isConnected) {
+       navigate('/colorimetro', { 
+         state: { 
+           returnTo: '/quality-control',
+           standardFromQC: standard
+         } 
+       });
+       return;
+     }
+     const result = await measure();
+     if (result) {
+       setStandard({
+         l: result.color.L,
+         a: result.color.a,
+         b: result.color.b,
+         hex: result.color.hex,
+         name: 'Patrón (Detectado)'
+       });
+     }
+   };
 
   const handleCaptureSample = async () => {
     if (!isConnected) {
