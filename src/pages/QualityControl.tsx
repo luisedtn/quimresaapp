@@ -1,9 +1,24 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Check, X, Info } from 'lucide-react';
 import { useNixDevice } from '../hooks/useNixDevice';
 import { deltaE2000 } from '../services/NixBluetoothService';
+
+function labToHex(l: number, a: number, b: number): string {
+  const y = (l + 16) / 116;
+  const x = a / 500 + y;
+  const z = y - b / 200;
+  const x3 = x * x * x, y3 = y * y * y, z3 = z * z * z;
+  const xr = x3 > 0.008856 ? x3 : (x - 16 / 116) / 7.787;
+  const yr = y3 > 0.008856 ? y3 : (y - 16 / 116) / 7.787;
+  const zr = z3 > 0.008856 ? z3 : (z - 16 / 116) / 7.787;
+  const rl = xr * 3.2406 + yr * -1.5372 + zr * -0.4986;
+  const gl = xr * -0.9689 + yr * 1.8758 + zr * 0.0415;
+  const bl = xr * 0.0557 + yr * -0.2040 + zr * 1.0570;
+  const gamma = (c: number) => Math.round(Math.max(0, Math.min(255, ((c > 0.0031308 ? 1.055 * Math.pow(c, 1 / 2.4) - 0.055 : 12.92 * c)) * 255)));
+  return `#${gamma(rl).toString(16).padStart(2, '0')}${gamma(gl).toString(16).padStart(2, '0')}${gamma(bl).toString(16).padStart(2, '0')}`;
+}
 
 const ColorDeltaChart = ({ standard, sample }: { standard: any, sample: any }) => {
   if (!standard || !sample) return null;
@@ -181,9 +196,27 @@ const ColorDeltaChart = ({ standard, sample }: { standard: any, sample: any }) =
 
 export default function QualityControl() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [standard, setStandard] = useState<any>(null);
   const [sample, setSample] = useState<any>(null);
   const { isConnected, measure, isMeasuring } = useNixDevice();
+  const initialStandardSet = useRef(false);
+
+  // Auto-set standard from formula navigation state
+  useEffect(() => {
+    const state = location.state as { standardFromFormula?: { l: number; a: number; b: number; name?: string } } | null;
+    if (state?.standardFromFormula && !initialStandardSet.current) {
+      initialStandardSet.current = true;
+      const std = state.standardFromFormula;
+      setStandard({
+        l: std.l,
+        a: std.a,
+        b: std.b,
+        hex: labToHex(std.l, std.a, std.b),
+        name: std.name || 'Patrón de Fórmula'
+      });
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (standard && sample) {
@@ -322,7 +355,7 @@ export default function QualityControl() {
 
         <button
           className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 py-4 font-bold text-slate-400 transition-all active:scale-95 text-xs uppercase tracking-widest shadow-xl"
-          onClick={() => { setStandard(null); setSample(null); }}
+          onClick={() => { setStandard(null); setSample(null); initialStandardSet.current = false; }}
         >
           Nueva Sesión / Limpiar
         </button>

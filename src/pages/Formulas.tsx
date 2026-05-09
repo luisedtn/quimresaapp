@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, Beaker, Calendar, User, Tag, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Search, Beaker, Calendar, User, Tag, ChevronUp, ClipboardCheck } from 'lucide-react';
 import { motion } from 'motion/react';
 import { API_BASE_URL } from '../config';
 import DetalleFormula from '../components/DetalleFormula';
@@ -119,6 +119,20 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
   const handleFormulaClick = (formula: any) => {
     setSelectedFormula(formula);
     setShowDetail(true);
+  };
+
+  const handleQualityControl = (e: React.MouseEvent, formula: any) => {
+    e.stopPropagation();
+    navigate('/quality-control', {
+      state: {
+        standardFromFormula: {
+          l: parseFloat(formula.L || '0'),
+          a: parseFloat(formula.A || '0'),
+          b: parseFloat(formula.B || '0'),
+          name: formula.NOMBREFORMULA || 'Patrón de Fórmula'
+        }
+      }
+    });
   };
 
   // Helper to format date string
@@ -255,6 +269,15 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
                         <p className="font-mono text-sm text-amber-400 font-bold">{parseFloat(formula.B || '0').toFixed(2)}</p>
                       </div>
                     </div>
+
+                    {/* Control de Calidad Button */}
+                    <button
+                      onClick={(e) => handleQualityControl(e, formula)}
+                      className="mt-3 w-full flex items-center justify-center gap-2 rounded-lg border border-[#004A99]/40 bg-[#004A99]/10 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-[#004A99] hover:bg-[#004A99]/20 hover:border-[#004A99]/60 transition-all active:scale-[0.97]"
+                    >
+                      <ClipboardCheck className="h-3.5 w-3.5" />
+                      Control de Calidad
+                    </button>
                   </div>
                 </motion.div>
               ))}
