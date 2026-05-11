@@ -44,27 +44,37 @@ const allowedOrigins = [
     'capacitor://localhost',
     'http://localhost',
     'http://localhost:3000',
-    'http://localhost:3001'
+    'http://localhost:3001',
+    'http://localhost:5173'
 ];
 
-app.use(cors({
-    origin: function (origin, callback) {
-        // allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) !== -1 || origin.startsWith('http://localhost')) {
-            return callback(null, true);
+const corsOptions = {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        if (!origin || allowedOrigins.includes(origin) || origin.startsWith('http://localhost') || origin.startsWith('http://192.168.')) {
+            callback(null, true);
+        } else {
+            // For production, maybe restrict more, but for debugging we'll reflect origin
+            callback(null, true);
         }
-        // For production, you might want to be more restrictive, 
-        // but for now let's allow all during debugging if needed or reflect origin
-        return callback(null, true);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
-}));
+};
 
-// Explicitly handle Preflight requests
-app.options('*', cors());
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
+// Manual CORS fallback for certain environments
+app.use((req, res, next) => {
+    const origin = req.headers.origin as string;
+    if (origin && (allowedOrigins.includes(origin) || origin.startsWith('http://localhost'))) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
+    next();
+});
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
@@ -297,6 +307,129 @@ app.get('/api/formulas', authenticateToken, async (req: Request, res: Response):
         res.json(formulas);
     } catch (error) {
         res.status(500).json({ error: 'Error al obtener fórmulas' });
+    }
+});
+
+// --- LIBRARIES (FORMULAS STANDARD) ---
+
+app.get('/api/marcas', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const marcas = await prisma.marca.findMany({ orderBy: { NOMBRE: 'asc' } });
+        res.json(marcas);
+    } catch (error: any) {
+        console.error('[ERROR] /api/marcas:', error.message);
+        res.status(500).json({ error: 'Error al obtener marcas', details: error.message });
+    }
+});
+
+app.get('/api/cartas', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const cartas = await prisma.carta.findMany({ orderBy: { CARTA: 'asc' } });
+        res.json(cartas);
+    } catch (error: any) {
+        console.error('[ERROR] /api/cartas:', error.message);
+        res.status(500).json({ error: 'Error al obtener cartas', details: error.message });
+    }
+});
+
+app.get('/api/productos-standard', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const productos = await prisma.producto.findMany({ orderBy: { PRODUCTO: 'asc' } });
+        res.json(productos);
+    } catch (error: any) {
+        console.error('[ERROR] /api/productos-standard:', error.message);
+        res.status(500).json({ error: 'Error al obtener productos', details: error.message });
+    }
+});
+
+app.get('/api/formulas-standard', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { idmarca, idproducto, idcarta, q } = req.query;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 25;
+        const skip = (page - 1) * limit;
+
+        const where: any = {};
+        if (idmarca && !isNaN(Number(idmarca))) where.IDMARCA = Number(idmarca);
+        if (idproducto && !isNaN(Number(idproducto))) where.IDPRODUCTO = Number(idproducto);
+        if (idcarta && !isNaN(Number(idcarta))) where.IDCARTA = Number(idcarta);
+        if (q) {
+            where.NOMBRE = { contains: String(q), mode: 'insensitive' };
+        }
+
+        const formulas = await prisma.formula.findMany({
+            where,
+            include: { marca: true, producto: true, carta: true },
+            skip,
+            take: limit,
+            orderBy: { NOMBRE: 'asc' }
+        });
+
+        res.json(formulas);
+    } catch (error: any) {
+        console.error('[ERROR] /api/formulas-standard:', error.message);
+        res.status(500).json({ error: 'Error al obtener fórmulas standard', details: error.message });
+    }
+});
+
+app.post('/api/componentes/densidades', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { codigos } = req.body;
+        if (!codigos || !Array.isArray(codigos)) return res.status(400).json({ error: 'Codigos requeridos' });
+
+        console.log('[DEBUG] Buscando densidades para:', codigos);
+        const results: any[] = [];
+
+        // 1. Intentar en tabla BASES
+        try {
+            const basesRes: any[] = await prisma.$queryRawUnsafe(
+                `SELECT "CODIGO" as "CODIGO", "DENSIDAD" FROM "BASES" WHERE "CODIGO" = ANY($1)`,
+                codigos
+            );
+            if (basesRes && basesRes.length > 0) {
+                console.log('[DEBUG] Encontrados en BASES:', basesRes.map(b => b.CODIGO));
+                results.push(...basesRes);
+            }
+        } catch (e: any) {
+            console.log('[DEBUG] Falló consulta a tabla BASES:', e.message);
+        }
+
+        // 2. Intentar en tabla COLORANTES (Columna PRODUCTO es el código)
+        try {
+            const colorantesRes: any[] = await prisma.$queryRawUnsafe(
+                `SELECT "PRODUCTO" as "CODIGO", "DENSIDAD" FROM "COLORANTES" WHERE "PRODUCTO" = ANY($1)`,
+                codigos
+            );
+            if (colorantesRes && colorantesRes.length > 0) {
+                console.log('[DEBUG] Encontrados en COLORANTES (PRODUCTO):', colorantesRes.map(c => c.CODIGO));
+                results.push(...colorantesRes);
+            }
+        } catch (e: any) {
+            console.log('[DEBUG] Falló consulta a COLORANTES (PRODUCTO):', e.message);
+        }
+
+        // 3. Intentar en tabla COLORANTES (Columna CODIGO)
+        try {
+            const colorantesRes2: any[] = await prisma.$queryRawUnsafe(
+                `SELECT "CODIGO"::text as "CODIGO", "DENSIDAD" FROM "COLORANTES" WHERE "CODIGO"::text = ANY($1)`,
+                codigos
+            );
+            if (colorantesRes2 && colorantesRes2.length > 0) {
+                console.log('[DEBUG] Encontrados en COLORANTES (CODIGO):', colorantesRes2.map(c => c.CODIGO));
+                results.push(...colorantesRes2);
+            }
+        } catch (e: any) { }
+
+        // Eliminar duplicados y asegurar que la densidad sea numérica
+        const uniqueResults = Array.from(new Map(results.map(item => [
+            item.CODIGO,
+            { ...item, DENSIDAD: parseFloat(item.DENSIDAD) || 1.0 }
+        ])).values());
+
+        res.json(uniqueResults);
+    } catch (error: any) {
+        console.error('[ERROR] /api/componentes/densidades:', error.message);
+        res.status(500).json({ error: 'Error al obtener densidades', details: error.message });
     }
 });
 

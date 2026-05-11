@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Beaker, Tag, User, Calendar, Info, Layers, Droplets, ChevronRight, MessageSquare, ClipboardList, Activity } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 
 interface DetalleFormulaProps {
     formula: any;
@@ -10,6 +11,68 @@ interface DetalleFormulaProps {
 
 export default function DetalleFormula({ formula, isOpen, onClose }: DetalleFormulaProps) {
     const [activeTab, setActiveTab] = useState<'mezcla' | 'lab' | 'procesos' | 'obs'>('mezcla');
+    const [densities, setDensities] = useState<Record<string, number>>({});
+    const [calculating, setCalculating] = useState(false);
+
+    useEffect(() => {
+        if (!isOpen || !formula) return;
+
+        const fetchDensities = async () => {
+            setCalculating(true);
+            const codes = new Set<string>();
+
+            // Identificar Código de la Base
+            // En Standard: puede ser el nombre (PRODUCTO) o el ID
+            console.log("FORMULAPRODUCTO", formula, formula.producto)
+            const baseCodeName = formula.RESERVA;
+            const baseId = formula.RESERVA;
+            const baseCodePersonal = formula.CBASE;
+
+            if (baseCodeName) codes.add(baseCodeName);
+            if (baseId) codes.add(baseId);
+            if (baseCodePersonal) codes.add(baseCodePersonal);
+
+            for (let i = 1; i <= 13; i++) {
+                const cCode = formula[`C${i}`];
+                if (cCode) codes.add(cCode);
+            }
+            for (let i = 1; i <= 6; i++) {
+                const aCode = formula[`A${i}`];
+                if (aCode) codes.add(aCode);
+            }
+            for (let i = 1; i <= 2; i++) {
+                const bCode = formula[`B${i}`];
+                if (bCode) codes.add(bCode);
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${API_BASE_URL}/api/componentes/densidades`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ codigos: Array.from(codes) })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    const densityMap: Record<string, number> = {};
+                    data.forEach((item: any) => {
+                        densityMap[item.CODIGO] = parseFloat(item.DENSIDAD) || 1.0;
+                    });
+                    setDensities(densityMap);
+                }
+            } catch (err) {
+                console.error("Error fetching densities:", err);
+            } finally {
+                setCalculating(false);
+            }
+        };
+
+        fetchDensities();
+    }, [isOpen, formula]);
 
     if (!formula) return null;
 
@@ -24,77 +87,108 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
         }
     };
 
-    // Extract ingredients and calculate totals
-    const ingredients: any[] = [];
-    let rawComponentsSum = 0;
-    const density = parseFloat(formula.DENSIDADMEZCLA || '1');
-    const safeDensity = density > 0 ? density : 1;
+    // --- CÁLCULOS DE VOLUMEN Y DENSIDAD (Física Real) ---
 
-    // 1. Calculate raw components sum (WITHOUT density)
-    const componentsList: any[] = [];
+    const rawIngredients: any[] = [];
+    console.log("DENSIDADES DE TODOS LOS ELEMENTOS", densities)
+    // 1. Identificar Base
+    const baseCodeName = formula.producto?.PRODUCTO;
+    const baseId = formula.IDPRODUCTO?.toString();
+    const baseCodePersonal = formula.CBASE;
 
-    // Group C: C1-C13
+    // Seleccionar el código que realmente tenga densidad en el mapa, o el nombre por defecto
+    const baseCode = (baseCodeName && densities[baseCodeName]) ? baseCodeName :
+        (baseId && densities[baseId]) ? baseId :
+            (baseCodePersonal && densities[baseCodePersonal]) ? baseCodePersonal :
+                (baseCodeName || baseCodePersonal || baseId);
+
+    const baseMass = parseFloat(formula.BASE || formula.QBASE || '0');
+    console.log("FORMULARECIBIDA", formula);
+    console.log("BASE RECIBIDA", baseCode, baseMass);
+    if (baseCode && baseMass > 0) {
+        rawIngredients.push({ code: baseCode, mass: baseMass, type: 'BASE' });
+    }
+
+    // 2. Colorantes
     for (let i = 1; i <= 13; i++) {
         const code = formula[`C${i}`];
-        const rawQty = parseFloat(formula[`Q${i}`] || '0');
-        if (code && rawQty > 0) {
-            rawComponentsSum += rawQty;
-            componentsList.push({ code, rawQty, type: 'COLORANTE' });
+        const mass = parseFloat(formula[`Q${i}`] || '0');
+        if (code && mass > 0) {
+            rawIngredients.push({ code, mass, type: 'COLORANTE' });
         }
     }
-
-    // Group A: A1-A5
-    for (let i = 1; i <= 5; i++) {
+    // 3. Aditivos A
+    for (let i = 1; i <= 6; i++) {
         const code = formula[`A${i}`];
-        const rawQty = parseFloat(formula[`AQ${i}`] || '0');
-        if (code && rawQty > 0) {
-            rawComponentsSum += rawQty;
-            componentsList.push({ code, rawQty, type: 'ADITIVO A' });
+        const mass = parseFloat(formula[`AQ${i}`] || '0');
+        if (code && mass > 0) {
+            rawIngredients.push({ code, mass, type: 'ADITIVO A' });
         }
     }
-
-    // Group B: B1-B2
+    // 4. Aditivos B
     for (let i = 1; i <= 2; i++) {
         const code = formula[`B${i}`];
-        const rawQty = parseFloat(formula[`BQ${i}`] || '0');
-        if (code && rawQty > 0) {
-            rawComponentsSum += rawQty;
-            componentsList.push({ code, rawQty, type: 'ADITIVO B' });
+        const mass = parseFloat(formula[`BQ${i}`] || '0');
+        if (code && mass > 0) {
+            rawIngredients.push({ code, mass, type: 'ADITIVO B' });
         }
     }
 
-    // 2. Calculate Raw Base Quantity
-    const rawBase = Math.max(0, 1000 - rawComponentsSum);
+    // CÁLCULO DE DENSIDAD DE MEZCLA Y VOLUMEN TOTAL
+    // Densidad = Masa / Volumen
+    // Volumen Total = Sumatoria(Masa_i / Densidad_i)
 
-    // 3. Final display list with density applied
-    if (formula.CBASE) {
-        ingredients.push({
-            code: formula.CBASE,
-            qty: rawBase * safeDensity,
-            type: 'BASE'
-        });
-    }
+    let totalRawMass = 0;
+    let totalRawVolume = 0;
 
-    componentsList.forEach(item => {
-        ingredients.push({
-            code: item.code,
-            qty: item.rawQty * safeDensity,
-            type: item.type
-        });
+    console.log(`[DENSIDAD] --- INICIO CÁLCULO PASO A PASO ---`);
+    console.log(`[DENSIDAD] Objetivo: rho_mix = Sum(Masas) / Sum(Masas/Densidades)`);
+
+    const ingredientsWithPhysics = rawIngredients.map((ing, index) => {
+        const rho = densities[ing.code] || 1.0;
+        const vol = ing.mass / rho;
+
+        const prevMass = totalRawMass;
+        const prevVol = totalRawVolume;
+
+        totalRawMass += ing.mass;
+        totalRawVolume += vol;
+
+        console.log(`[DENSIDAD] Paso ${index + 1}: Componente ${ing.code}`);
+        console.log(`  > Masa: ${ing.mass} g`);
+        console.log(`  > Densidad Elemento: ${rho}`);
+        console.log(`  > Cociente (M/D): ${ing.mass} / ${rho} = ${vol.toFixed(4)} ml`);
+        console.log(`  > Suma Acumulada: Masa=${totalRawMass.toFixed(2)}g, Vol=${totalRawVolume.toFixed(2)}ml`);
+
+        return { ...ing, rho, vol };
     });
 
-    const totalQty = 1000 * safeDensity;
+    const calculatedMixtureDensity = totalRawVolume > 0 ? (totalRawMass / totalRawVolume) : 1.0;
+    console.log(`[DENSIDAD] RESULTADO FINAL: ${totalRawMass.toFixed(2)} / ${totalRawVolume.toFixed(2)} = ${calculatedMixtureDensity.toFixed(4)}`);
 
-    // Add accumulated and percentage
-    let accumulated = 0;
-    const processedIngredients = ingredients.map(ing => {
-        accumulated += ing.qty;
+    // Factor de escala para formar exactamente 1000 ml
+    const volumeFactor = totalRawVolume > 0 ? 1000 / totalRawVolume : 1;
+    console.log(`[DENSIDAD] Factor de volumen para 1 litro: 1000 / ${totalRawVolume.toFixed(2)} = ${volumeFactor.toFixed(4)}`);
+
+    // Cantidades finales para el usuario (Escaladas a 1 Litro)
+    let finalMassSum = 0;
+    const processedIngredients = ingredientsWithPhysics.map(ing => {
+        const finalVol = ing.vol * volumeFactor; // Volumen en ml (Suma = 1000)
+        const finalGrams = finalVol * ing.rho;   // Masa en gramos
+        finalMassSum += finalGrams;
+
+        console.log(`[FINAL] ${ing.code} | ml: ${finalVol.toFixed(2)} | g: ${finalGrams.toFixed(2)}`);
+
         return {
             ...ing,
-            accumulated,
-            percentage: totalQty > 0 ? (ing.qty / totalQty) * 100 : 0
+            ml: finalVol,
+            grams: finalGrams,
+            percentage: (finalVol / 10) // (ml / 1000) * 100
         };
     });
+
+    const mixtureDensityDisplay = totalRawVolume > 0 ? (finalMassSum / 1000) : calculatedMixtureDensity;
+    console.log(`[CÁLCULO] --- Finalizado. Masa Total: ${finalMassSum.toFixed(2)} g ---`);
 
     const processes = [
         { id: 1, text: formula.PROCESOS },
@@ -145,9 +239,9 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                             <span className="text-[10px] font-bold text-[#c07204] bg-[#c07204]/10 px-2 py-0.5 rounded border border-[#c07204]/20 uppercase tracking-widest">
                                                 {formula.CODIGO || 'SIN CÓDIGO'}
                                             </span>
-                                            {formula.DENSIDADMEZCLA && (
+                                            {mixtureDensityDisplay && (
                                                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                                                    ρ {formula.DENSIDADMEZCLA}
+                                                    ρ mix: {mixtureDensityDisplay.toFixed(4)}
                                                 </span>
                                             )}
                                         </div>
@@ -204,12 +298,19 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                         <div className="flex-grow overflow-y-auto bg-[#070B0F]">
                             {activeTab === 'mezcla' && (
                                 <div className="p-6 space-y-6">
+                                    {calculating && (
+                                        <div className="flex items-center gap-3 bg-[#c07204]/10 p-3 rounded-xl border border-[#c07204]/20 animate-pulse">
+                                            <div className="h-4 w-4 rounded-full border-2 border-[#c07204] border-t-transparent animate-spin"></div>
+                                            <p className="text-[10px] font-bold text-[#c07204] uppercase tracking-widest">Calculando densidades y volumen...</p>
+                                        </div>
+                                    )}
+
                                     {/* Summary row */}
                                     <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] px-2">
-                                        <span>Componente</span>
+                                        <span>Componente | ρ</span>
                                         <div className="flex gap-8">
-                                            <span>Gramos</span>
-                                            <span className="w-16 text-right">Acum.</span>
+                                            <span>Mililitros (ml)</span>
+                                            <span className="w-16 text-right">Gramos</span>
                                         </div>
                                     </div>
 
@@ -231,7 +332,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                                         <div>
                                                             <p className="text-sm font-bold text-white tracking-tight">{item.code}</p>
                                                             <div className="flex items-center gap-2">
-                                                                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">{item.type}</p>
+                                                                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">{item.type} | ρ {item.rho.toFixed(3)}</p>
                                                                 <span className="text-slate-700">•</span>
                                                                 <p className="text-[9px] text-blue-400 font-bold uppercase">{item.percentage.toFixed(2)}%</p>
                                                             </div>
@@ -240,12 +341,12 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                                     <div className="text-right flex items-center gap-6">
                                                         <div>
                                                             <p className={`text-lg font-mono font-bold ${item.type === 'BASE' ? 'text-[#c07204]' : 'text-white'}`}>
-                                                                {item.qty.toFixed(2)}
+                                                                {item.ml.toFixed(2)}
                                                             </p>
                                                         </div>
                                                         <div className="w-16">
                                                             <p className="text-sm font-mono font-bold text-slate-500">
-                                                                {item.accumulated.toFixed(2)}
+                                                                {item.grams.toFixed(1)}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -258,8 +359,12 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                     <div className="pt-4 space-y-4">
                                         <div className="bg-slate-900/30 p-5 rounded-[2rem] border border-white/5 space-y-3">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Mezcla</span>
-                                                <span className="text-xl font-mono font-black text-white">{totalQty.toFixed(2)} <span className="text-xs text-slate-500 font-bold ml-1">g</span></span>
+                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Volumen</span>
+                                                <span className="text-xl font-mono font-black text-white">1000.00 <span className="text-xs text-slate-500 font-bold ml-1">ml</span></span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Masa Total</span>
+                                                <span className="text-lg font-mono font-bold text-slate-400">{finalMassSum.toFixed(1)} <span className="text-xs text-slate-600 font-bold ml-1">g</span></span>
                                             </div>
                                             <div className="h-[1px] w-full bg-white/5" />
                                             <div className="grid grid-cols-2 gap-4">

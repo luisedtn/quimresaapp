@@ -70,7 +70,7 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
     // { id: 'colorimetro', icon: Scan, title: 'Colorímetro Bluetooth', desc: 'Conecta tu Nix para escanear y capturar colores.', path: '/colorimetro' },
     { id: 'scan', icon: Scan, title: 'Escaneo único', desc: 'Obtén datos espectrales, RGB, HEX, CIELAB y más.', path: '/scan' },
     { id: 'match', icon: Layers, title: 'Búsqueda de color', desc: 'Encuentra la coincidencia más cercana en bibliotecas de pintura.' },
-    { id: 'libraries', icon: Library, title: 'Gestionar bibliotecas', desc: 'Crea, adquiere y explora bibliotecas de color.' },
+    { id: 'libraries', icon: Library, title: 'Fórmulas stándard', desc: 'Explora tus fórmulas stándard.', path: '/libraries' },
     { id: 'favorites', icon: Heart, title: 'Colores favoritos', desc: 'Accede, descarga y edita tus colores favoritos.' },
     // { id: 'cloud', icon: Cloud, title: 'Panel en la nube', desc: 'Comparte colores, ve analíticas y gestiona usuarios.' },
   ];

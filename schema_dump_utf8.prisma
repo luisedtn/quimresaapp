@@ -1,4 +1,4 @@
-generator client {
+﻿generator client {
   provider = "prisma-client-js"
 }
 
@@ -186,124 +186,168 @@ model FormPersonales {
 }
 
 model Marca {
-  ID         Int       @id @default(autoincrement())
-  NOMBRE     String?   @db.VarChar(255)
-  ESPECIAL   Int?      @default(0)
-  PREFIJO    String?   @db.VarChar(50)
-  formulas   Formula[]
+  ID       Int     @id
+  NOMBRE   String?
+  ESPECIAL Int?
+  PREFIJO  String?
 
   @@map("MARCAS")
 }
 
 model Carta {
-  ID         Int       @id @default(autoincrement())
-  CARTA      String?   @db.VarChar(255)
-  CODIGO     String?   @db.VarChar(50)
-  FICHERO    String?   @db.VarChar(255)
-  FORMATO    String?   @db.VarChar(50)
+  ID         Int     @id
+  CARTA      String?
+  CODIGO     String?
+  FICHERO    String?
+  FORMATO    String?
   LONGITUD   Int?
-  METALIZADA Int?      @default(0)
-  STANDARD   Int?      @default(0)
-  formulas   Formula[]
+  METALIZADA Int?
+  STANDARD   Int?
 
   @@map("CARTAS")
 }
 
 model Producto {
-  ID         Int       @id @default(autoincrement())
-  PRODUCTO   String?   @db.VarChar(255)
-  UNIDAD     String?   @db.VarChar(50)
+  ID         Int     @id
+  PRODUCTO   String?
+  UNIDAD     String?
   DESCRIPCIO String?
-  AGUA       Int?      @default(0)
+  AGUA       String?
   MARCA      Int?
-  formulas   Formula[]
 
   @@map("PRODUCTOS")
 }
 
 model Formula {
-  id         Int       @id @default(autoincrement())
-  NOMBRE     String?   @db.VarChar(255)
-  CANTIDAD   Decimal?  @db.Decimal(20, 6)
-  RESERVA    String?   @db.VarChar(50)
-  C1         String?   @db.VarChar(50)
-  Q1         Decimal?  @db.Decimal(20, 10)
-  C2         String?   @db.VarChar(50)
-  Q2         Decimal?  @db.Decimal(20, 10)
-  C3         String?   @db.VarChar(50)
-  Q3         Decimal?  @db.Decimal(20, 10)
-  C4         String?   @db.VarChar(50)
-  Q4         Decimal?  @db.Decimal(20, 10)
-  C5         String?   @db.VarChar(50)
-  Q5         Decimal?  @db.Decimal(20, 10)
-  C6         String?   @db.VarChar(50)
-  Q6         Decimal?  @db.Decimal(20, 10)
+  id         Int      @id @default(autoincrement())
+  NOMBRE     String?  @db.VarChar(255)
+  CANTIDAD   Decimal? @db.Decimal(20, 6)
+  RESERVA    String?  @db.VarChar(50)
+  C1         String?  @db.VarChar(50)
+  Q1         Decimal? @db.Decimal(20, 10)
+  C2         String?  @db.VarChar(50)
+  Q2         Decimal? @db.Decimal(20, 10)
+  C3         String?  @db.VarChar(50)
+  Q3         Decimal? @db.Decimal(20, 10)
+  C4         String?  @db.VarChar(50)
+  Q4         Decimal? @db.Decimal(20, 10)
+  C5         String?  @db.VarChar(50)
+  Q5         Decimal? @db.Decimal(20, 10)
+  C6         String?  @db.VarChar(50)
+  Q6         Decimal? @db.Decimal(20, 10)
   MENSAJE    String?
-  L          String?   @db.VarChar(50)
-  A          String?   @db.VarChar(50)
-  B          String?   @db.VarChar(50)
-  BASE       String?   @db.VarChar(50)
-  QV1        Decimal?  @db.Decimal(20, 10)
-  QV2        Decimal?  @db.Decimal(20, 10)
-  QV3        Decimal?  @db.Decimal(20, 10)
-  QV4        Decimal?  @db.Decimal(20, 10)
-  QV5        Decimal?  @db.Decimal(20, 10)
-  QV6        Decimal?  @db.Decimal(20, 10)
-  BASEV      String?   @db.VarChar(50)
-  A1         String?   @db.VarChar(50)
-  AQ1        Decimal?  @db.Decimal(20, 10)
-  A2         String?   @db.VarChar(50)
-  AQ2        Decimal?  @db.Decimal(20, 10)
-  A3         String?   @db.VarChar(50)
-  AQ3        Decimal?  @db.Decimal(20, 10)
-  A4         String?   @db.VarChar(50)
-  AQ4        Decimal?  @db.Decimal(20, 10)
-  A5         String?   @db.VarChar(50)
-  AQ5        Decimal?  @db.Decimal(20, 10)
-  A6         String?   @db.VarChar(50)
-  AQ6        Decimal?  @db.Decimal(20, 10)
-  C7         String?   @db.VarChar(50)
-  Q7         Decimal?  @db.Decimal(20, 10)
-  C8         String?   @db.VarChar(50)
-  Q8         Decimal?  @db.Decimal(20, 10)
-  C9         String?   @db.VarChar(50)
-  Q9         Decimal?  @db.Decimal(20, 10)
-  C10        String?   @db.VarChar(50)
-  Q10        Decimal?  @db.Decimal(20, 10)
-  C11        String?   @db.VarChar(50)
-  Q11        Decimal?  @db.Decimal(20, 10)
-  C12        String?   @db.VarChar(50)
-  Q12        Decimal?  @db.Decimal(20, 10)
-  B1         String?   @db.VarChar(50)
-  BQ1        Decimal?  @db.Decimal(20, 10)
-  B2         String?   @db.VarChar(50)
-  BQ2        Decimal?  @db.Decimal(20, 10)
-  C13        String?   @db.VarChar(50)
-  Q13        Decimal?  @db.Decimal(20, 10)
+  L          String?  @db.VarChar(50)
+  A          String?  @db.VarChar(50)
+  B          String?  @db.VarChar(50)
+  BASE       String?  @db.VarChar(50)
+  QV1        Decimal? @db.Decimal(20, 10)
+  QV2        Decimal? @db.Decimal(20, 10)
+  QV3        Decimal? @db.Decimal(20, 10)
+  QV4        Decimal? @db.Decimal(20, 10)
+  QV5        Decimal? @db.Decimal(20, 10)
+  QV6        Decimal? @db.Decimal(20, 10)
+  BASEV      String?  @db.VarChar(50)
+  A1         String?  @db.VarChar(50)
+  AQ1        Decimal? @db.Decimal(20, 10)
+  A2         String?  @db.VarChar(50)
+  AQ2        Decimal? @db.Decimal(20, 10)
+  A3         String?  @db.VarChar(50)
+  AQ3        Decimal? @db.Decimal(20, 10)
+  A4         String?  @db.VarChar(50)
+  AQ4        Decimal? @db.Decimal(20, 10)
+  A5         String?  @db.VarChar(50)
+  AQ5        Decimal? @db.Decimal(20, 10)
+  A6         String?  @db.VarChar(50)
+  AQ6        Decimal? @db.Decimal(20, 10)
+  C7         String?  @db.VarChar(50)
+  Q7         Decimal? @db.Decimal(20, 10)
+  C8         String?  @db.VarChar(50)
+  Q8         Decimal? @db.Decimal(20, 10)
+  C9         String?  @db.VarChar(50)
+  Q9         Decimal? @db.Decimal(20, 10)
+  C10        String?  @db.VarChar(50)
+  Q10        Decimal? @db.Decimal(20, 10)
+  C11        String?  @db.VarChar(50)
+  Q11        Decimal? @db.Decimal(20, 10)
+  C12        String?  @db.VarChar(50)
+  Q12        Decimal? @db.Decimal(20, 10)
+  B1         String?  @db.VarChar(50)
+  BQ1        Decimal? @db.Decimal(20, 10)
+  B2         String?  @db.VarChar(50)
+  BQ2        Decimal? @db.Decimal(20, 10)
+  C13        String?  @db.VarChar(50)
+  Q13        Decimal? @db.Decimal(20, 10)
   PROCESOS   String?
-  PROYECTO   String?   @db.VarChar(255)
-  VISCOSIDAD String?   @db.VarChar(50)
-  DELTA      String?   @db.VarChar(50)
-  LO         String?   @db.VarChar(50)
-  AO         String?   @db.VarChar(50)
-  BO         String?   @db.VarChar(50)
-  RO         String?   @db.VarChar(50)
-  GO         String?   @db.VarChar(50)
-  RB         String?   @db.VarChar(50)
-  C          String?   @db.VarChar(50)
-  H          String?   @db.VarChar(50)
-  D          String?   @db.VarChar(50)
-  CO         String?   @db.VarChar(50)
-  HO         String?   @db.VarChar(50)
-  DO         String?   @db.VarChar(50)
+  PROYECTO   String?  @db.VarChar(255)
+  VISCOSIDAD String?  @db.VarChar(50)
+  DELTA      String?  @db.VarChar(50)
+  LO         String?  @db.VarChar(50)
+  AO         String?  @db.VarChar(50)
+  BO         String?  @db.VarChar(50)
+  RO         String?  @db.VarChar(50)
+  GO         String?  @db.VarChar(50)
+  RB         String?  @db.VarChar(50)
+  C          String?  @db.VarChar(50)
+  H          String?  @db.VarChar(50)
+  D          String?  @db.VarChar(50)
+  CO         String?  @db.VarChar(50)
+  HO         String?  @db.VarChar(50)
+  DO         String?  @db.VarChar(50)
   IDMARCA    Int?
   IDPRODUCTO Int?
   IDCARTA    Int?
-  NOMUESTRAS Int?      @default(0)
-  marca      Marca?    @relation(fields: [IDMARCA], references: [ID])
-  producto   Producto? @relation(fields: [IDPRODUCTO], references: [ID])
-  carta      Carta?    @relation(fields: [IDCARTA], references: [ID])
+  NOMUESTRAS Int?     @default(0)
 
+  @@unique([NOMBRE, IDMARCA, IDPRODUCTO, IDCARTA], map: "idx_formulas_unique")
+  @@index([NOMBRE], map: "idx_formulas_nombre")
+  @@index([IDPRODUCTO], map: "idx_formulas_producto")
   @@map("FORMULAS")
 }
+
+model COLORANTES {
+  ID             Int     @id
+  PRODUCTO       String? @db.VarChar(50)
+  COLORANTE      Int?
+  PBT            Int?
+  UNIDAD         String? @db.VarChar(2)
+  PROPV          Int?
+  PROPP          Int?
+  PRECIOKG       Float?
+  GRUPO          String? @db.VarChar(50)
+  ETIQUETAPB     Int?
+  ETIQUETASI     Int?
+  CALIDAD        String? @db.VarChar(20)
+  CODIGOETIQ     String? @db.VarChar(8)
+  CODIGO         Int?
+  SUBCODIGO      String? @db.VarChar(4)
+  DESCRIPCIO     String? @db.VarChar(50)
+  COLOR          String? @db.VarChar(10)
+  AGUA           Int?
+  BASEPESO       Int?
+  BASEVOLUME     Int?
+  PASTA1         String? @db.VarChar(3)
+  PASTA1PESO     Int?
+  PASTA1VOLU     Int?
+  PASTA2         String? @db.VarChar(3)
+  PASTA2PESO     Int?
+  PASTA2VOLU     Int?
+  PASTA3         String? @db.VarChar(3)
+  PASTA3PESO     Int?
+  PASTA3VOLU     Int?
+  DESCBASET      String? @db.VarChar(25)
+  METALIZADA     Int?
+  ESPECIAL       Int?
+  DENSIDAD       Float?
+  VISUALIZAR     Int?
+  DISPONIBLE     Int?
+  MARCA          Int?
+  PORDESPERDICIO Float?
+  LIMITEREORDEN  Float?
+  CANTIDADACTUAL Float?
+  COSTO          Float?
+  PREFIJO        String? @db.VarChar(10)
+  CONSECUTIVO    Int?
+  BLANCO         Int?
+}
+
 
