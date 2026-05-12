@@ -29,24 +29,25 @@ export default function ColorAiChat() {
                 try {
                     const data = JSON.parse(qcData);
                     if (data.standard && data.sample) {
-                        let contextMsg = `Hola. He analizado los datos actuales: 
-            - Patrón: L=${data.standard.l}, a=${data.standard.a}, b=${data.standard.b}
-            - Muestra: L=${data.sample.l}, a=${data.sample.a}, b=${data.sample.b}
-            - Desviación (Deltas): dL=${data.dL || '0'}, da=${data.dA || '0'}, db=${data.dB || '0'}
+                        let contextMsg = `Hola. He analizado los datos de la fórmula seleccionada: 
+            - Patrón (Target): L=${data.standard.l}, a=${data.standard.a}, b=${data.standard.b}
+            - Fórmula base: L=${data.sample.l}, a=${data.sample.a}, b=${data.sample.b}
+            - Desviación actual: dL=${data.dL || '0'}, da=${data.dA || '0'}, db=${data.dB || '0'}
             - Delta E (CIE2000): ${data.de}`;
 
                         if (data.componentColors && data.componentColors.length > 0) {
                             contextMsg += `\n\nComponentes de la fórmula actual:`;
                             data.componentColors.forEach((cc: any) => {
+                                const qty = cc.quantity ? cc.quantity.toFixed(3) : '0.000';
                                 if (cc.isBase) {
-                                    contextMsg += `\n- [BASE] ${cc.code}: ${cc.baseType === 'white' ? 'Blanca' : cc.baseType === 'transparent' ? 'Transparente' : 'Color ' + cc.color}`;
+                                    contextMsg += `\n- [BASE] ${cc.code}: ${qty} (Color: ${cc.color})`;
                                 } else {
-                                    contextMsg += `\n- [PIGMENTO] ${cc.code}: Color RGB ${cc.color}`;
+                                    contextMsg += `\n- [PIGMENTO] ${cc.code}: ${qty} (Color RGB: ${cc.color})`;
                                 }
                             });
                         }
 
-                        contextMsg += `\n\n¿Cómo puedo ajustar esta mezcla para reducir el Delta E?`;
+                        contextMsg += `\n\n¿Qué pigmentos y qué cantidades en gramos debo adicionar para reducir el Delta E y acercarme más al patrón?`;
                         setMessages([{ role: 'ai', text: contextMsg }]);
                     }
                 } catch (e) {

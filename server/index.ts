@@ -117,7 +117,7 @@ PROCEDIMIENTO DE CORRECCIÓN:
    - Prioriza siempre los pigmentos que ya están en la fórmula actual.
 
 3. Sugerencia de Cantidades:
-   - Para ajustes finos, sugiere adiciones porcentuales sobre el peso total (ej. "Añadir 0.2% de pigmento X").
+   - Basándote en que las fórmulas estándar suelen estar expresadas para 1000g (1kg), sugiere adiciones precisas en gramos (ej. "Añadir 5g de pigmento X").
    - Recuerda que es mejor añadir poco a poco que pasarse de color.
 
 REGLAS DE RESPUESTA:

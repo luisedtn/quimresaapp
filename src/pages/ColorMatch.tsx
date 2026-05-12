@@ -40,6 +40,7 @@ interface ComponentColor {
     rgb: string;       // hex color
     isBase: boolean;
     baseType?: 'white' | 'transparent' | 'colored' | 'colorant';
+    quantity?: number; // Cantidad en la fórmula
 }
 
 // ----------------------------------------------------------------
@@ -174,8 +175,48 @@ export default function ColorMatch() {
                 body: JSON.stringify({ codigos: codes }),
             });
             if (res.ok) {
-                const data = await res.json();
-                setComponentColors(data);
+                const data: ComponentColor[] = await res.json();
+
+                // Mapear cantidades desde la fórmula a los colores obtenidos
+                const enrichedData = data.map(cc => {
+                    const code = cc.code;
+                    let quantity = 0;
+
+                    // Buscar en Base
+                    if (code === f.BASE || code === f.RESERVA || code === f.CBASE) {
+                        quantity = parseFloat(f.QBASE || f.CANTIDAD || '0');
+                    } else {
+                        // Buscar en C(1-13)
+                        for (let i = 1; i <= 13; i++) {
+                            if (f[`C${i}`] === code) {
+                                quantity = parseFloat(f[`Q${i}`] || '0');
+                                break;
+                            }
+                        }
+                        // Si no se encontró, buscar en A(1-6)
+                        if (quantity === 0) {
+                            for (let i = 1; i <= 6; i++) {
+                                if (f[`A${i}`] === code) {
+                                    quantity = parseFloat(f[`AQ${i}`] || '0');
+                                    break;
+                                }
+                            }
+                        }
+                        // Si no se encontró, buscar en B(1-5)
+                        if (quantity === 0) {
+                            for (let i = 1; i <= 5; i++) {
+                                if (f[`B${i}`] === code) {
+                                    quantity = parseFloat(f[`BQ${i}`] || '0');
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    return { ...cc, quantity };
+                });
+
+                setComponentColors(enrichedData);
             }
         } catch (err) {
             console.error('Error fetching component colors:', err);
@@ -183,6 +224,47 @@ export default function ColorMatch() {
             setLoadingComponents(false);
         }
     };
+
+    // Auto-update AI context when selection or colors change
+    useEffect(() => {
+        if (!selectedMatch || componentColors.length === 0) return;
+
+        const f = selectedMatch.formula;
+        const l = parseFloat(patronL);
+        const a = parseFloat(patronA);
+        const b = parseFloat(patronB);
+
+        const qcContext = {
+            standard: {
+                l, a, b,
+                hex: labToHex(l, a, b),
+                name: 'Patrón (Búsqueda de Color)',
+            },
+            sample: {
+                l: parseFloat(f.L || '0'),
+                a: parseFloat(f.A || '0'),
+                b: parseFloat(f.B || '0'),
+                hex: selectedMatch.hex,
+                name: f.NOMBREFORMULA || f.NOMBRE || 'Fórmula Encontrada',
+            },
+            dL: (parseFloat(f.L || '0') - l).toFixed(2),
+            dA: (parseFloat(f.A || '0') - a).toFixed(2),
+            dB: (parseFloat(f.B || '0') - b).toFixed(2),
+            de: selectedMatch.deltaE.toFixed(2),
+            formulaSource: selectedMatch.source,
+            componentColors: componentColors.map(cc => ({
+                code: cc.code,
+                color: cc.rgb,
+                isBase: cc.isBase,
+                baseType: cc.baseType,
+                quantity: cc.quantity,
+            })),
+            timestamp: new Date().toISOString(),
+            isMatchMode: true
+        };
+
+        localStorage.setItem('qc_context', JSON.stringify(qcContext));
+    }, [selectedMatch, componentColors, patronL, patronA, patronB]);
 
     // ----------------------------------------------------------------
     // Send to Quality Control
