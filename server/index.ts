@@ -380,18 +380,32 @@ app.post('/api/componentes/densidades', authenticateToken, async (req: Request, 
         console.log('[DEBUG] Buscando densidades para:', codigos);
         const results: any[] = [];
 
-        // 1. Intentar en tabla BASES
+        // 1. Intentar en tabla BASES (mayúsculas)
         try {
             const basesRes: any[] = await prisma.$queryRawUnsafe(
                 `SELECT "CODIGO" as "CODIGO", "DENSIDAD" FROM "BASES" WHERE "CODIGO" = ANY($1)`,
                 codigos
             );
             if (basesRes && basesRes.length > 0) {
-                console.log('[DEBUG] Encontrados en BASES:', basesRes.map(b => b.CODIGO));
+                console.log('[DEBUG] Encontrados en BASES (con comillas):', basesRes.map(b => b.CODIGO));
                 results.push(...basesRes);
             }
         } catch (e: any) {
-            console.log('[DEBUG] Falló consulta a tabla BASES:', e.message);
+            console.log('[DEBUG] Falló consulta a tabla "BASES":', e.message);
+        }
+
+        // 1.1 Intentar en tabla BASES (sin comillas)
+        try {
+            const basesResLow: any[] = await prisma.$queryRawUnsafe(
+                `SELECT CODIGO as "CODIGO", DENSIDAD FROM BASES WHERE CODIGO = ANY($1)`,
+                codigos
+            );
+            if (basesResLow && basesResLow.length > 0) {
+                console.log('[DEBUG] Encontrados en BASES (sin comillas):', basesResLow.map(b => b.CODIGO));
+                results.push(...basesResLow);
+            }
+        } catch (e: any) {
+            console.log('[DEBUG] Falló consulta a tabla BASES (sin comillas):', e.message);
         }
 
         // 2. Intentar en tabla COLORANTES (Columna PRODUCTO es el código)
@@ -401,11 +415,25 @@ app.post('/api/componentes/densidades', authenticateToken, async (req: Request, 
                 codigos
             );
             if (colorantesRes && colorantesRes.length > 0) {
-                console.log('[DEBUG] Encontrados en COLORANTES (PRODUCTO):', colorantesRes.map(c => c.CODIGO));
+                console.log('[DEBUG] Encontrados en COLORANTES ("PRODUCTO"):', colorantesRes.map(c => c.CODIGO));
                 results.push(...colorantesRes);
             }
         } catch (e: any) {
-            console.log('[DEBUG] Falló consulta a COLORANTES (PRODUCTO):', e.message);
+            console.log('[DEBUG] Falló consulta a "COLORANTES" ("PRODUCTO"):', e.message);
+        }
+
+        // 2.1 Intentar en tabla COLORANTES (sin comillas, columna PRODUCTO)
+        try {
+            const colorantesResLow: any[] = await prisma.$queryRawUnsafe(
+                `SELECT PRODUCTO as "CODIGO", DENSIDAD FROM COLORANTES WHERE PRODUCTO = ANY($1)`,
+                codigos
+            );
+            if (colorantesResLow && colorantesResLow.length > 0) {
+                console.log('[DEBUG] Encontrados en COLORANTES (PRODUCTO sin comillas):', colorantesResLow.map(c => c.CODIGO));
+                results.push(...colorantesResLow);
+            }
+        } catch (e: any) {
+            console.log('[DEBUG] Falló consulta a COLORANTES (PRODUCTO sin comillas):', e.message);
         }
 
         // 3. Intentar en tabla COLORANTES (Columna CODIGO)
@@ -415,8 +443,20 @@ app.post('/api/componentes/densidades', authenticateToken, async (req: Request, 
                 codigos
             );
             if (colorantesRes2 && colorantesRes2.length > 0) {
-                console.log('[DEBUG] Encontrados en COLORANTES (CODIGO):', colorantesRes2.map(c => c.CODIGO));
+                console.log('[DEBUG] Encontrados en "COLORANTES" ("CODIGO"):', colorantesRes2.map(c => c.CODIGO));
                 results.push(...colorantesRes2);
+            }
+        } catch (e: any) { }
+
+        // 3.1 Intentar en tabla COLORANTES (sin comillas, columna CODIGO)
+        try {
+            const colorantesRes2Low: any[] = await prisma.$queryRawUnsafe(
+                `SELECT CODIGO::text as "CODIGO", DENSIDAD FROM COLORANTES WHERE CODIGO::text = ANY($1)`,
+                codigos
+            );
+            if (colorantesRes2Low && colorantesRes2Low.length > 0) {
+                console.log('[DEBUG] Encontrados en COLORANTES (CODIGO sin comillas):', colorantesRes2Low.map(c => c.CODIGO));
+                results.push(...colorantesRes2Low);
             }
         } catch (e: any) { }
 

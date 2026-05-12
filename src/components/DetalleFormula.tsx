@@ -28,9 +28,15 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
             const baseId = formula.RESERVA;
             const baseCodePersonal = formula.CBASE;
 
-            if (baseCodeName) codes.add(baseCodeName);
-            if (baseId) codes.add(baseId);
-            if (baseCodePersonal) codes.add(baseCodePersonal);
+            if (baseCodeName) {
+                codes.add(baseCodeName);
+            } else {
+                if (baseId) {
+                    codes.add(baseId);
+                } else {
+                    if (baseCodePersonal) codes.add(baseCodePersonal);
+                }
+            }
 
             for (let i = 1; i <= 13; i++) {
                 const cCode = formula[`C${i}`];
