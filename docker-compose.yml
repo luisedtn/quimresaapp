@@ -7,7 +7,7 @@ services:
     # build: . # Portainer Swarm no soporta builds locales fácilmente, mejor subir imagen o usar git
     environment:
       - DATABASE_URL=postgresql://postgres:9db5e5a64387efaa96264ebd79551fd9@postgres:5432/quimresa?schema=public
-      - JWT_SECRET=parangaricutirimicuaro
+      - JWT_SECRET=${JWT_SECRET}
       - PORT=3001
     networks:
       - traefik_public

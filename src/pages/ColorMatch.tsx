@@ -39,7 +39,7 @@ interface ComponentColor {
     code: string;
     rgb: string;       // hex color
     isBase: boolean;
-    baseType?: 'white' | 'transparent' | 'colored';
+    baseType?: 'white' | 'transparent' | 'colored' | 'colorant';
 }
 
 // ----------------------------------------------------------------
@@ -60,7 +60,7 @@ export default function ColorMatch() {
 
     // Search & results
     const [searchResults, setSearchResults] = useState<MatchResult[]>([]);
-    const [maxResults, setMaxResults] = useState(10);
+    const [maxResults, setMaxResults] = useState(5);
     const [isSearching, setIsSearching] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
 
@@ -525,11 +525,11 @@ export default function ColorMatch() {
                                         {componentColors.map((cc, idx) => (
                                             <div key={idx} className="flex items-center gap-3 bg-slate-950/60 p-3 rounded-xl border border-slate-800/50">
                                                 <div
-                                                    className="h-8 w-8 rounded-lg border border-slate-700 flex-shrink-0 shadow-inner"
+                                                    className={`h-8 w-8 rounded-lg flex-shrink-0 shadow-inner border-2 ${cc.isBase ? 'border-blue-500/60' : 'border-violet-500/60'}`}
                                                     style={{
-                                                        backgroundColor: cc.baseType === 'transparent' ? 'transparent' : cc.rgb || '#333',
+                                                        backgroundColor: cc.baseType === 'transparent' ? '#fff' : (cc.rgb || '#555'),
                                                         backgroundImage: cc.baseType === 'transparent'
-                                                            ? 'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)'
+                                                            ? 'linear-gradient(45deg, #aaa 25%, transparent 25%), linear-gradient(-45deg, #aaa 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #aaa 75%), linear-gradient(-45deg, transparent 75%, #aaa 75%)'
                                                             : undefined,
                                                         backgroundSize: cc.baseType === 'transparent' ? '8px 8px' : undefined,
                                                         backgroundPosition: cc.baseType === 'transparent' ? '0 0, 0 4px, 4px -4px, -4px 0px' : undefined,
@@ -537,7 +537,7 @@ export default function ColorMatch() {
                                                 />
                                                 <div className="min-w-0">
                                                     <p className="text-[10px] font-bold text-white truncate">{cc.code}</p>
-                                                    <p className="text-[8px] text-slate-500 font-bold uppercase">
+                                                    <p className={`text-[8px] font-bold uppercase ${cc.isBase ? 'text-blue-400' : 'text-violet-400'}`}>
                                                         {cc.isBase
                                                             ? cc.baseType === 'white' ? 'Base Blanca'
                                                                 : cc.baseType === 'transparent' ? 'Base Transparente'

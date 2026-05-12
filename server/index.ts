@@ -644,7 +644,7 @@ app.post('/api/componentes/colores', authenticateToken, async (req: Request, res
             console.log('[COLORES] Falló consulta BASES:', e.message);
         }
 
-        // 2. Check COLORANTES table – COLOR field is the RGB int value
+        // 2. Check COLORANTES table – COLOR field is stored as BGR integer (Delphi/Windows format)
         try {
             const colorantesRes: any[] = await prisma.$queryRawUnsafe(
                 `SELECT "PRODUCTO" as "CODIGO", "COLOR" FROM "COLORANTES" WHERE "PRODUCTO" = ANY($1)`,
@@ -654,15 +654,14 @@ app.post('/api/componentes/colores', authenticateToken, async (req: Request, res
                 if (processed.has(c.CODIGO)) continue;
                 processed.add(c.CODIGO);
 
-                // The COLOR field in COLORANTES is typically an integer RGB value
+                // COLOR is stored in BGR format (Delphi/Windows convention): swap B and R channels
                 let rgb = '#333333';
                 try {
                     const colorInt = parseInt(c.COLOR);
-                    if (!isNaN(colorInt) && colorInt > 0) {
-                        // Convert integer color to hex RGB
-                        const r = (colorInt >> 16) & 0xFF;
+                    if (!isNaN(colorInt) && colorInt >= 0) {
+                        const b = (colorInt >> 16) & 0xFF; // high byte is Blue in BGR
                         const g = (colorInt >> 8) & 0xFF;
-                        const b = colorInt & 0xFF;
+                        const r = colorInt & 0xFF;          // low byte is Red in BGR
                         rgb = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
                     }
                 } catch { }
@@ -670,6 +669,7 @@ app.post('/api/componentes/colores', authenticateToken, async (req: Request, res
                     code: c.CODIGO,
                     rgb,
                     isBase: false,
+                    baseType: 'colorant',
                 });
             }
         } catch (e: any) {
