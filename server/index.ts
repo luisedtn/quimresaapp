@@ -465,11 +465,234 @@ app.post('/api/componentes/densidades', authenticateToken, async (req: Request, 
             item.CODIGO,
             { ...item, DENSIDAD: parseFloat(item.DENSIDAD) || 1.0 }
         ])).values());
-
+        console.log("RESULTADOSRESULTANTES", uniqueResults);
         res.json(uniqueResults);
     } catch (error: any) {
         console.error('[ERROR] /api/componentes/densidades:', error.message);
         res.status(500).json({ error: 'Error al obtener densidades', details: error.message });
+    }
+});
+
+// =================================================================
+// Delta E 2000 (server-side for color matching)
+// =================================================================
+function serverDeltaE2000(L1: number, a1: number, b1: number, L2: number, a2: number, b2: number): number {
+    const rad = Math.PI / 180;
+    const C1 = Math.sqrt(a1 * a1 + b1 * b1);
+    const C2 = Math.sqrt(a2 * a2 + b2 * b2);
+    const mC = (C1 + C2) / 2;
+    const G = 0.5 * (1 - Math.sqrt(Math.pow(mC, 7) / (Math.pow(mC, 7) + Math.pow(25, 7))));
+    const a1p = a1 * (1 + G), a2p = a2 * (1 + G);
+    const C1p = Math.sqrt(a1p * a1p + b1 * b1);
+    const C2p = Math.sqrt(a2p * a2p + b2 * b2);
+    let h1p = (Math.atan2(b1, a1p) * 180 / Math.PI + 360) % 360;
+    let h2p = (Math.atan2(b2, a2p) * 180 / Math.PI + 360) % 360;
+    const dLp = L2 - L1, dCp = C2p - C1p;
+    let dhp: number;
+    if (C1p * C2p === 0) dhp = 0;
+    else if (Math.abs(h2p - h1p) <= 180) dhp = h2p - h1p;
+    else if (h2p - h1p > 180) dhp = h2p - h1p - 360;
+    else dhp = h2p - h1p + 360;
+    const dHp = 2 * Math.sqrt(C1p * C2p) * Math.sin((dhp / 2) * rad);
+    const mLp = (L1 + L2) / 2, mCp = (C1p + C2p) / 2;
+    let mhp: number;
+    if (C1p * C2p === 0) mhp = h1p + h2p;
+    else if (Math.abs(h1p - h2p) <= 180) mhp = (h1p + h2p) / 2;
+    else if (h1p + h2p < 360) mhp = (h1p + h2p + 360) / 2;
+    else mhp = (h1p + h2p - 360) / 2;
+    const T = 1 - 0.17 * Math.cos((mhp - 30) * rad) + 0.24 * Math.cos(2 * mhp * rad)
+        + 0.32 * Math.cos((3 * mhp + 6) * rad) - 0.2 * Math.cos((4 * mhp - 63) * rad);
+    const SL = 1 + (0.015 * Math.pow(mLp - 50, 2)) / Math.sqrt(20 + Math.pow(mLp - 50, 2));
+    const SC = 1 + 0.045 * mCp;
+    const SH = 1 + 0.015 * mCp * T;
+    const RT = -2 * Math.sqrt(Math.pow(mCp, 7) / (Math.pow(mCp, 7) + Math.pow(25, 7)))
+        * Math.sin(60 * rad * Math.exp(-Math.pow((mhp - 275) / 25, 2)));
+    return Math.sqrt(
+        Math.pow(dLp / SL, 2) + Math.pow(dCp / SC, 2) + Math.pow(dHp / SH, 2)
+        + RT * (dCp / SC) * (dHp / SH)
+    );
+}
+
+// =================================================================
+// POST /api/color-match  – Find closest formulas by Delta E 2000
+// =================================================================
+app.post('/api/color-match', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { l, a, b, limit = 10 } = req.body;
+        const { idcliente } = (req as any).user;
+
+        if (l == null || a == null || b == null) {
+            return res.status(400).json({ error: 'Se requieren valores L, a, b' });
+        }
+
+        const targetL = parseFloat(l);
+        const targetA = parseFloat(a);
+        const targetB = parseFloat(b);
+
+        console.log(`[COLOR-MATCH] Buscando color L=${targetL}, a=${targetA}, b=${targetB} con límite=${limit}`);
+
+        // 1. Fetch all standard formulas that have L, A, B values
+        const standardFormulas = await prisma.formula.findMany({
+            where: {
+                L: { not: null },
+                A: { not: null },
+                B: { not: null },
+            },
+            include: { marca: true, producto: true, carta: true },
+        });
+
+        // 2. Fetch personal formulas for this client that have L, A, B values
+        const personalFormulas = await prisma.formPersonales.findMany({
+            where: {
+                IDCLIENTE: idcliente,
+                L: { not: null },
+                A: { not: null },
+                B: { not: null },
+            },
+        });
+
+        console.log(`[COLOR-MATCH] Standard formulas con LAB: ${standardFormulas.length}, Personal: ${personalFormulas.length}`);
+
+        // 3. Compute Delta E 2000 for each
+        const results: any[] = [];
+
+        for (const f of standardFormulas) {
+            const fL = parseFloat(f.L || '0');
+            const fA = parseFloat(f.A || '0');
+            const fB = parseFloat(f.B || '0');
+            if (isNaN(fL) || isNaN(fA) || isNaN(fB)) continue;
+
+            const de = serverDeltaE2000(targetL, targetA, targetB, fL, fA, fB);
+            results.push({
+                formula: {
+                    ...f,
+                    NOMBREFORMULA: f.NOMBRE, // Map standard's NOMBRE to NOMBREFORMULA
+                },
+                deltaE: parseFloat(de.toFixed(4)),
+                source: 'standard',
+            });
+        }
+
+        for (const f of personalFormulas) {
+            const fL = parseFloat(f.L || '0');
+            const fA = parseFloat(f.A || '0');
+            const fB = parseFloat(f.B || '0');
+            if (isNaN(fL) || isNaN(fA) || isNaN(fB)) continue;
+
+            const de = serverDeltaE2000(targetL, targetA, targetB, fL, fA, fB);
+            results.push({
+                formula: f,
+                deltaE: parseFloat(de.toFixed(4)),
+                source: 'personal',
+            });
+        }
+
+        // 4. Sort by deltaE ascending and return top N
+        results.sort((x, y) => x.deltaE - y.deltaE);
+        const topResults = results.slice(0, Math.min(limit, results.length));
+
+        console.log(`[COLOR-MATCH] Top ${topResults.length} resultados, mejor ΔE = ${topResults[0]?.deltaE?.toFixed(2)}`);
+        res.json(topResults);
+    } catch (error: any) {
+        console.error('[ERROR] /api/color-match:', error.message);
+        res.status(500).json({ error: 'Error en búsqueda de color', details: error.message });
+    }
+});
+
+// =================================================================
+// POST /api/componentes/colores  – Get RGB colors for components
+// =================================================================
+app.post('/api/componentes/colores', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { codigos } = req.body;
+        if (!codigos || !Array.isArray(codigos)) {
+            return res.status(400).json({ error: 'Codigos requeridos' });
+        }
+
+        console.log('[COLORES] Buscando colores para componentes:', codigos);
+        const componentColors: any[] = [];
+        const processed = new Set<string>();
+
+        // 1. Check BASES table – COLOR field: 1 = white base, 2 = transparent base
+        try {
+            const basesRes: any[] = await prisma.$queryRawUnsafe(
+                `SELECT "CODIGO", "COLOR" FROM "BASES" WHERE "CODIGO" = ANY($1)`,
+                codigos
+            );
+            for (const base of basesRes) {
+                if (processed.has(base.CODIGO)) continue;
+                processed.add(base.CODIGO);
+
+                const colorVal = parseInt(base.COLOR);
+                let rgb = '#888888';
+                let baseType = 'colored';
+                if (colorVal === 1) {
+                    rgb = '#FFFFFF';
+                    baseType = 'white';
+                } else if (colorVal === 2) {
+                    rgb = 'transparent';
+                    baseType = 'transparent';
+                }
+                componentColors.push({
+                    code: base.CODIGO,
+                    rgb,
+                    isBase: true,
+                    baseType,
+                });
+            }
+        } catch (e: any) {
+            console.log('[COLORES] Falló consulta BASES:', e.message);
+        }
+
+        // 2. Check COLORANTES table – COLOR field is the RGB int value
+        try {
+            const colorantesRes: any[] = await prisma.$queryRawUnsafe(
+                `SELECT "PRODUCTO" as "CODIGO", "COLOR" FROM "COLORANTES" WHERE "PRODUCTO" = ANY($1)`,
+                codigos
+            );
+            for (const c of colorantesRes) {
+                if (processed.has(c.CODIGO)) continue;
+                processed.add(c.CODIGO);
+
+                // The COLOR field in COLORANTES is typically an integer RGB value
+                let rgb = '#333333';
+                try {
+                    const colorInt = parseInt(c.COLOR);
+                    if (!isNaN(colorInt) && colorInt > 0) {
+                        // Convert integer color to hex RGB
+                        const r = (colorInt >> 16) & 0xFF;
+                        const g = (colorInt >> 8) & 0xFF;
+                        const b = colorInt & 0xFF;
+                        rgb = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+                    }
+                } catch { }
+                componentColors.push({
+                    code: c.CODIGO,
+                    rgb,
+                    isBase: false,
+                });
+            }
+        } catch (e: any) {
+            console.log('[COLORES] Falló consulta COLORANTES:', e.message);
+        }
+
+        // 3. For any codes not found, add with default
+        for (const code of codigos) {
+            if (!processed.has(code)) {
+                componentColors.push({
+                    code,
+                    rgb: '#555555',
+                    isBase: false,
+                    baseType: undefined,
+                });
+            }
+        }
+
+        console.log('[COLORES] Resultado:', componentColors.length, 'componentes');
+        res.json(componentColors);
+    } catch (error: any) {
+        console.error('[ERROR] /api/componentes/colores:', error.message);
+        res.status(500).json({ error: 'Error al obtener colores', details: error.message });
     }
 });
 

@@ -66,7 +66,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                     const data = await res.json();
                     const densityMap: Record<string, number> = {};
                     data.forEach((item: any) => {
-                        densityMap[item.CODIGO] = parseFloat(item.DENSIDAD) || 1.0;
+                        densityMap[item.CODIGO] = item.DENSIDAD || 1.0;
                     });
                     setDensities(densityMap);
                 }
@@ -98,7 +98,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
     const rawIngredients: any[] = [];
     console.log("DENSIDADES DE TODOS LOS ELEMENTOS", densities)
     // 1. Identificar Base
-    const baseCodeName = formula.producto?.PRODUCTO;
+    const baseCodeName = formula.RESERVA;
     const baseId = formula.IDPRODUCTO?.toString();
     const baseCodePersonal = formula.CBASE;
 
@@ -107,6 +107,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
         (baseId && densities[baseId]) ? baseId :
             (baseCodePersonal && densities[baseCodePersonal]) ? baseCodePersonal :
                 (baseCodeName || baseCodePersonal || baseId);
+
 
     const baseMass = parseFloat(formula.BASE || formula.QBASE || '0');
     console.log("FORMULARECIBIDA", formula);
@@ -140,6 +141,9 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
         }
     }
 
+
+
+
     // CÁLCULO DE DENSIDAD DE MEZCLA Y VOLUMEN TOTAL
     // Densidad = Masa / Volumen
     // Volumen Total = Sumatoria(Masa_i / Densidad_i)
@@ -149,6 +153,13 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
 
     console.log(`[DENSIDAD] --- INICIO CÁLCULO PASO A PASO ---`);
     console.log(`[DENSIDAD] Objetivo: rho_mix = Sum(Masas) / Sum(Masas/Densidades)`);
+
+    const totalMass = rawIngredients.reduce((accumulator, ing) => {
+        return accumulator + (ing.mass || 0);
+    }, 0);
+
+    console.log(`Masa Total Acumulada: ${totalMass.toFixed(2)} g`);
+    rawIngredients[0].mass = 1000 - (totalMass - baseMass);
 
     const ingredientsWithPhysics = rawIngredients.map((ing, index) => {
         const rho = densities[ing.code] || 1.0;
@@ -173,22 +184,23 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
     console.log(`[DENSIDAD] RESULTADO FINAL: ${totalRawMass.toFixed(2)} / ${totalRawVolume.toFixed(2)} = ${calculatedMixtureDensity.toFixed(4)}`);
 
     // Factor de escala para formar exactamente 1000 ml
-    const volumeFactor = totalRawVolume > 0 ? 1000 / totalRawVolume : 1;
+    const volumeFactor = calculatedMixtureDensity
+    //totalRawVolume > 0 ? 1000 / totalRawVolume : 1;
     console.log(`[DENSIDAD] Factor de volumen para 1 litro: 1000 / ${totalRawVolume.toFixed(2)} = ${volumeFactor.toFixed(4)}`);
 
     // Cantidades finales para el usuario (Escaladas a 1 Litro)
     let finalMassSum = 0;
     const processedIngredients = ingredientsWithPhysics.map(ing => {
-        const finalVol = ing.vol * volumeFactor; // Volumen en ml (Suma = 1000)
-        const finalGrams = finalVol * ing.rho;   // Masa en gramos
-        finalMassSum += finalGrams;
+        const finalVol = ing.mass * volumeFactor; // Volumen en ml (Suma = 1000)
+        //const finalGrams = finalVol * ing.rho;   // Masa en gramos
+        finalMassSum += finalVol;
 
-        console.log(`[FINAL] ${ing.code} | ml: ${finalVol.toFixed(2)} | g: ${finalGrams.toFixed(2)}`);
+        console.log(`[FINAL] ${ing.code} | ml: ${ing.vol.toFixed(2)} | g: ${finalVol.toFixed(2)}`);
 
         return {
             ...ing,
             ml: finalVol,
-            grams: finalGrams,
+            grams: ing.mass,
             percentage: (finalVol / 10) // (ml / 1000) * 100
         };
     });

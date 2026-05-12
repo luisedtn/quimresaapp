@@ -29,11 +29,33 @@ export default function ColorAiChat() {
                 try {
                     const data = JSON.parse(qcData);
                     if (data.standard && data.sample) {
-                        const contextMsg = `Hola. He analizado los datos actuales: 
+                        let contextMsg = `Hola. He analizado los datos actuales: 
             - Patrón: L=${data.standard.l}, a=${data.standard.a}, b=${data.standard.b}
             - Muestra: L=${data.sample.l}, a=${data.sample.a}, b=${data.sample.b}
-            - Delta E (CIE2000): ${data.de}
-            ¿Qué deseas hacer con este control de calidad? Puedo ayudarte a ajustar la mezcla o analizar la desviación.`;
+            - Delta E (CIE2000): ${data.de}`;
+
+                        // Include component color info if available (from ColorMatch)
+                        if (data.componentColors && data.componentColors.length > 0) {
+                            contextMsg += `\n\nComponentes de la fórmula:`;
+                            data.componentColors.forEach((cc: any) => {
+                                if (cc.isBase) {
+                                    if (cc.baseType === 'white') {
+                                        contextMsg += `\n- ${cc.code}: BASE BLANCA (no aporta color al tono)`;
+                                    } else if (cc.baseType === 'transparent') {
+                                        contextMsg += `\n- ${cc.code}: BASE TRANSPARENTE (no influye en la obtención del color)`;
+                                    } else {
+                                        contextMsg += `\n- ${cc.code}: BASE (color: ${cc.color})`;
+                                    }
+                                } else {
+                                    contextMsg += `\n- ${cc.code}: COLORANTE (color RGB: ${cc.color})`;
+                                }
+                            });
+                            if (data.formulaSource) {
+                                contextMsg += `\n\nFuente de la fórmula: ${data.formulaSource === 'standard' ? 'Fórmula Standard' : 'Fórmula Personal'}`;
+                            }
+                        }
+
+                        contextMsg += `\n¿Qué deseas hacer con este control de calidad? Puedo ayudarte a ajustar la mezcla o analizar la desviación.`;
 
                         setMessages([{ role: 'ai', text: contextMsg }]);
                     }
@@ -139,8 +161,8 @@ export default function ColorAiChat() {
                             {messages.map((msg, i) => (
                                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                     <div className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${msg.role === 'user'
-                                            ? 'bg-violet-600 text-white rounded-br-none shadow-lg'
-                                            : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700 shadow-xl'
+                                        ? 'bg-violet-600 text-white rounded-br-none shadow-lg'
+                                        : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700 shadow-xl'
                                         }`}>
                                         {msg.text}
                                     </div>

@@ -9,6 +9,7 @@ import Usuarios from './pages/Usuarios';
 import Cuenta from './pages/Cuenta';
 import Colorimetro from './pages/Colorimetro';
 import StandardFormulas from './pages/StandardFormulas';
+import ColorMatch from './pages/ColorMatch';
 import ColorAiChat from './components/ColorAiChat';
 
 export default function App() {
@@ -73,6 +74,10 @@ export default function App() {
         <Route
           path="/libraries"
           element={isAuthenticated ? <StandardFormulas onLogout={handleLogout} /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/color-match"
+          element={isAuthenticated ? <ColorMatch /> : <Navigate to="/login" />}
         />
       </Routes>
       {isAuthenticated && <ColorAiChat />}
