@@ -307,3 +307,77 @@ model Formula {
   @@map("FORMULAS")
 }
 
+model BASES {
+  ID             Int      @id @default(autoincrement())
+  GRUPO          String?
+  CODIGO         String?
+  DESCRIPCIO     String?
+  DENSIDAD       Float?
+  FS             String?
+  ETIQUETA       Int?
+  PRECIO         Float?
+  UNIDAD         String?
+  COLOR          String?
+  PORDESPERDICIO Float?
+  LIMITEREORDEN  Float?
+  CANTIDADACTUAL Float?
+  IDMARCA        Int?
+  IDPRODUCTO     Int?
+  IDGRUPO        Int?
+  PRODUCTO       String?
+  COSTO          Float?
+  FICHATECNICA   String?
+  FICHASEGURIDAD String?
+  BLANCO         Int?
+
+  @@map("BASES")
+}
+
+model COLORANTES {
+  ID             Int     @id @default(autoincrement())
+  PRODUCTO       String? @db.VarChar(50)
+  COLORANTE      Int?
+  PBT            Int?
+  UNIDAD         String? @db.VarChar(2)
+  PROPV          Int?
+  PROPP          Int?
+  PRECIOKG       Float?
+  GRUPO          String? @db.VarChar(50)
+  ETIQUETAPB     Int?
+  ETIQUETASI     Int?
+  CALIDAD        String? @db.VarChar(20)
+  CODIGOETIQ     String? @db.VarChar(8)
+  CODIGO         Int?
+  SUBCODIGO      String? @db.VarChar(4)
+  DESCRIPCIO     String? @db.VarChar(50)
+  COLOR          String? @db.VarChar(10)
+  AGUA           Int?
+  BASEPESO       Int?
+  BASEVOLUME     Int?
+  PASTA1         String? @db.VarChar(3)
+  PASTA1PESO     Int?
+  PASTA1VOLU     Int?
+  PASTA2         String? @db.VarChar(3)
+  PASTA2PESO     Int?
+  PASTA2VOLU     Int?
+  PASTA3         String? @db.VarChar(3)
+  PASTA3PESO     Int?
+  PASTA3VOLU     Int?
+  DESCBASET      String? @db.VarChar(25)
+  METALIZADA     Int?
+  ESPECIAL       Int?
+  DENSIDAD       Float?
+  VISUALIZAR     Int?
+  DISPONIBLE     Int?
+  MARCA          Int?
+  PORDESPERDICIO Float?
+  LIMITEREORDEN  Float?
+  CANTIDADACTUAL Float?
+  COSTO          Float?
+  PREFIJO        String? @db.VarChar(10)
+  CONSECUTIVO    Int?
+  BLANCO         Int?
+
+  @@map("COLORANTES")
+}
+
