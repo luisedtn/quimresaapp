@@ -99,23 +99,31 @@ app.get('/api/test-chat', (req, res) => {
 });
 
 const SYSTEM_PROMPT = `
-Eres el Asistente Experto de Quimresa, especializado en colorimetría, medición de color y Laboratorio de Pinturas.
-Tu objetivo es ayudar a los operadores de la planta con dudas técnicas, cálculos y mezclas.
+Eres el Asistente Experto en Colorimetría de Quimresa. Tu especialidad es el Laboratorio de Pinturas y la corrección de fórmulas mediante el análisis de desviaciones CIELAB (L*, a*, b*).
+
+OBJETIVO: Ayudar al operario a alcanzar un Delta E (ΔE) < 1.0 sugiriendo adiciones precisas de los pigmentos ya presentes en la fórmula.
+
+PROCEDIMIENTO DE CORRECCIÓN:
+1. Analiza los deltas (DL, Da, Db):
+   - Si DL > 0 (Muestra clara): Identifica pigmentos oscuros (negros, azules, marrones) en la fórmula para añadir.
+   - Si DL < 0 (Muestra oscura): Sugiere añadir Base Blanca si está disponible.
+   - Si Da > 0 (Muestra rojiza): Busca pigmentos verdes o azules compensatorios en la fórmula.
+   - Si Da < 0 (Muestra verdosa): Busca pigmentos rojos o magentas en la fórmula para añadir.
+   - Si Db > 0 (Muestra amarillenta): Busca pigmentos azules o violetas en la fórmula.
+   - Si Db < 0 (Muestra azulada): Busca pigmentos amarillos u ocres en la fórmula.
+
+2. Recomendación de Pigmentos:
+   - Usa los códigos y colores RGB proporcionados para identificar la función de cada pigmento.
+   - Prioriza siempre los pigmentos que ya están en la fórmula actual.
+
+3. Sugerencia de Cantidades:
+   - Para ajustes finos, sugiere adiciones porcentuales sobre el peso total (ej. "Añadir 0.2% de pigmento X").
+   - Recuerda que es mejor añadir poco a poco que pasarse de color.
 
 REGLAS DE RESPUESTA:
-1. Sé extremadamente breve y directo. Máximo 2-3 frases por respuesta.
-2. Si el usuario pide cálculos (ej. Delta E, conversiones, mezclas porcentuales), realízalos con precisión matemática.
-3. El tono debe ser profesional pero servicial.
-4. Habla siempre en español.
-5. Si no sabes algo de colorimetría específica, sugiere consultar al jefe de laboratorio.
-
-CONTEXTO TÉCNICO:
-- Trabajamos con espacios de color CIELAB (L*, a*, b*).
-- Delta E (ΔE) < 1.0 suele ser el estándar de aprobación en Quimresa.
-- Ayuda con reglas de mezcla: si falta rojo, añadir pigmento magenta o rojo respectivo; si el color es muy claro, ajustar bases.
-
-OPERACIONES MATEMÁTICAS:
-- Eres capaz de resolver ecuaciones de mezclas de pigmentos y cálculos de rendimiento.
+- Sé técnico y preciso pero breve (máximo 3-4 frases).
+- Si no hay un pigmento adecuado en la fórmula para corregir un eje específico, indícalo claramente.
+- Habla siempre en español.
 `;
 
 // --- ROUTES ---
@@ -602,6 +610,39 @@ app.post('/api/color-match', authenticateToken, async (req: Request, res: Respon
 // =================================================================
 // POST /api/componentes/colores  – Get RGB colors for components
 // =================================================================
+// Helper to parse color from string (can be integer BGR, hex, or RGB comma-separated)
+function parseComponentColor(colorStr: string | null | undefined): string {
+    if (!colorStr) return '#555555';
+    const trimmed = colorStr.trim();
+    if (!trimmed) return '#555555';
+
+    // 1. If it's already a hex starting with #
+    if (trimmed.startsWith('#')) return trimmed;
+
+    // 2. If it's a 6-digit hex string
+    if (/^[0-9A-Fa-f]{6}$/.test(trimmed)) return '#' + trimmed;
+
+    // 3. If it's RGB comma-separated (e.g. "255,0,0")
+    if (trimmed.includes(',')) {
+        const parts = trimmed.split(',').map(p => parseInt(p.trim()));
+        if (parts.length >= 3 && parts.every(p => !isNaN(p))) {
+            return `#${parts[0].toString(16).padStart(2, '0')}${parts[1].toString(16).padStart(2, '0')}${parts[2].toString(16).padStart(2, '0')}`;
+        }
+    }
+
+    // 4. Try as integer (Delphi/Windows BGR format)
+    const colorInt = parseInt(trimmed);
+    if (!isNaN(colorInt)) {
+        // Delphi BGR: clRed = 255 ($FF), clBlue = 16711680 ($FF0000)
+        const b = (colorInt >> 16) & 0xFF;
+        const g = (colorInt >> 8) & 0xFF;
+        const r = colorInt & 0xFF;
+        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    }
+
+    return '#555555';
+}
+
 app.post('/api/componentes/colores', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
         const { codigos } = req.body;
@@ -613,67 +654,86 @@ app.post('/api/componentes/colores', authenticateToken, async (req: Request, res
         const componentColors: any[] = [];
         const processed = new Set<string>();
 
-        // 1. Check BASES table – COLOR field: 1 = white base, 2 = transparent base
+        // 1. Check BASES table
         try {
-            const basesRes: any[] = await prisma.$queryRawUnsafe(
+            // Try multiple table name variations if quoted fail
+            const queries = [
                 `SELECT "CODIGO", "COLOR" FROM "BASES" WHERE "CODIGO" = ANY($1)`,
-                codigos
-            );
+                `SELECT CODIGO, COLOR FROM BASES WHERE CODIGO = ANY($1)`
+            ];
+
+            let basesRes: any[] = [];
+            for (const q of queries) {
+                try {
+                    basesRes = await prisma.$queryRawUnsafe(q, codigos);
+                    if (basesRes.length > 0) break;
+                } catch (e) { /* continue */ }
+            }
+
             for (const base of basesRes) {
-                if (processed.has(base.CODIGO)) continue;
-                processed.add(base.CODIGO);
+                const codeStr = String(base.CODIGO);
+                if (processed.has(codeStr)) continue;
+                processed.add(codeStr);
 
                 const colorVal = parseInt(base.COLOR);
                 let rgb = '#888888';
-                let baseType = 'colored';
+                let baseType: any = 'colored';
                 if (colorVal === 1) {
                     rgb = '#FFFFFF';
                     baseType = 'white';
                 } else if (colorVal === 2) {
                     rgb = 'transparent';
                     baseType = 'transparent';
+                } else {
+                    // Try parsing COLOR as a standard color value too if it's not 1 or 2
+                    rgb = parseComponentColor(base.COLOR);
                 }
+
                 componentColors.push({
-                    code: base.CODIGO,
+                    code: codeStr,
                     rgb,
                     isBase: true,
                     baseType,
                 });
             }
         } catch (e: any) {
-            console.log('[COLORES] Falló consulta BASES:', e.message);
+            console.log('[COLORES] Error en BASES:', e.message);
         }
 
-        // 2. Check COLORANTES table – COLOR field is stored as BGR integer (Delphi/Windows format)
+        // 2. Check COLORANTES table
         try {
-            const colorantesRes: any[] = await prisma.$queryRawUnsafe(
+            // Try different variations of table names and columns (PRODUCTO vs CODIGO)
+            const queries = [
                 `SELECT "PRODUCTO" as "CODIGO", "COLOR" FROM "COLORANTES" WHERE "PRODUCTO" = ANY($1)`,
-                codigos
-            );
-            for (const c of colorantesRes) {
-                if (processed.has(c.CODIGO)) continue;
-                processed.add(c.CODIGO);
+                `SELECT "CODIGO"::text as "CODIGO", "COLOR" FROM "COLORANTES" WHERE "CODIGO"::text = ANY($1)`,
+                `SELECT PRODUCTO as "CODIGO", COLOR FROM COLORANTES WHERE PRODUCTO = ANY($1)`,
+                `SELECT CODIGO::text as "CODIGO", COLOR FROM COLORANTES WHERE CODIGO::text = ANY($1)`
+            ];
 
-                // COLOR is stored in BGR format (Delphi/Windows convention): swap B and R channels
-                let rgb = '#333333';
+            let colorantesRes: any[] = [];
+            for (const q of queries) {
                 try {
-                    const colorInt = parseInt(c.COLOR);
-                    if (!isNaN(colorInt) && colorInt >= 0) {
-                        const b = (colorInt >> 16) & 0xFF; // high byte is Blue in BGR
-                        const g = (colorInt >> 8) & 0xFF;
-                        const r = colorInt & 0xFF;          // low byte is Red in BGR
-                        rgb = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+                    const temp = await prisma.$queryRawUnsafe(q, codigos) as any[];
+                    if (temp && temp.length > 0) {
+                        colorantesRes.push(...temp);
                     }
-                } catch { }
+                } catch (e) { /* ignore error and try next variation */ }
+            }
+
+            for (const c of colorantesRes) {
+                const codeStr = String(c.CODIGO);
+                if (processed.has(codeStr)) continue;
+                processed.add(codeStr);
+
                 componentColors.push({
-                    code: c.CODIGO,
-                    rgb,
+                    code: codeStr,
+                    rgb: parseComponentColor(c.COLOR),
                     isBase: false,
                     baseType: 'colorant',
                 });
             }
         } catch (e: any) {
-            console.log('[COLORES] Falló consulta COLORANTES:', e.message);
+            console.log('[COLORES] Error en COLORANTES:', e.message);
         }
 
         // 3. For any codes not found, add with default
@@ -681,14 +741,14 @@ app.post('/api/componentes/colores', authenticateToken, async (req: Request, res
             if (!processed.has(code)) {
                 componentColors.push({
                     code,
-                    rgb: '#555555',
+                    rgb: '#555555', // Grey fallback
                     isBase: false,
                     baseType: undefined,
                 });
             }
         }
 
-        console.log('[COLORES] Resultado:', componentColors.length, 'componentes');
+        console.log('[COLORES] Resultado Final:', componentColors.length, 'componentes');
         res.json(componentColors);
     } catch (error: any) {
         console.error('[ERROR] /api/componentes/colores:', error.message);

@@ -32,31 +32,21 @@ export default function ColorAiChat() {
                         let contextMsg = `Hola. He analizado los datos actuales: 
             - Patrón: L=${data.standard.l}, a=${data.standard.a}, b=${data.standard.b}
             - Muestra: L=${data.sample.l}, a=${data.sample.a}, b=${data.sample.b}
+            - Desviación (Deltas): dL=${data.dL || '0'}, da=${data.dA || '0'}, db=${data.dB || '0'}
             - Delta E (CIE2000): ${data.de}`;
 
-                        // Include component color info if available (from ColorMatch)
                         if (data.componentColors && data.componentColors.length > 0) {
-                            contextMsg += `\n\nComponentes de la fórmula:`;
+                            contextMsg += `\n\nComponentes de la fórmula actual:`;
                             data.componentColors.forEach((cc: any) => {
                                 if (cc.isBase) {
-                                    if (cc.baseType === 'white') {
-                                        contextMsg += `\n- ${cc.code}: BASE BLANCA (no aporta color al tono)`;
-                                    } else if (cc.baseType === 'transparent') {
-                                        contextMsg += `\n- ${cc.code}: BASE TRANSPARENTE (no influye en la obtención del color)`;
-                                    } else {
-                                        contextMsg += `\n- ${cc.code}: BASE (color: ${cc.color})`;
-                                    }
+                                    contextMsg += `\n- [BASE] ${cc.code}: ${cc.baseType === 'white' ? 'Blanca' : cc.baseType === 'transparent' ? 'Transparente' : 'Color ' + cc.color}`;
                                 } else {
-                                    contextMsg += `\n- ${cc.code}: COLORANTE (color RGB: ${cc.color})`;
+                                    contextMsg += `\n- [PIGMENTO] ${cc.code}: Color RGB ${cc.color}`;
                                 }
                             });
-                            if (data.formulaSource) {
-                                contextMsg += `\n\nFuente de la fórmula: ${data.formulaSource === 'standard' ? 'Fórmula Standard' : 'Fórmula Personal'}`;
-                            }
                         }
 
-                        contextMsg += `\n¿Qué deseas hacer con este control de calidad? Puedo ayudarte a ajustar la mezcla o analizar la desviación.`;
-
+                        contextMsg += `\n\n¿Cómo puedo ajustar esta mezcla para reducir el Delta E?`;
                         setMessages([{ role: 'ai', text: contextMsg }]);
                     }
                 } catch (e) {
