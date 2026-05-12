@@ -577,15 +577,19 @@ export default function ColorMatch() {
                             {/* Comparison Bar */}
                             <div className="w-full h-16 rounded-2xl overflow-hidden relative flex border border-slate-800">
                                 <div
-                                    className="w-1/2"
+                                    className="w-1/2 relative flex items-start justify-center pt-1"
                                     style={{ backgroundColor: patronHex || '#111' }}
-                                />
+                                >
+                                    <span className="text-[8px] font-black text-white px-2 py-0.5 rounded-full bg-black/20 uppercase tracking-widest">Patrón</span>
+                                </div>
                                 <div
-                                    className="w-1/2"
+                                    className="w-1/2 relative flex items-start justify-center pt-1 border-l border-white/20"
                                     style={{ backgroundColor: selectedMatch.hex }}
-                                />
+                                >
+                                    <span className="text-[8px] font-black text-white px-2 py-0.5 rounded-full bg-black/20 uppercase tracking-widest">Fórmula</span>
+                                </div>
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="bg-white rounded-full px-4 py-1 text-[11px] font-black border-2 border-black shadow-lg">
+                                    <div className="bg-white rounded-full px-4 py-1 text-[11px] font-black border-2 border-black shadow-lg text-black">
                                         ΔE: {selectedMatch.deltaE.toFixed(2)}
                                     </div>
                                 </div>
