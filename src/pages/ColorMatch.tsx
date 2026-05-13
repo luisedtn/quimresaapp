@@ -50,6 +50,13 @@ export default function ColorMatch() {
     const navigate = useNavigate();
     const { isConnected, measure, isMeasuring } = useNixDevice();
 
+    // Helper function to normalize decimal separator (comma to dot)
+    const normalizeDecimal = (value: string | number | undefined): number => {
+        if (typeof value === 'number') return value;
+        if (value === undefined || value === null) return 0;
+        return parseFloat(value.toString().replace(',', '.')) || 0;
+    };
+
     // Patron (target) color
     const [patronL, setPatronL] = useState('');
     const [patronA, setPatronA] = useState('');
@@ -99,131 +106,141 @@ export default function ColorMatch() {
     };
 
     // ----------------------------------------------------------------
-    // Search formulas
-    // ----------------------------------------------------------------
-    const handleSearch = async () => {
-        const l = parseFloat(patronL);
-        const a = parseFloat(patronA);
-        const b = parseFloat(patronB);
-        if (isNaN(l) || isNaN(a) || isNaN(b)) return;
+     // Search formulas
+     // ----------------------------------------------------------------
+     const handleSearch = async () => {
+         const l = parseFloat(patronL);
+         const a = parseFloat(patronA);
+         const b = parseFloat(patronB);
+         if (isNaN(l) || isNaN(a) || isNaN(b)) return;
 
-        setIsSearching(true);
-        setHasSearched(true);
-        setSelectedMatch(null);
-        setComponentColors([]);
+         console.log(`Iniciando búsqueda de color - L:${l}, A:${a}, B:${b}, límite:${maxResults}`);
+         setIsSearching(true);
+         setHasSearched(true);
+         setSelectedMatch(null);
+         setComponentColors([]);
 
-        try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`${API_BASE_URL}/api/color-match`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({ l, a, b, limit: maxResults }),
-            });
+         try {
+             const token = localStorage.getItem('token');
+             const res = await fetch(`${API_BASE_URL}/api/color-match`, {
+                 method: 'POST',
+                 headers: {
+                     'Content-Type': 'application/json',
+                     'Authorization': `Bearer ${token}`,
+                 },
+                 body: JSON.stringify({ l, a, b, limit: maxResults }),
+             });
 
-            if (res.ok) {
-                const data: MatchResult[] = await res.json();
-                // data already sorted by deltaE from backend
-                setSearchResults(data.map(d => ({
-                    ...d,
-                    hex: labToHex(
-                        parseFloat(d.formula.L || '0'),
-                        parseFloat(d.formula.A || '0'),
-                        parseFloat(d.formula.B || '0'),
-                    ),
-                })));
-            }
-        } catch (err) {
-            console.error('Error searching colors:', err);
-        } finally {
-            setIsSearching(false);
-        }
-    };
+             if (res.ok) {
+                 const data: MatchResult[] = await res.json();
+                 console.log(`Resultados de búsqueda recibidos: ${data.length} fórmulas encontradas`);
+                 // data already sorted by deltaE from backend
+                 const processedResults = data.map(d => ({
+                     ...d,
+                     hex: labToHex(
+                         parseFloat(d.formula.L || '0'),
+                         parseFloat(d.formula.A || '0'),
+                         parseFloat(d.formula.B || '0'),
+                     ),
+                 }));
+                 console.log('Resultados procesados y listos para mostrar');
+                 setSearchResults(processedResults);
+             }
+         } catch (err) {
+             console.error('Error searching colors:', err);
+         } finally {
+             setIsSearching(false);
+         }
+     };
 
-    // ----------------------------------------------------------------
-    // Select a match → fetch component colors
-    // ----------------------------------------------------------------
-    const handleSelectMatch = async (match: MatchResult) => {
-        setSelectedMatch(match);
-        setLoadingComponents(true);
+     // ----------------------------------------------------------------
+     // Select a match → fetch component colors
+     // ----------------------------------------------------------------
+     const handleSelectMatch = async (match: MatchResult) => {
+          console.log(`Seleccionando fórmula: ${match.formula.NOMBREFORMULA || match.formula.NOMBRE || 'Sin nombre'} (ΔE: ${match.deltaE.toFixed(2)})`);
+          setSelectedMatch(match);
+          setLoadingComponents(true);
 
-        const f = match.formula;
-        // Collect component codes
-        const codes: string[] = [];
-        const baseCode = f.BASE || f.RESERVA || f.CBASE;
-        if (baseCode) codes.push(baseCode);
-        for (let i = 1; i <= 13; i++) {
-            if (f[`C${i}`]) codes.push(f[`C${i}`]);
-        }
-        for (let i = 1; i <= 6; i++) {
-            if (f[`A${i}`]) codes.push(f[`A${i}`]);
-        }
-        for (let i = 1; i <= 5; i++) {
-            if (f[`B${i}`]) codes.push(f[`B${i}`]);
-        }
+          const f = match.formula;
+          // Collect component codes
+          const codes: string[] = [];
+          const baseCode = f.BASE || f.RESERVA || f.CBASE;
+          if (baseCode) codes.push(baseCode);
+          for (let i = 1; i <= 13; i++) {
+              if (f[`C${i}`]) codes.push(f[`C${i}`]);
+          }
+          for (let i = 1; i <= 6; i++) {
+              if (f[`A${i}`]) codes.push(f[`A${i}`]);
+          }
+          for (let i = 1; i <= 5; i++) {
+              if (f[`B${i}`]) codes.push(f[`B${i}`]);
+          }
+          console.log(`Solicitando colores para ${codes.length} componentes:`, codes);
 
-        try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`${API_BASE_URL}/api/componentes/colores`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({ codigos: codes }),
-            });
-            if (res.ok) {
-                const data: ComponentColor[] = await res.json();
+          try {
+              const token = localStorage.getItem('token');
+              const res = await fetch(`${API_BASE_URL}/api/componentes/colores`, {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({ codigos: codes }),
+              });
+              if (res.ok) {
+                  const data: ComponentColor[] = await res.json();
+                  console.log(`Colores de componentes recibidos: ${data.length} componentes`);
 
-                // Mapear cantidades desde la fórmula a los colores obtenidos
-                const enrichedData = data.map(cc => {
-                    const code = cc.code;
-                    let quantity = 0;
+                  // Mapear cantidades desde la fórmula a los colores obtenidos
+                  const enrichedData = data.map(cc => {
+                      const code = cc.code;
+                      let quantity = 0;
 
-                    // Buscar en Base
-                    if (code === f.BASE || code === f.RESERVA || code === f.CBASE) {
-                        quantity = parseFloat(f.QBASE || f.CANTIDAD || '0');
-                    } else {
-                        // Buscar en C(1-13)
-                        for (let i = 1; i <= 13; i++) {
-                            if (f[`C${i}`] === code) {
-                                quantity = parseFloat(f[`Q${i}`] || '0');
-                                break;
-                            }
-                        }
-                        // Si no se encontró, buscar en A(1-6)
-                        if (quantity === 0) {
-                            for (let i = 1; i <= 6; i++) {
-                                if (f[`A${i}`] === code) {
-                                    quantity = parseFloat(f[`AQ${i}`] || '0');
-                                    break;
-                                }
-                            }
-                        }
-                        // Si no se encontró, buscar en B(1-5)
-                        if (quantity === 0) {
-                            for (let i = 1; i <= 5; i++) {
-                                if (f[`B${i}`] === code) {
-                                    quantity = parseFloat(f[`BQ${i}`] || '0');
-                                    break;
-                                }
-                            }
-                        }
-                    }
+                      // Buscar en Base
+                      if (code === f.BASE || code === f.RESERVA || code === f.CBASE) {
+                          quantity = normalizeDecimal(f.QBASE || f.CANTIDAD || '0');
+                      } else {
+                          // Buscar en C(1-13)
+                          for (let i = 1; i <= 13; i++) {
+                              if (f[`C${i}`] === code) {
+                                  quantity = normalizeDecimal(f[`Q${i}`] || '0');
+                                  break;
+                              }
+                          }
+                          // Si no se encontró, buscar en A(1-6)
+                          if (quantity === 0) {
+                              for (let i = 1; i <= 6; i++) {
+                                  if (f[`A${i}`] === code) {
+                                      quantity = normalizeDecimal(f[`AQ${i}`] || '0');
+                                      break;
+                                  }
+                              }
+                          }
+                          // Si no se encontró, buscar en B(1-5)
+                          if (quantity === 0) {
+                              for (let i = 1; i <= 5; i++) {
+                                  if (f[`B${i}`] === code) {
+                                      quantity = normalizeDecimal(f[`BQ${i}`] || '0');
+                                      break;
+                                  }
+                              }
+                          }
+                      }
 
-                    return { ...cc, quantity };
-                });
+                      // Store quantity as number with exactly 2 decimal places
+                      const normalizedQty = Math.round(normalizeDecimal(quantity) * 100) / 100;
+                      return { ...cc, quantity: normalizedQty };
+                  });
 
-                setComponentColors(enrichedData);
-            }
-        } catch (err) {
-            console.error('Error fetching component colors:', err);
-        } finally {
-            setLoadingComponents(false);
-        }
-    };
+                  console.log('Colores de componentes procesados:', enrichedData);
+                  setComponentColors(enrichedData);
+              }
+          } catch (err) {
+              console.error('Error fetching component colors:', err);
+          } finally {
+              setLoadingComponents(false);
+          }
+      };
 
     // Auto-update AI context when selection or colors change
     useEffect(() => {
@@ -496,6 +513,10 @@ export default function ColorMatch() {
                             </h2>
 
                             {searchResults.map((match, index) => {
+                                // Hide other formulas when one is selected
+                                if (selectedMatch && selectedMatch !== match) {
+                                    return null;
+                                }
                                 const isSelected = selectedMatch === match;
                                 return (
                                     <motion.div
@@ -595,50 +616,61 @@ export default function ColorMatch() {
                                 </div>
                             </div>
 
-                            {/* Component Colors */}
-                            <div className="bg-slate-900/60 rounded-2xl border border-slate-800 p-4 space-y-3">
-                                <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                    <Beaker className="h-3.5 w-3.5 text-violet-400" />
-                                    Componentes de la Fórmula
-                                </h3>
-                                {loadingComponents ? (
-                                    <div className="flex items-center gap-3 py-4 justify-center">
-                                        <div className="h-4 w-4 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
-                                        <span className="text-[10px] text-slate-500 uppercase tracking-widest">Cargando componentes...</span>
-                                    </div>
-                                ) : componentColors.length > 0 ? (
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {componentColors.map((cc, idx) => (
-                                            <div key={idx} className="flex items-center gap-3 bg-slate-950/60 p-3 rounded-xl border border-slate-800/50">
-                                                <div
-                                                    className={`h-8 w-8 rounded-lg flex-shrink-0 shadow-inner border-2 ${cc.isBase ? 'border-blue-500/60' : 'border-violet-500/60'}`}
-                                                    style={{
-                                                        backgroundColor: cc.baseType === 'transparent' ? '#fff' : (cc.rgb || '#555'),
-                                                        backgroundImage: cc.baseType === 'transparent'
-                                                            ? 'linear-gradient(45deg, #aaa 25%, transparent 25%), linear-gradient(-45deg, #aaa 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #aaa 75%), linear-gradient(-45deg, transparent 75%, #aaa 75%)'
-                                                            : undefined,
-                                                        backgroundSize: cc.baseType === 'transparent' ? '8px 8px' : undefined,
-                                                        backgroundPosition: cc.baseType === 'transparent' ? '0 0, 0 4px, 4px -4px, -4px 0px' : undefined,
-                                                    }}
-                                                />
-                                                <div className="min-w-0">
-                                                    <p className="text-[10px] font-bold text-white truncate">{cc.code}</p>
-                                                    <p className={`text-[8px] font-bold uppercase ${cc.isBase ? 'text-blue-400' : 'text-violet-400'}`}>
-                                                        {cc.isBase
-                                                            ? cc.baseType === 'white' ? 'Base Blanca'
-                                                                : cc.baseType === 'transparent' ? 'Base Transparente'
-                                                                    : 'Base'
-                                                            : 'Colorante'
-                                                        }
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p className="text-[10px] text-slate-600 italic text-center py-2">Sin información de color para los componentes.</p>
-                                )}
+                    {/* Component Colors */}
+                    <div className="bg-slate-900/60 rounded-2xl border border-slate-800 p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <Beaker className="h-3.5 w-3.5 text-violet-400" />
+                                Componentes de la Fórmula
+                            </h3>
+                            <button onClick={() => {
+                                setSelectedMatch(null);
+                                setComponentColors([]);
+                            }} className="text-[10px] text-slate-400 hover:text-white transition-colors">
+                                <span className="mr-1">←</span> Volver a resultados
+                            </button>
+                        </div>
+                        {loadingComponents ? (
+                            <div className="flex items-center gap-3 py-4 justify-center">
+                                <div className="h-4 w-4 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+                                <span className="text-[10px] text-slate-500 uppercase tracking-widest">Cargando componentes...</span>
                             </div>
+                        ) : componentColors.length > 0 ? (
+                            <div className="space-y-2">
+                                {componentColors.map((cc, idx) => (
+                                    <div key={idx} className="flex items-center gap-3 bg-slate-950/60 p-3 rounded-xl">
+                                        <div
+                                            className={`h-8 w-8 rounded-lg flex-shrink-0 shadow-inner`}
+                                            style={{
+                                                backgroundColor: cc.baseType === 'transparent' ? '#fff' : (cc.rgb || '#555'),
+                                                backgroundImage: cc.baseType === 'transparent'
+                                                    ? 'linear-gradient(45deg, #aaa 25%, transparent 25%), linear-gradient(-45deg, #aaa 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #aaa 75%), linear-gradient(-45deg, transparent 75%, #aaa 75%)'
+                                                    : undefined,
+                                                backgroundSize: cc.baseType === 'transparent' ? '8px 8px' : undefined,
+                                                backgroundPosition: cc.baseType === 'transparent' ? '0 0, 0 4px, 4px -4px, -4px 0px' : undefined,
+                                            }}
+                                        />
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-[10px] font-bold text-white truncate">{cc.code}</p>
+                                            <p className={`text-[8px] font-bold uppercase ${cc.isBase ? 'text-blue-400' : 'text-violet-400'}`}>
+                                                {cc.isBase
+                                                    ? cc.baseType === 'white' ? 'Base Blanca'
+                                                    : cc.baseType === 'transparent' ? 'Base Transparente'
+                                                    : 'Base'
+                                                    : 'Colorante'
+                                                }
+                                            </p>
+                                        </div>
+                                            <div className="text-[9px] font-bold text-slate-300 text-right">
+                                                {(((cc.quantity || 0) as number).toFixed(2))}g
+                                            </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-[10px] text-slate-600 italic text-center py-2">Sin información de color para los componentes.</p>
+                        )}
+                    </div>
 
                             {/* Send to QC Button */}
                             <motion.button

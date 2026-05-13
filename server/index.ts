@@ -261,7 +261,7 @@ app.all('/api/chat', authenticateToken, async (req: Request, res: Response): Pro
         }
         if (!model) {
             try {
-                model = vertexAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+                model = vertexAI.getGenerativeModel({ model: "gemini-1.5-flash" });
             } catch (e: any) {
                 return res.status(500).json({ error: 'AI Error: Fallo al inicializar el modelo' });
             }
@@ -537,70 +537,111 @@ app.post('/api/color-match', authenticateToken, async (req: Request, res: Respon
         const targetA = parseFloat(a);
         const targetB = parseFloat(b);
 
+        if (isNaN(targetL) || isNaN(targetA) || isNaN(targetB)) {
+            return res.status(400).json({ error: 'Valores L, a, b inválidos' });
+        }
+
         console.log(`[COLOR-MATCH] Buscando color L=${targetL}, a=${targetA}, b=${targetB} con límite=${limit}`);
 
-        // 1. Fetch all standard formulas that have L, A, B values
-        const standardFormulas = await prisma.formula.findMany({
+        // 1. Fetch minimal data for standard formulas (without heavy relations/columns)
+        const standardMinData = await prisma.formula.findMany({
             where: {
-                L: { not: null },
-                A: { not: null },
-                B: { not: null },
+                L: { not: null, notIn: [''] },
+                A: { not: null, notIn: [''] },
+                B: { not: null, notIn: [''] },
             },
-            include: { marca: true, producto: true, carta: true },
+            select: {
+                id: true,
+                L: true,
+                A: true,
+                B: true,
+            }
         });
 
-        // 2. Fetch personal formulas for this client that have L, A, B values
-        const personalFormulas = await prisma.formPersonales.findMany({
+        // 2. Fetch minimal data for personal formulas
+        const personalMinData = await prisma.formPersonales.findMany({
             where: {
                 IDCLIENTE: idcliente,
-                L: { not: null },
-                A: { not: null },
-                B: { not: null },
+                L: { not: null, notIn: [''] },
+                A: { not: null, notIn: [''] },
+                B: { not: null, notIn: [''] },
             },
+            select: {
+                ID: true,
+                L: true,
+                A: true,
+                B: true,
+            }
         });
 
-        console.log(`[COLOR-MATCH] Standard formulas con LAB: ${standardFormulas.length}, Personal: ${personalFormulas.length}`);
+        console.log(`[COLOR-MATCH] Candidatos Standard: ${standardMinData.length}, Personal: ${personalMinData.length}`);
 
-        // 3. Compute Delta E 2000 for each
-        const results: any[] = [];
+        // 3. Compute Delta E 2000 and collect IDs
+        const allCandidates: any[] = [];
 
-        for (const f of standardFormulas) {
+        for (const f of standardMinData) {
             const fL = parseFloat(f.L || '0');
             const fA = parseFloat(f.A || '0');
             const fB = parseFloat(f.B || '0');
             if (isNaN(fL) || isNaN(fA) || isNaN(fB)) continue;
 
             const de = serverDeltaE2000(targetL, targetA, targetB, fL, fA, fB);
-            results.push({
-                formula: {
-                    ...f,
-                    NOMBREFORMULA: f.NOMBRE, // Map standard's NOMBRE to NOMBREFORMULA
-                },
-                deltaE: parseFloat(de.toFixed(4)),
-                source: 'standard',
-            });
+            allCandidates.push({ id: f.id, source: 'standard', deltaE: de });
         }
 
-        for (const f of personalFormulas) {
+        for (const f of personalMinData) {
             const fL = parseFloat(f.L || '0');
             const fA = parseFloat(f.A || '0');
             const fB = parseFloat(f.B || '0');
             if (isNaN(fL) || isNaN(fA) || isNaN(fB)) continue;
 
             const de = serverDeltaE2000(targetL, targetA, targetB, fL, fA, fB);
-            results.push({
-                formula: f,
-                deltaE: parseFloat(de.toFixed(4)),
-                source: 'personal',
-            });
+            allCandidates.push({ id: f.ID, source: 'personal', deltaE: de });
         }
 
-        // 4. Sort by deltaE ascending and return top N
-        results.sort((x, y) => x.deltaE - y.deltaE);
-        const topResults = results.slice(0, Math.min(limit, results.length));
+        // 4. Sort and take top N
+        allCandidates.sort((x, y) => x.deltaE - y.deltaE);
+        const topCandidates = allCandidates.slice(0, Math.min(limit, allCandidates.length));
 
-        console.log(`[COLOR-MATCH] Top ${topResults.length} resultados, mejor ΔE = ${topResults[0]?.deltaE?.toFixed(2)}`);
-        res.json(topResults);
+        if (topCandidates.length === 0) {
+            return res.json([]);
+        }
+
+        // 5. Fetch full data for top results ONLY
+        const standardIds = topCandidates.filter(c => c.source === 'standard').map(c => c.id);
+        const personalIds = topCandidates.filter(c => c.source === 'personal').map(c => c.id);
+
+        const fullStandard = await prisma.formula.findMany({
+            where: { id: { in: standardIds } },
+            // Relations are small for only a few records
+            include: { marca: true, producto: true, carta: true }
+        });
+
+        const fullPersonal = await prisma.formPersonales.findMany({
+            where: { ID: { in: personalIds } }
+        });
+
+        // 6. Final assembly of results
+        const finalResults = topCandidates.map(cand => {
+            if (cand.source === 'standard') {
+                const f = fullStandard.find(x => x.id === cand.id);
+                return {
+                    formula: f ? { ...f, NOMBREFORMULA: f.NOMBRE } : null,
+                    deltaE: parseFloat(cand.deltaE.toFixed(4)),
+                    source: 'standard'
+                };
+            } else {
+                const f = fullPersonal.find(x => x.ID === cand.id);
+                return {
+                    formula: f,
+                    deltaE: parseFloat(cand.deltaE.toFixed(4)),
+                    source: 'personal'
+                };
+            }
+        }).filter(r => r.formula !== null);
+
+        console.log(`[COLOR-MATCH] Enviando ${finalResults.length} resultados, mejor ΔE = ${finalResults[0]?.deltaE?.toFixed(2)}`);
+        res.json(finalResults);
     } catch (error: any) {
         console.error('[ERROR] /api/color-match:', error.message);
         res.status(500).json({ error: 'Error en búsqueda de color', details: error.message });

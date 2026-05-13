@@ -20,5 +20,8 @@ COPY --from=build /app/server ./server
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/.env ./.env
 
+# Generar el Prisma Client en la etapa de producción después de copiar el schema
+RUN npx prisma generate
+
 EXPOSE 3001
 CMD ["tsx", "server/index.ts"]

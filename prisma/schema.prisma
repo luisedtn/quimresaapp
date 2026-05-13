@@ -179,7 +179,7 @@ model FormPersonales {
   IMPRIMIRPRECIO  Decimal? @db.Decimal
   NROCOPIAS       Decimal? @db.Decimal
   NOMUESTRAS      Int?     @default(0)
-  IDFORMULA       Int?
+  IDFORMULA       String?
   cliente         Cliente? @relation(fields: [IDCLIENTE], references: [CODIGO])
 
   @@map("formpersonales")
