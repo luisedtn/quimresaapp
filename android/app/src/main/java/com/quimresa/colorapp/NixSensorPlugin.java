@@ -108,7 +108,7 @@ public class NixSensorPlugin extends Plugin {
     }
 
     @PermissionCallback
-    private void checkPermissionsCallback(PluginCall call) {
+    public void checkPermissionsCallback(PluginCall call) {
         if (getPermissionState("bluetooth") == PermissionState.GRANTED) {
             startScan(call);
         } else {
@@ -204,7 +204,7 @@ public class NixSensorPlugin extends Plugin {
             @Override
             public void onDeviceResult(@NonNull CommandStatus status,
                     @Nullable Map<ScanMode, ? extends IMeasurementData> results) {
-                if (status == CommandStatus.SUCCESS && results != null) {
+                if (status == CommandStatus.SUCCESS && results != null && !results.isEmpty()) {
                     IMeasurementData mData = results.values().iterator().next();
                     if (mData != null) {
                         IColorData color = mData.toColorData(ReferenceWhite.D50_2, IColorData.ColorType.CIELAB);

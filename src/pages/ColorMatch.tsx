@@ -78,6 +78,7 @@ export default function ColorMatch() {
     const [selectedMatch, setSelectedMatch] = useState<MatchResult | null>(null);
     const [componentColors, setComponentColors] = useState<ComponentColor[]>([]);
     const [loadingComponents, setLoadingComponents] = useState(false);
+    const [prepareAmount, setPrepareAmount] = useState<string | number>(1.0);
 
     // Recompute hex preview when input changes
     useEffect(() => {
@@ -316,11 +317,12 @@ export default function ColorMatch() {
                 quantity: cc.quantity,
             })),
             timestamp: new Date().toISOString(),
-            isMatchMode: true
+            isMatchMode: true,
+            prepareAmount
         };
 
         localStorage.setItem('qc_context', JSON.stringify(qcContext));
-    }, [selectedMatch, componentColors, patronL, patronA, patronB]);
+    }, [selectedMatch, componentColors, patronL, patronA, patronB, prepareAmount]);
 
     // ----------------------------------------------------------------
     // Send to Quality Control
@@ -400,140 +402,148 @@ export default function ColorMatch() {
                 {/* ========================== */}
                 {/* Patron Input               */}
                 {/* ========================== */}
-                <div className="space-y-3">
-                    <h2 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
-                        Color a Buscar (Patrón)
-                    </h2>
+                {/* ========================== */}
+                {/* Patron Input & Search      */}
+                {/* ========================== */}
+                {!selectedMatch && (
+                    <>
+                        <div className="space-y-3">
+                            <h2 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                Color a Buscar (Patrón)
+                            </h2>
 
-                    {/* Preview Swatch */}
-                    <div className="flex items-center gap-4">
-                        <div
-                            className="h-20 w-20 rounded-2xl border-2 border-slate-700 shadow-2xl transition-colors flex items-center justify-center flex-shrink-0 overflow-hidden"
-                            style={{ backgroundColor: patronHex || '#111' }}
-                        >
-                            {!patronHex && (
-                                <Target className="h-6 w-6 text-slate-700" />
-                            )}
-                        </div>
-                        <div className="flex-1 space-y-1">
-                            <p className="text-sm font-bold text-white">
-                                {patronHex ? 'Vista previa del color' : 'Ingresa valores L*a*b*'}
-                            </p>
-                            {patronHex && (
-                                <p className="text-[10px] text-slate-500 font-mono uppercase tracking-wider">
-                                    L: {parseFloat(patronL).toFixed(2)} | a: {parseFloat(patronA).toFixed(2)} | b: {parseFloat(patronB).toFixed(2)}
-                                </p>
-                            )}
-                            <p className="text-[10px] text-slate-600">{patronHex || '#------'}</p>
-                        </div>
-                    </div>
-
-                    {/* Mode Selector */}
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setInputMode('manual')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all border ${inputMode === 'manual'
-                                ? 'bg-violet-600/20 border-violet-500/50 text-violet-300'
-                                : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'
-                                }`}
-                        >
-                            <Keyboard className="h-3.5 w-3.5" />
-                            Manual
-                        </button>
-                        <button
-                            onClick={() => {
-                                setInputMode('device');
-                                handleDeviceCapture();
-                            }}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all border ${inputMode === 'device'
-                                ? 'bg-blue-600/20 border-blue-500/50 text-blue-300'
-                                : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'
-                                }`}
-                        >
-                            <Scan className="h-3.5 w-3.5" />
-                            Dispositivo
-                        </button>
-                    </div>
-
-                    {/* Manual LAB inputs */}
-                    <AnimatePresence>
-                        {inputMode === 'manual' && (
-                            <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                className="overflow-hidden"
-                            >
-                                <div className="grid grid-cols-3 gap-3 pt-2">
-                                    {[
-                                        { label: 'L*', value: patronL, setter: setPatronL, accent: 'text-white', border: 'focus:border-white/30' },
-                                        { label: 'a*', value: patronA, setter: setPatronA, accent: 'text-emerald-400', border: 'focus:border-emerald-500/50' },
-                                        { label: 'b*', value: patronB, setter: setPatronB, accent: 'text-amber-400', border: 'focus:border-amber-500/50' },
-                                    ].map((field) => (
-                                        <div key={field.label} className="flex flex-col gap-1">
-                                            <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${field.accent}`}>
-                                                {field.label}
-                                            </label>
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                value={field.value}
-                                                onChange={(e) => field.setter(e.target.value)}
-                                                placeholder="0.00"
-                                                className={`w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-3 text-center text-sm font-mono text-white outline-none transition-all ${field.border}`}
-                                            />
-                                        </div>
-                                    ))}
+                            {/* Preview Swatch */}
+                            <div className="flex items-center gap-4">
+                                <div
+                                    className="h-20 w-20 rounded-2xl border-2 border-slate-700 shadow-2xl transition-colors flex items-center justify-center flex-shrink-0 overflow-hidden"
+                                    style={{ backgroundColor: patronHex || '#111' }}
+                                >
+                                    {!patronHex && (
+                                        <Target className="h-6 w-6 text-slate-700" />
+                                    )}
                                 </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
+                                <div className="flex-1 space-y-1">
+                                    <p className="text-sm font-bold text-white">
+                                        {patronHex ? 'Vista previa del color' : 'Ingresa valores L*a*b*'}
+                                    </p>
+                                    {patronHex && (
+                                        <p className="text-[10px] text-slate-500 font-mono uppercase tracking-wider">
+                                            L: {parseFloat(patronL).toFixed(2)} | a: {parseFloat(patronA).toFixed(2)} | b: {parseFloat(patronB).toFixed(2)}
+                                        </p>
+                                    )}
+                                    <p className="text-[10px] text-slate-600">{patronHex || '#------'}</p>
+                                </div>
+                            </div>
 
-                {/* Results count selector */}
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 flex-1">
-                        <Sliders className="h-3.5 w-3.5 text-slate-500" />
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Resultados:</span>
-                    </div>
-                    <div className="flex gap-1.5">
-                        {[5, 10, 20, 50].map((n) => (
-                            <button
-                                key={n}
-                                onClick={() => setMaxResults(n)}
-                                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${maxResults === n
-                                    ? 'bg-violet-600 border-violet-500 text-white shadow-lg shadow-violet-900/30'
-                                    : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'
-                                    }`}
-                            >
-                                {n}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                            {/* Mode Selector */}
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setInputMode('manual')}
+                                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all border ${inputMode === 'manual'
+                                        ? 'bg-violet-600/20 border-violet-500/50 text-violet-300'
+                                        : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'
+                                        }`}
+                                >
+                                    <Keyboard className="h-3.5 w-3.5" />
+                                    Manual
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setInputMode('device');
+                                        handleDeviceCapture();
+                                    }}
+                                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all border ${inputMode === 'device'
+                                        ? 'bg-blue-600/20 border-blue-500/50 text-blue-300'
+                                        : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'
+                                        }`}
+                                >
+                                    <Scan className="h-3.5 w-3.5" />
+                                    Dispositivo
+                                </button>
+                            </div>
 
-                {/* Search Button */}
-                <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    onClick={handleSearch}
-                    disabled={!patronHex || isSearching}
-                    className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all shadow-xl ${patronHex && !isSearching
-                        ? 'bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-violet-900/30 active:shadow-none'
-                        : 'bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed'
-                        }`}
-                >
-                    {isSearching ? (
-                        <>
-                            <div className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                            Buscando coincidencias...
-                        </>
-                    ) : (
-                        <>
-                            <Search className="h-4 w-4" />
-                            Buscar Fórmulas Cercanas
-                        </>
-                    )}
-                </motion.button>
+                            {/* Manual LAB inputs */}
+                            <AnimatePresence>
+                                {inputMode === 'manual' && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="overflow-hidden"
+                                    >
+                                        <div className="grid grid-cols-3 gap-3 pt-2">
+                                            {[
+                                                { label: 'L*', value: patronL, setter: setPatronL, accent: 'text-white', border: 'focus:border-white/30' },
+                                                { label: 'a*', value: patronA, setter: setPatronA, accent: 'text-emerald-400', border: 'focus:border-emerald-500/50' },
+                                                { label: 'b*', value: patronB, setter: setPatronB, accent: 'text-amber-400', border: 'focus:border-amber-500/50' },
+                                            ].map((field) => (
+                                                <div key={field.label} className="flex flex-col gap-1">
+                                                    <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${field.accent}`}>
+                                                        {field.label}
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={field.value}
+                                                        onChange={(e) => field.setter(e.target.value)}
+                                                        placeholder="0.00"
+                                                        className={`w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-3 text-center text-sm font-mono text-white outline-none transition-all ${field.border}`}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+
+                        {/* Results count selector */}
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 flex-1">
+                                <Sliders className="h-3.5 w-3.5 text-slate-500" />
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Resultados:</span>
+                            </div>
+                            <div className="flex gap-1.5">
+                                {[5, 10, 20, 50].map((n) => (
+                                    <button
+                                        key={n}
+                                        onClick={() => setMaxResults(n)}
+                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${maxResults === n
+                                            ? 'bg-violet-600 border-violet-500 text-white shadow-lg shadow-violet-900/30'
+                                            : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'
+                                            }`}
+                                    >
+                                        {n}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Search Button */}
+                        <motion.button
+                            whileTap={{ scale: 0.97 }}
+                            onClick={handleSearch}
+                            disabled={!patronHex || isSearching}
+                            className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all shadow-xl ${patronHex && !isSearching
+                                ? 'bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-violet-900/30 active:shadow-none'
+                                : 'bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed'
+                                }`}
+                        >
+                            {isSearching ? (
+                                <>
+                                    <div className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                                    Buscando coincidencias...
+                                </>
+                            ) : (
+                                <>
+                                    <Search className="h-4 w-4" />
+                                    Buscar Fórmulas Cercanas
+                                </>
+                            )}
+                        </motion.button>
+                    </>
+                )}
+
 
                 {/* ========================== */}
                 {/* Results List               */}
@@ -655,6 +665,41 @@ export default function ColorMatch() {
                                 </div>
                             </div>
 
+                            {/* Quantity Input */}
+                            <div className="bg-slate-900/40 rounded-2xl border border-slate-800 p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                        <Layers className="h-3.5 w-3.5 text-blue-400" />
+                                        Cantidad a Preparar
+                                    </h3>
+                                    <span className="text-[10px] font-bold text-blue-400 uppercase">Litros (LT)</span>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={prepareAmount}
+                                        onChange={(e) => setPrepareAmount(e.target.value)}
+                                        onBlur={() => {
+                                            const val = normalizeDecimal(prepareAmount);
+                                            if (val <= 0) setPrepareAmount(1.0);
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                const val = normalizeDecimal(prepareAmount);
+                                                if (val <= 0) setPrepareAmount(1.0);
+                                                (e.target as HTMLInputElement).blur();
+                                            }
+                                        }}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-4 px-4 text-center text-xl font-mono font-black text-white outline-none focus:border-blue-500/50 transition-all"
+                                    />
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                        <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">LT</span>
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Component Colors */}
                             <div className="bg-slate-900/60 rounded-2xl border border-slate-800 p-4 space-y-3">
                                 <div className="flex items-center justify-between">
@@ -665,6 +710,7 @@ export default function ColorMatch() {
                                     <button onClick={() => {
                                         setSelectedMatch(null);
                                         setComponentColors([]);
+                                        setPrepareAmount(1.0);
                                     }} className="text-[10px] text-slate-400 hover:text-white transition-colors">
                                         <span className="mr-1">←</span> Volver a resultados
                                     </button>
@@ -701,7 +747,7 @@ export default function ColorMatch() {
                                                     </p>
                                                 </div>
                                                 <div className="text-[9px] font-bold text-slate-300 text-right">
-                                                    {(((cc.quantity || 0) as number).toFixed(2))}g
+                                                    {(((cc.ml || 0) * (normalizeDecimal(prepareAmount) || 0)).toFixed(2))}g
                                                 </div>
                                             </div>
                                         ))}
