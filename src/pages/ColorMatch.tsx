@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Search, Scan, Keyboard, Layers, ChevronRight, Target, Sliders, Beaker, Check, Sparkles } from 'lucide-react';
@@ -97,7 +97,7 @@ export default function ColorMatch() {
     const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [historyItems, setHistoryItems] = useState<any[]>([]);
 
-    const logTechnicalStep = async (tipoPaso: string, datos: any, description?: string, explicitLote?: string) => {
+    const logTechnicalStep = useCallback(async (tipoPaso: string, datos: any, description?: string, explicitLote?: string) => {
         const loteToUse = explicitLote || currentLote;
         if (!selectedMatch || !loteToUse) return;
         const f = selectedMatch.formula;
@@ -129,7 +129,7 @@ export default function ColorMatch() {
         } catch (e) {
             console.error("Error logging technical step", e);
         }
-    };
+    }, [currentLote, selectedMatch]);
 
     const generateLote = () => {
         const now = new Date();
@@ -164,10 +164,18 @@ export default function ColorMatch() {
                 return updated;
             });
 
-            // Registrar adición en el historial
+            // Registrar adición en el historial con contexto de color
             logTechnicalStep('ADICION',
-                { suggestions },
-                `Sugerencia IA aplicada: ${suggestions.map((s: any) => `${s.code}(${s.quantity}g)`).join(', ')}`
+                {
+                    suggestions,
+                    currentLAB: {
+                        l: parseFloat(sampleL || patronL),
+                        a: parseFloat(sampleA || patronA),
+                        b: parseFloat(sampleB || patronB)
+                    },
+                    currentDeltaE: sampleDe || selectedMatch?.deltaE
+                },
+                `Ajuste técnico: ${suggestions.map((s: any) => `${s.code} (+${s.quantity}g)`).join(', ')}`
             );
 
             // Abrir modal de nueva lectura
@@ -176,7 +184,7 @@ export default function ColorMatch() {
 
         window.addEventListener('apply-ai-suggestions', handleSuggestions);
         return () => window.removeEventListener('apply-ai-suggestions', handleSuggestions);
-    }, []);
+    }, [selectedMatch, currentLote, sampleL, sampleA, sampleB, sampleDe, patronL, patronA, patronB, logTechnicalStep]);
 
     // Sincronizar contexto para el Asistente IA
     useEffect(() => {
