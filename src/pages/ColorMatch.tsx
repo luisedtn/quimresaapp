@@ -178,6 +178,37 @@ export default function ColorMatch() {
         return () => window.removeEventListener('apply-ai-suggestions', handleSuggestions);
     }, []);
 
+    // Sincronizar contexto para el Asistente IA
+    useEffect(() => {
+        if (selectedMatch) {
+            const context = {
+                standard: {
+                    l: parseFloat(patronL) || 0,
+                    a: parseFloat(patronA) || 0,
+                    b: parseFloat(patronB) || 0,
+                    hex: patronHex
+                },
+                sample: {
+                    l: parseFloat(selectedMatch.formula.L || '0'),
+                    a: parseFloat(selectedMatch.formula.A || '0'),
+                    b: parseFloat(selectedMatch.formula.B || '0'),
+                    name: selectedMatch.formula.NOMBREFORMULA || selectedMatch.formula.NOMBRE,
+                    hex: selectedMatch.hex
+                },
+                de: selectedMatch.deltaE,
+                dL: parseFloat(selectedMatch.formula.L || '0') - (parseFloat(patronL) || 0),
+                dA: parseFloat(selectedMatch.formula.A || '0') - (parseFloat(patronA) || 0),
+                dB: parseFloat(selectedMatch.formula.B || '0') - (parseFloat(patronB) || 0),
+                prepareAmount: normalizeDecimal(prepareAmount),
+                componentColors: componentColors,
+                lote: currentLote
+            };
+            localStorage.setItem('qc_context', JSON.stringify(context));
+            window.dispatchEvent(new CustomEvent('qc-context-updated'));
+        }
+    }, [selectedMatch, patronL, patronA, patronB, componentColors, prepareAmount, currentLote]);
+
+
     // Recompute hex preview when input changes
     useEffect(() => {
         const l = parseFloat(patronL);

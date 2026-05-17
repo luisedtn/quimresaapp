@@ -48,12 +48,14 @@ export default function ColorAiChat() {
             const suggestions: any[] = [];
             const rows = lastMsg.text.split('\n');
             rows.forEach(row => {
-                const match = row.match(/\|\s*([^|\[]*)\s*\[(#\w+)\]\s*\|\s*([\d. ]+)\s*\|/);
+                // Regex robusto para capturar: | Codigo [Color] | Cantidad |
+                const match = row.match(/\|\s*([^|\[(]*?)\s*(?:[[(](#[a-f\d]{3,6})[\])]|(#[a-f\d]{3,6}))?\s*\|\s*([+\d., ]+).*?\|/i);
                 if (match) {
                     const code = match[1].trim();
-                    const color = match[2];
-                    const qty = parseFloat(match[3].trim());
-                    if (code && !isNaN(qty)) {
+                    const color = match[2] || match[3] || '#808080';
+                    const qtyStr = match[4].replace(/[+ ]/g, '').replace(',', '.').trim();
+                    const qty = parseFloat(qtyStr);
+                    if (code && !isNaN(qty) && qty > 0) {
                         suggestions.push({ code, color, quantity: qty });
                     }
                 }
