@@ -27,7 +27,28 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
     const [error, setError] = useState<string | null>(null);
     const [selectedPdfUrl, setSelectedPdfUrl] = useState<string | null>(null);
     const [numPages, setNumPages] = useState<number>();
-    // Calculado directamente, nunca con estado para evitar renders con valor viejo
+    const [containerWidth, setContainerWidth] = useState<number>(window.innerWidth);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Observar el tamaño del contenedor para ajustar el PDF dinámicamente y evitar cortes
+    useEffect(() => {
+        if (!selectedPdfUrl || !containerRef.current) return;
+
+        const handleResize = () => {
+            if (containerRef.current) {
+                // clientWidth ya excluye el scrollbar del propio contenedor
+                // Restamos padding de ambos lados (40px total de seguridad)
+                const availableWidth = containerRef.current.clientWidth - 40;
+                setContainerWidth(availableWidth);
+            }
+        };
+
+        const observer = new ResizeObserver(handleResize);
+        observer.observe(containerRef.current);
+        handleResize(); // Carga inicial
+
+        return () => observer.disconnect();
+    }, [selectedPdfUrl]);
 
     useEffect(() => {
         const fetchPDFs = async () => {
@@ -58,7 +79,7 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
 
     const handleOpenPdf = (url: string) => {
         const fullUrl = `${API_BASE_URL}${url}`;
-        console.log(`[UI] Intentando abrir internamente con react-pdf la URL: ${fullUrl}`);
+        console.log(`[UI] Abriendo reporte en visor interno: ${fullUrl}`);
         setSelectedPdfUrl(fullUrl);
     };
 
@@ -129,7 +150,7 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
                 )}
             </div>
 
-            {/* Visor de PDF integrado basado en Canvas (React-PDF) para soporte 100% nativo */}
+            {/* Visor de PDF integrado basado en Canvas (React-PDF) */}
             <AnimatePresence>
                 {selectedPdfUrl && (
                     <motion.div
@@ -138,7 +159,7 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
                         exit={{ opacity: 0 }}
                         className="fixed inset-0 z-[400] bg-[#0A0F14] flex flex-col"
                     >
-                        {/* Cabecera del visor — full width, no rounded */}
+                        {/* Cabecera del visor */}
                         <div className="w-full bg-[#0A0F14] px-4 py-3 flex items-center justify-between border-b border-slate-800 flex-shrink-0">
                             <h3 className="text-white font-bold text-sm tracking-wide flex items-center gap-2">
                                 <FileText className="h-4 w-4 text-red-500" /> Visor de Documento
@@ -154,8 +175,11 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
                             </button>
                         </div>
 
-                        {/* Área de scroll — ocupa todo el espacio restante */}
-                        <div className="flex-1 overflow-y-auto bg-slate-800 flex flex-col items-center py-4">
+                        {/* Área de scroll dinámica para evitar cortes horizontales */}
+                        <div
+                            ref={containerRef}
+                            className="flex-1 overflow-y-auto bg-slate-800 flex flex-col items-center p-4 md:p-6"
+                        >
                             <Document
                                 file={selectedPdfUrl}
                                 onLoadSuccess={onDocumentLoadSuccess}
@@ -172,23 +196,22 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
                                     </div>
                                 }
                             >
-                                {Array.from(new Array(numPages), (el, index) => {
-                                    // document.documentElement.clientWidth es más confiable en Capacitor WebView
-                                    const vw = document.documentElement.clientWidth || window.innerWidth;
-                                    const pdfPageWidth = Math.max(vw - 2, 200);
-                                    console.log(`[UI] Renderizando página ${index + 1}: vw=${vw}, pdfPageWidth=${pdfPageWidth}, screen.width=${window.screen.width}, devicePixelRatio=${window.devicePixelRatio}`);
-                                    return (
-                                        <div key={`page_${index + 1}`} className="mb-4 shadow-2xl bg-white">
-                                            <Page
-                                                pageNumber={index + 1}
-                                                width={pdfPageWidth}
-                                                renderTextLayer={false}
-                                                renderAnnotationLayer={false}
-                                                loading={<div className="animate-pulse bg-slate-700" style={{ width: pdfPageWidth, height: 400 }}></div>}
-                                            />
-                                        </div>
-                                    );
-                                })}
+                                {Array.from(new Array(numPages), (el, index) => (
+                                    <div key={`page_${index + 1}`} className="mb-6 shadow-2xl bg-white ring-1 ring-slate-700">
+                                        <Page
+                                            pageNumber={index + 1}
+                                            width={containerWidth}
+                                            renderTextLayer={false}
+                                            renderAnnotationLayer={false}
+                                            loading={
+                                                <div
+                                                    className="animate-pulse bg-slate-700"
+                                                    style={{ width: containerWidth, height: 400 }}
+                                                ></div>
+                                            }
+                                        />
+                                    </div>
+                                ))}
                             </Document>
                         </div>
                     </motion.div>
