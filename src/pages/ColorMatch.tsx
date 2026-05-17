@@ -114,6 +114,7 @@ export default function ColorMatch() {
                     formulaName: f.NOMBREFORMULA || f.NOMBRE || 'Sin nombre',
                     lote: loteToUse,
                     tipoPaso,
+                    descripcion: description || (tipoPaso === 'ADICION' ? 'Adición aplicada' : (tipoPaso === 'MEDICION' ? 'Medición realizada' : 'Paso registrado')),
                     datos
                 })
             });
@@ -1167,6 +1168,11 @@ export default function ColorMatch() {
                                                 </div>
 
                                                 <div className="space-y-2">
+                                                    {item.descripcion && (
+                                                        <p className="text-[11px] font-bold text-slate-200 leading-relaxed mb-3">
+                                                            {item.descripcion}
+                                                        </p>
+                                                    )}
                                                     {type === 'ADICION' && data.suggestions && (
                                                         <div className="space-y-1.5">
                                                             {data.suggestions.map((s: any, i: number) => (

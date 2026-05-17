@@ -823,6 +823,7 @@ app.post('/api/ajustes/registrar-paso', authenticateToken, async (req: Request, 
             formulaName,
             lote,
             tipoPaso, // 'INICIO', 'ADICION', 'MEDICION'
+            descripcion,
             datos
         } = req.body;
 
@@ -837,6 +838,7 @@ app.post('/api/ajustes/registrar-paso', authenticateToken, async (req: Request, 
                 formula_nombre: formulaName,
                 lote: lote,
                 tipo_paso: tipoPaso,
+                descripcion: descripcion,
                 datos: datos,
                 fecha: new Date()
             }
@@ -860,6 +862,20 @@ app.get('/api/ajustes/historial/:lote', authenticateToken, async (req: Request, 
     } catch (error: any) {
         console.error('[ERROR] /api/ajustes/historial:', error.message);
         res.status(500).json({ error: 'Error al obtener el historial', details: error.message });
+    }
+});
+
+app.get('/api/ajustes/todo-historial', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { idcliente } = (req as any).user;
+        const historial = await prisma.ajustesTecnicos.findMany({
+            where: { id_cliente: idcliente },
+            orderBy: { fecha: 'desc' }
+        });
+        res.json(historial);
+    } catch (error: any) {
+        console.error('[ERROR] /api/ajustes/todo-historial:', error.message);
+        res.status(500).json({ error: 'Error al obtener el historial completo', details: error.message });
     }
 });
 

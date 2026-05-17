@@ -388,6 +388,7 @@ model AjustesTecnicos {
   formula_nombre  String?
   lote            String
   tipo_paso       String   // 'INICIO', 'ADICION', 'MEDICION'
+  descripcion     String?
   datos           Json?
   fecha           DateTime @default(now())
 

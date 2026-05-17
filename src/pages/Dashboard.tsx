@@ -20,6 +20,7 @@ import {
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import Sidebar from '../components/Sidebar';
+import HistorialControl from '../components/HistorialControl';
 
 import IconoAjustes from '../assets/iconSpectro.svg';
 
@@ -32,6 +33,7 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showHistorialControl, setShowHistorialControl] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -182,7 +184,13 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
               key={item.id}
               whileHover={{ y: -2, backgroundColor: 'rgba(30, 41, 59, 0.3)' }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => item.path && navigate(item.path)}
+              onClick={() => {
+                if (item.id === 'qc-history') {
+                  setShowHistorialControl(true);
+                } else if (item.path) {
+                  navigate(item.path);
+                }
+              }}
               className="elegant-card flex flex-col items-start gap-4 p-6 text-left transition-all hover:border-slate-600 group"
             >
               <div className="rounded-lg bg-slate-800/50 p-3 group-hover:bg-[#004A99]/20 transition-colors">
@@ -209,6 +217,12 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
           Quimresa Digital Color System v0.0.1 © 2026
         </div>
       </footer>
+
+      <AnimatePresence>
+        {showHistorialControl && (
+          <HistorialControl onClose={() => setShowHistorialControl(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
