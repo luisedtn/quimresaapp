@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, FileText, Loader2, ExternalLink } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -19,6 +19,7 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
     const [pdfs, setPdfs] = useState<PDFFile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [selectedPdfUrl, setSelectedPdfUrl] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchPDFs = async () => {
@@ -48,14 +49,14 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
     }, [clientCode]);
 
     const handleOpenPdf = (url: string) => {
-        // Abrir visor de PDF en nueva pestaña (usará la ruta estática /controlcalidad/...)
-        window.open(`${API_BASE_URL}${url}`, '_blank');
+        // En vez de window.open, abrimos el PDF internamente
+        setSelectedPdfUrl(`${API_BASE_URL}${url}`);
     };
 
     return (
-        <div className="fixed inset-0 z-[300] flex flex-col items-center justify-start bg-[#0A0F14]/95 backdrop-blur-md overflow-y-auto w-full p-4 md:p-8">
+        <div className="fixed inset-0 z-[300] flex flex-col items-center justify-start bg-[#0A0F14]/95 backdrop-blur-md w-full p-4 md:p-8 overflow-y-auto">
             {/* Header */}
-            <div className="w-full max-w-5xl bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-2xl mb-6 sticky top-4 z-10">
+            <div className="w-full max-w-5xl bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-2xl mb-6 flex-shrink-0">
                 <h2 className="text-white font-bold flex items-center gap-2 uppercase tracking-wide">
                     <FileText className="w-5 h-5 text-red-500" /> Reportes de Calidad - Cliente: {clientCode}
                 </h2>
@@ -68,7 +69,7 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
             </div>
 
             {/* Grid de PDFs */}
-            <div className="w-full max-w-5xl">
+            <div className="w-full max-w-5xl pb-10">
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-32 text-slate-400">
                         <Loader2 className="w-12 h-12 animate-spin mb-4 text-red-500" />
@@ -113,6 +114,39 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
                     </div>
                 )}
             </div>
+
+            {/* Internal PDF Viewer overlay */}
+            <AnimatePresence>
+                {selectedPdfUrl && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="fixed inset-0 z-[400] bg-[#0A0F14]/90 backdrop-blur-md flex flex-col items-center justify-center p-2 md:p-8"
+                    >
+                        <div className="w-full max-w-5xl h-full flex flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+                            <div className="w-full bg-slate-950 p-4 flex items-center justify-between border-b border-slate-800">
+                                <h3 className="text-white font-bold text-sm tracking-wide flex items-center gap-2">
+                                    <FileText className="h-4 w-4 text-red-500" /> Visor PDF Documento
+                                </h3>
+                                <button
+                                    onClick={() => setSelectedPdfUrl(null)}
+                                    className="bg-slate-800 hover:bg-slate-700 transition-colors p-2 rounded-lg text-white border border-slate-700"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <div className="flex-1 w-full bg-slate-400">
+                                <iframe
+                                    src={selectedPdfUrl}
+                                    className="w-full h-full border-none bg-white"
+                                    title="PDF Viewer"
+                                />
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
