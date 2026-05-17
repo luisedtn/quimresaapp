@@ -26,11 +26,8 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedPdfUrl, setSelectedPdfUrl] = useState<string | null>(null);
-
-    // Estados para control del visor interno react-pdf
     const [numPages, setNumPages] = useState<number>();
-    const [containerWidth, setContainerWidth] = useState<number>(300);
-    const pdfContainerRef = useRef<HTMLDivElement>(null);
+    // Calculado directamente, nunca con estado para evitar renders con valor viejo
 
     useEffect(() => {
         const fetchPDFs = async () => {
@@ -58,16 +55,6 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
 
         fetchPDFs();
     }, [clientCode]);
-
-    // Calcular el ancho del PDF basado en el ancho real de la ventana cuando se abre
-    useEffect(() => {
-        if (selectedPdfUrl) {
-            // 32px = margen total (16px cada lado) en móvil
-            const w = window.innerWidth - 32;
-            setContainerWidth(w > 0 ? w : 300);
-            console.log(`[UI] containerWidth calculado: ${w}px (window.innerWidth=${window.innerWidth})`);
-        }
-    }, [selectedPdfUrl]);
 
     const handleOpenPdf = (url: string) => {
         const fullUrl = `${API_BASE_URL}${url}`;
@@ -168,7 +155,7 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
                         </div>
 
                         {/* Área de scroll — ocupa todo el espacio restante */}
-                        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-800 flex flex-col items-center py-4 px-0">
+                        <div className="flex-1 overflow-y-auto bg-slate-800 flex flex-col items-center py-4">
                             <Document
                                 file={selectedPdfUrl}
                                 onLoadSuccess={onDocumentLoadSuccess}
@@ -185,17 +172,23 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
                                     </div>
                                 }
                             >
-                                {Array.from(new Array(numPages), (el, index) => (
-                                    <div key={`page_${index + 1}`} className="mb-4 shadow-2xl bg-white">
-                                        <Page
-                                            pageNumber={index + 1}
-                                            width={containerWidth}
-                                            renderTextLayer={false}
-                                            renderAnnotationLayer={false}
-                                            loading={<div className="animate-pulse bg-slate-700" style={{ width: containerWidth, height: 400 }}></div>}
-                                        />
-                                    </div>
-                                ))}
+                                {Array.from(new Array(numPages), (el, index) => {
+                                    // document.documentElement.clientWidth es más confiable en Capacitor WebView
+                                    const vw = document.documentElement.clientWidth || window.innerWidth;
+                                    const pdfPageWidth = Math.max(vw - 2, 200);
+                                    console.log(`[UI] Renderizando página ${index + 1}: vw=${vw}, pdfPageWidth=${pdfPageWidth}, screen.width=${window.screen.width}, devicePixelRatio=${window.devicePixelRatio}`);
+                                    return (
+                                        <div key={`page_${index + 1}`} className="mb-4 shadow-2xl bg-white">
+                                            <Page
+                                                pageNumber={index + 1}
+                                                width={pdfPageWidth}
+                                                renderTextLayer={false}
+                                                renderAnnotationLayer={false}
+                                                loading={<div className="animate-pulse bg-slate-700" style={{ width: pdfPageWidth, height: 400 }}></div>}
+                                            />
+                                        </div>
+                                    );
+                                })}
                             </Document>
                         </div>
                     </motion.div>
