@@ -852,15 +852,30 @@ app.post('/api/upload-pdf', authenticateToken, async (req: Request, res: Respons
 // =================================================================
 app.get('/api/pdfs/:clientCode', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
+        console.log('\n[GET-PDFs] === INICIANDO LECTURA DE DIRECTORIO DE PDFs ===');
         const { clientCode } = req.params;
-        const clientDir = path.join(__dirname, '../controlcalidad', clientCode);
+
+        // Define la ruta usando __dirname o asumiendo el root de la app (/app)
+        const baseDir = path.join(__dirname, '../controlcalidad');
+        const clientDir = path.join(baseDir, clientCode);
+
+        console.log(`[GET-PDFs] Buscando reportes para el cliente: "${clientCode}"`);
+        console.log(`[GET-PDFs] Directorio Base resuelto: ${baseDir}`);
+        console.log(`[GET-PDFs] Directorio Cliente resuelto: ${clientDir}`);
 
         if (!fs.existsSync(clientDir)) {
+            console.warn(`[GET-PDFs] AVISO: El directorio ${clientDir} NO existe aún.`);
             return res.json([]);
         }
 
-        const files = fs.readdirSync(clientDir).filter(file => file.toLowerCase().endsWith('.pdf'));
-        const fileData = files.map(file => {
+        console.log(`[GET-PDFs] ✔️ El directorio existe. Leyendo archivos...`);
+        const allFiles = fs.readdirSync(clientDir);
+        console.log(`[GET-PDFs] Todos los archivos encontrados:`, allFiles);
+
+        const pdfFiles = allFiles.filter(file => file.toLowerCase().endsWith('.pdf'));
+        console.log(`[GET-PDFs] Cantidad de PDFs válidos: ${pdfFiles.length}`);
+
+        const fileData = pdfFiles.map(file => {
             const stat = fs.statSync(path.join(clientDir, file));
             return {
                 name: file,
@@ -871,9 +886,13 @@ app.get('/api/pdfs/:clientCode', authenticateToken, async (req: Request, res: Re
 
         // Sort newest first
         fileData.sort((a, b) => b.date.getTime() - a.date.getTime());
+
+        console.log(`[GET-PDFs] Respondido con éxito. Devolviendo ${fileData.length} reportes.`);
+        console.log('[GET-PDFs] ==================================================\n');
+
         res.json(fileData);
     } catch (error: any) {
-        console.error('[ERROR] /api/pdfs/:clientCode:', error.message);
+        console.error('[GET-PDFs] [ERROR CRÍTICO]:', error.message);
         res.status(500).json({ error: 'Error al listar PDFs', details: error.message });
     }
 });
