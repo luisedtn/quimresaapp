@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { X, Download, Printer } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 import { jsPDF } from 'jspdf';
 import { format, addYears } from 'date-fns';
 

@@ -40,7 +40,7 @@
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "firebase": "^12.12.1",
-    "html2canvas": "^1.4.1",
+    "html2canvas-pro": "^2.0.2",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^4.2.1",
     "leaflet": "^1.9.4",
