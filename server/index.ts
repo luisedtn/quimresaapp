@@ -847,6 +847,39 @@ app.post('/api/upload-pdf', authenticateToken, async (req: Request, res: Respons
     }
 });
 
+// =================================================================
+// GET /api/pdfs/:clientCode  – List PDFs
+// =================================================================
+app.get('/api/pdfs/:clientCode', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { clientCode } = req.params;
+        const clientDir = path.join(__dirname, '../controlcalidad', clientCode);
+
+        if (!fs.existsSync(clientDir)) {
+            return res.json([]);
+        }
+
+        const files = fs.readdirSync(clientDir).filter(file => file.toLowerCase().endsWith('.pdf'));
+        const fileData = files.map(file => {
+            const stat = fs.statSync(path.join(clientDir, file));
+            return {
+                name: file,
+                url: `/controlcalidad/${clientCode}/${file}`,
+                date: stat.mtime
+            };
+        });
+
+        // Sort newest first
+        fileData.sort((a, b) => b.date.getTime() - a.date.getTime());
+        res.json(fileData);
+    } catch (error: any) {
+        console.error('[ERROR] /api/pdfs/:clientCode:', error.message);
+        res.status(500).json({ error: 'Error al listar PDFs', details: error.message });
+    }
+});
+
+app.use('/controlcalidad', express.static(path.join(__dirname, '../controlcalidad')));
+
 const distPath = path.join(__dirname, '../dist');
 app.use(express.static(distPath));
 

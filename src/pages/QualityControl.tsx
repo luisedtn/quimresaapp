@@ -5,6 +5,7 @@ import { ArrowLeft, Check, X, Info, ZoomIn, ZoomOut, Sparkles, FileText } from '
 import { useNixDevice } from '../hooks/useNixDevice';
 import { deltaE2000 } from '../services/NixBluetoothService';
 import GenerarPDF from '../components/GenerarPDF';
+import ListaControlesCalidad from '../components/ListaControlesCalidad';
 
 function labToHex(l: number, a: number, b: number): string {
   const y = (l + 16) / 116;
@@ -268,6 +269,7 @@ export default function QualityControl() {
   const [sample, setSample] = useState<any>(null);
   const [qcContextData, setQcContextData] = useState<any>(null);
   const [showPDF, setShowPDF] = useState(false);
+  const [showListaPDFs, setShowListaPDFs] = useState(false);
   const { isConnected, measure, isMeasuring } = useNixDevice();
   const initialStandardSet = useRef(false);
 
@@ -407,7 +409,13 @@ export default function QualityControl() {
           <ArrowLeft className="h-6 w-6" />
         </button>
         <h1 className="text-lg font-semibold uppercase tracking-tight">Control de calidad</h1>
-        <div className="w-10"></div>
+        <button
+          onClick={() => setShowListaPDFs(true)}
+          className="p-2 text-slate-400 hover:text-white transition-colors relative group"
+        >
+          <div className="absolute inset-0 bg-violet-500/20 rounded-full scale-0 group-hover:scale-100 transition-transform"></div>
+          <FileText className="h-6 w-6 relative z-10" />
+        </button>
       </header>
 
       <main className="flex flex-col gap-4 pt-24 pb-8 px-4 max-w-lg mx-auto w-full flex-grow">
@@ -490,6 +498,12 @@ export default function QualityControl() {
       <AnimatePresence>
         {showPDF && (
           <GenerarPDF onClose={() => setShowPDF(false)} qcContextData={qcContextData} />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showListaPDFs && (
+          <ListaControlesCalidad onClose={() => setShowListaPDFs(false)} clientCode="MADEVAL" />
         )}
       </AnimatePresence>
 
