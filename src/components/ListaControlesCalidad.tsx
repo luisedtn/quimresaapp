@@ -59,21 +59,14 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
         fetchPDFs();
     }, [clientCode]);
 
-    // Medir el ancho del contenedor PDF para que las páginas no se recorten
+    // Calcular el ancho del PDF basado en el ancho real de la ventana cuando se abre
     useEffect(() => {
-        if (!pdfContainerRef.current || !selectedPdfUrl) return;
-        const observer = new ResizeObserver(entries => {
-            for (const entry of entries) {
-                const w = entry.contentRect.width;
-                if (w > 0) {
-                    setContainerWidth(w - 16); // pequeño margen
-                }
-            }
-        });
-        observer.observe(pdfContainerRef.current);
-        // Leer el ancho inicial también
-        setContainerWidth((pdfContainerRef.current.clientWidth || 300) - 16);
-        return () => observer.disconnect();
+        if (selectedPdfUrl) {
+            // 32px = margen total (16px cada lado) en móvil
+            const w = window.innerWidth - 32;
+            setContainerWidth(w > 0 ? w : 300);
+            console.log(`[UI] containerWidth calculado: ${w}px (window.innerWidth=${window.innerWidth})`);
+        }
     }, [selectedPdfUrl]);
 
     const handleOpenPdf = (url: string) => {
@@ -153,59 +146,57 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
             <AnimatePresence>
                 {selectedPdfUrl && (
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="fixed inset-0 z-[400] bg-[#0A0F14]/95 backdrop-blur-md flex flex-col items-center justify-center p-2 md:p-8"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[400] bg-[#0A0F14] flex flex-col"
                     >
-                        <div className="w-full max-w-5xl h-full flex flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-                            {/* Cabecera del visor */}
-                            <div className="w-full bg-[#0A0F14] p-4 flex items-center justify-between border-b border-slate-800">
-                                <h3 className="text-white font-bold text-sm tracking-wide flex items-center gap-2">
-                                    <FileText className="h-4 w-4 text-red-500" /> Visor de Documento Nativo
-                                </h3>
-                                <button
-                                    onClick={() => {
-                                        setSelectedPdfUrl(null);
-                                        setNumPages(undefined);
-                                    }}
-                                    className="bg-slate-800 hover:bg-red-500 hover:text-white transition-colors p-2 rounded-lg text-slate-300 border border-slate-700"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
+                        {/* Cabecera del visor — full width, no rounded */}
+                        <div className="w-full bg-[#0A0F14] px-4 py-3 flex items-center justify-between border-b border-slate-800 flex-shrink-0">
+                            <h3 className="text-white font-bold text-sm tracking-wide flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-red-500" /> Visor de Documento
+                            </h3>
+                            <button
+                                onClick={() => {
+                                    setSelectedPdfUrl(null);
+                                    setNumPages(undefined);
+                                }}
+                                className="bg-slate-800 hover:bg-red-500 hover:text-white transition-colors p-2 rounded-lg text-slate-300 border border-slate-700"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
 
-                            {/* Área de renderizado en Canvas (Universal) */}
-                            <div ref={pdfContainerRef} className="flex-1 w-full bg-slate-800/50 overflow-y-auto flex flex-col items-center py-6 custom-scrollbar">
-                                <Document
-                                    file={selectedPdfUrl}
-                                    onLoadSuccess={onDocumentLoadSuccess}
-                                    onLoadError={(e) => console.error('[UI] Error crítico cargando react-pdf:', e)}
-                                    loading={
-                                        <div className="flex flex-col items-center space-y-4 text-slate-400 mt-20">
-                                            <Loader2 className="w-10 h-10 animate-spin text-red-500" />
-                                            <span className="font-bold tracking-widest uppercase text-xs">Renderizando Páginas...</span>
-                                        </div>
-                                    }
-                                    error={
-                                        <div className="bg-red-500/20 text-red-400 font-bold p-8 rounded-2xl border border-red-500/50 text-center max-w-sm mt-20">
-                                            ⚠️ Error renderizando el documento. Verifica la conexión con el servidor de reportes HTTP.
-                                        </div>
-                                    }
-                                >
-                                    {Array.from(new Array(numPages), (el, index) => (
-                                        <div key={`page_${index + 1}`} className="mb-6 rounded-xl overflow-hidden shadow-2xl border border-slate-700 bg-white">
-                                            <Page
-                                                pageNumber={index + 1}
-                                                width={containerWidth}
-                                                renderTextLayer={false}
-                                                renderAnnotationLayer={false}
-                                                loading={<div className="bg-slate-800 animate-pulse w-full h-96"></div>}
-                                            />
-                                        </div>
-                                    ))}
-                                </Document>
-                            </div>
+                        {/* Área de scroll — ocupa todo el espacio restante */}
+                        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-800 flex flex-col items-center py-4 px-0">
+                            <Document
+                                file={selectedPdfUrl}
+                                onLoadSuccess={onDocumentLoadSuccess}
+                                onLoadError={(e) => console.error('[UI] Error crítico cargando react-pdf:', e)}
+                                loading={
+                                    <div className="flex flex-col items-center space-y-4 text-slate-400 mt-20">
+                                        <Loader2 className="w-10 h-10 animate-spin text-red-500" />
+                                        <span className="font-bold tracking-widest uppercase text-xs">Renderizando Páginas...</span>
+                                    </div>
+                                }
+                                error={
+                                    <div className="bg-red-500/20 text-red-400 font-bold p-8 rounded-2xl border border-red-500/50 text-center max-w-sm mt-20">
+                                        ⚠️ Error renderizando el documento.
+                                    </div>
+                                }
+                            >
+                                {Array.from(new Array(numPages), (el, index) => (
+                                    <div key={`page_${index + 1}`} className="mb-4 shadow-2xl bg-white">
+                                        <Page
+                                            pageNumber={index + 1}
+                                            width={containerWidth}
+                                            renderTextLayer={false}
+                                            renderAnnotationLayer={false}
+                                            loading={<div className="animate-pulse bg-slate-700" style={{ width: containerWidth, height: 400 }}></div>}
+                                        />
+                                    </div>
+                                ))}
+                            </Document>
                         </div>
                     </motion.div>
                 )}
