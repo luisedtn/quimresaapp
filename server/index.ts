@@ -815,6 +815,97 @@ app.get('/api/componentes/catalogo', authenticateToken, async (req: Request, res
     }
 });
 
+app.post('/api/ajustes/registrar-paso', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { idcliente } = (req as any).user;
+        const {
+            formulaCode,
+            formulaName,
+            lote,
+            tipoPaso, // 'INICIO', 'ADICION', 'MEDICION'
+            datos
+        } = req.body;
+
+        if (!lote || !tipoPaso) {
+            return res.status(400).json({ error: 'Lote y tipo de paso son obligatorios' });
+        }
+
+        const registro = await prisma.ajustesTecnicos.create({
+            data: {
+                id_cliente: idcliente,
+                formula_codigo: formulaCode,
+                formula_nombre: formulaName,
+                lote: lote,
+                tipo_paso: tipoPaso,
+                datos: datos,
+                fecha: new Date()
+            }
+        });
+
+        res.json({ message: 'Paso registrado con éxito', id: registro.id });
+    } catch (error: any) {
+        console.error('[ERROR] /api/ajustes/registrar-paso:', error.message);
+        res.status(500).json({ error: 'Error al registrar el paso técnico', details: error.message });
+    }
+});
+
+app.get('/api/ajustes/historial/:lote', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { lote } = req.params;
+        const historial = await prisma.ajustesTecnicos.findMany({
+            where: { lote },
+            orderBy: { fecha: 'asc' }
+        });
+        res.json(historial);
+    } catch (error: any) {
+        console.error('[ERROR] /api/ajustes/historial:', error.message);
+        res.status(500).json({ error: 'Error al obtener el historial', details: error.message });
+    }
+});
+
+app.post('/api/ajustes/guardar', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { idcliente } = (req as any).user;
+        const {
+            formulaName,
+            formulaCode,
+            lote,
+            history,
+            source,
+            originalFormulaId,
+            currentLab,
+            currentDeltaE,
+            componentQuantities
+        } = req.body;
+
+        if (!formulaName || !lote) {
+            return res.status(400).json({ error: 'Faltan datos obligatorios (Nombre, Lote)' });
+        }
+
+        const historyJson = JSON.stringify(history);
+
+        const savedAdjustment = await prisma.formPersonales.create({
+            data: {
+                IDCLIENTE: idcliente,
+                NOMBREFORMULA: formulaName,
+                CODIGO: formulaCode,
+                LOTE: lote,
+                HISTORIALDOSIS: historyJson,
+                DELTA: currentDeltaE?.toString(),
+                L: currentLab?.l?.toString(),
+                A: currentLab?.a?.toString(),
+                B: currentLab?.b?.toString(),
+                FECHACREADA: new Date().toISOString(),
+            }
+        });
+
+        res.json({ message: 'Ajuste técnico guardado con éxito', id: savedAdjustment.ID });
+    } catch (error: any) {
+        console.error('[ERROR] /api/ajustes/guardar:', error.message);
+        res.status(500).json({ error: 'Error al guardar el ajuste técnico', details: error.message });
+    }
+});
+
 // =================================================================
 // POST /api/upload-pdf  – Save PDF to VPS directory
 // =================================================================

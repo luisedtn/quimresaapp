@@ -41,6 +41,7 @@ interface ComponentColor {
     isBase: boolean;
     baseType?: 'white' | 'transparent' | 'colored' | 'colorant';
     quantity?: number; // Cantidad en la fórmula
+    calculatedQuantity?: number; // Cantidad calculada para el volumen actual
     ml?: number;
     rho?: number;
 }
@@ -79,6 +80,102 @@ export default function ColorMatch() {
     const [componentColors, setComponentColors] = useState<ComponentColor[]>([]);
     const [loadingComponents, setLoadingComponents] = useState(false);
     const [prepareAmount, setPrepareAmount] = useState<string | number>(1.0);
+    const [showReadingModal, setShowReadingModal] = useState(false);
+    const [sampleL, setSampleL] = useState<string | null>(null);
+    const [sampleA, setSampleA] = useState<string | null>(null);
+    const [sampleB, setSampleB] = useState<string | null>(null);
+    const [sampleDe, setSampleDe] = useState<number | null>(null);
+
+    const [currentLote, setCurrentLote] = useState<string>('');
+    const [technicalLog, setTechnicalLog] = useState<{
+        timestamp: string;
+        type: 'INICIO' | 'ADICION' | 'MEDICION';
+        description: string;
+        data?: any;
+    }[]>([]);
+
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
+    const [historyItems, setHistoryItems] = useState<any[]>([]);
+
+    const logTechnicalStep = async (tipoPaso: string, datos: any, description?: string, explicitLote?: string) => {
+        const loteToUse = explicitLote || currentLote;
+        if (!selectedMatch || !loteToUse) return;
+        const f = selectedMatch.formula;
+        try {
+            const token = localStorage.getItem('token');
+            await fetch(`${API_BASE_URL}/api/ajustes/registrar-paso`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    formulaCode: f.CODIGO || '',
+                    formulaName: f.NOMBREFORMULA || f.NOMBRE || 'Sin nombre',
+                    lote: loteToUse,
+                    tipoPaso,
+                    datos
+                })
+            });
+
+            // Update local state
+            setTechnicalLog(prev => [...prev, {
+                timestamp: new Date().toISOString(),
+                type: tipoPaso as any,
+                description: description || (tipoPaso === 'ADICION' ? 'Adición aplicada' : 'Medición realizada'),
+                data: datos
+            }]);
+        } catch (e) {
+            console.error("Error logging technical step", e);
+        }
+    };
+
+    const generateLote = () => {
+        const now = new Date();
+        const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+        const random = Math.floor(1000 + Math.random() * 9000);
+        return `BATCH-${dateStr}-${random}`;
+    };
+
+    // Escuchar sugerencias de la IA
+    useEffect(() => {
+        const handleSuggestions = (e: any) => {
+            const { suggestions } = e.detail;
+            if (!suggestions || suggestions.length === 0) return;
+
+            setComponentColors(prev => {
+                const updated = [...prev].map(c => ({ ...c })); // deep copy
+                suggestions.forEach((s: any) => {
+                    const existing = updated.find(c => c.code === s.code);
+                    if (existing) {
+                        existing.calculatedQuantity = (existing.calculatedQuantity || 0) + s.quantity;
+                    } else {
+                        updated.push({
+                            code: s.code,
+                            rgb: s.color,
+                            isBase: false,
+                            baseType: 'colorant',
+                            quantity: 0,
+                            calculatedQuantity: s.quantity
+                        });
+                    }
+                });
+                return updated;
+            });
+
+            // Registrar adición en el historial
+            logTechnicalStep('ADICION',
+                { suggestions },
+                `Sugerencia IA aplicada: ${suggestions.map((s: any) => `${s.code}(${s.quantity}g)`).join(', ')}`
+            );
+
+            // Abrir modal de nueva lectura
+            setShowReadingModal(true);
+        };
+
+        window.addEventListener('apply-ai-suggestions', handleSuggestions);
+        return () => window.removeEventListener('apply-ai-suggestions', handleSuggestions);
+    }, []);
 
     // Recompute hex preview when input changes
     useEffect(() => {
@@ -102,9 +199,48 @@ export default function ColorMatch() {
         }
         const result = await measure();
         if (result) {
-            setPatronL(result.color.L.toString());
-            setPatronA(result.color.a.toString());
-            setPatronB(result.color.b.toString());
+            const rl = result.color.L;
+            const ra = result.color.a;
+            const rb = result.color.b;
+            setPatronL(rl.toString());
+            setPatronA(ra.toString());
+            setPatronB(rb.toString());
+
+            // Registrar lectura de patrón si hay un lote activo
+            if (currentLote && selectedMatch) {
+                logTechnicalStep('LECTURA_PATRON', { l: rl, a: ra, b: rb }, 'Lectura de patrón con dispositivo');
+            }
+        }
+    };
+
+    const handlePerformNewReading = async () => {
+        const result = await measure();
+        if (result) {
+            const sl = result.color.L;
+            const sa = result.color.a;
+            const sb = result.color.b;
+
+            setSampleL(sl.toString());
+            setSampleA(sa.toString());
+            setSampleB(sb.toString());
+
+            // Recalcular Delta E
+            const l_target = parseFloat(patronL);
+            const a_target = parseFloat(patronA);
+            const b_target = parseFloat(patronB);
+
+            if (!isNaN(l_target)) {
+                const de = deltaE2000(l_target, a_target, b_target, sl, sa, sb);
+                setSampleDe(de);
+
+                // Registrar medición en el historial
+                logTechnicalStep('MEDICION',
+                    { l: sl, a: sa, b: sb, de: de },
+                    `Nueva lectura realizada. Delta E: ${de.toFixed(2)}`
+                );
+            }
+
+            setShowReadingModal(false);
         }
     };
 
@@ -163,8 +299,20 @@ export default function ColorMatch() {
         console.log(`Seleccionando fórmula: ${match.formula.NOMBREFORMULA || match.formula.NOMBRE || 'Sin nombre'} (ΔE: ${match.deltaE.toFixed(2)})`);
         setSelectedMatch(match);
         setLoadingComponents(true);
+        window.dispatchEvent(new CustomEvent('clear-chat'));
 
         const f = match.formula;
+
+        // Inicializar historial técnico y Lote
+        const loteExistente = f.LOTE;
+        const loteParaUsar = loteExistente || generateLote();
+        setCurrentLote(loteParaUsar);
+
+        logTechnicalStep('INICIO', {
+            initialDeltaE: match.deltaE,
+            lote: loteParaUsar,
+            source: match.source
+        }, `Inicio de ciclo técnico para formula ${f.NOMBREFORMULA || f.NOMBRE}`, loteParaUsar);
         // Collect component codes
         const codes: string[] = [];
         const baseCode = match.source === 'standard' ? f.RESERVA : f.CBASE;
@@ -291,6 +439,11 @@ export default function ColorMatch() {
         const a = parseFloat(patronA);
         const b = parseFloat(patronB);
 
+        const currentSampleL = sampleL ? parseFloat(sampleL) : parseFloat(f.L || '0');
+        const currentSampleA = sampleA ? parseFloat(sampleA) : parseFloat(f.A || '0');
+        const currentSampleB = sampleB ? parseFloat(sampleB) : parseFloat(f.B || '0');
+        const currentDe = sampleDe !== null ? sampleDe : selectedMatch.deltaE;
+
         const qcContext = {
             standard: {
                 l, a, b,
@@ -298,16 +451,16 @@ export default function ColorMatch() {
                 name: 'Patrón (Búsqueda de Color)',
             },
             sample: {
-                l: parseFloat(f.L || '0'),
-                a: parseFloat(f.A || '0'),
-                b: parseFloat(f.B || '0'),
-                hex: selectedMatch.hex,
-                name: f.NOMBREFORMULA || f.NOMBRE || 'Fórmula Encontrada',
+                l: currentSampleL,
+                a: currentSampleA,
+                b: currentSampleB,
+                hex: sampleL ? labToHex(currentSampleL, currentSampleA, currentSampleB) : selectedMatch.hex,
+                name: sampleL ? 'Muestra Ajustada (Nueva Lectura)' : (f.NOMBREFORMULA || f.NOMBRE || 'Fórmula Encontrada'),
             },
-            dL: (parseFloat(f.L || '0') - l).toFixed(2),
-            dA: (parseFloat(f.A || '0') - a).toFixed(2),
-            dB: (parseFloat(f.B || '0') - b).toFixed(2),
-            de: selectedMatch.deltaE.toFixed(2),
+            dL: (currentSampleL - l).toFixed(2),
+            dA: (currentSampleA - a).toFixed(2),
+            dB: (currentSampleB - b).toFixed(2),
+            de: currentDe.toFixed(2),
             formulaSource: selectedMatch.source,
             componentColors: componentColors.map(cc => {
                 const totalQty = (cc.ml || 0) * (normalizeDecimal(prepareAmount) || 1.0);
@@ -317,16 +470,19 @@ export default function ColorMatch() {
                     isBase: cc.isBase,
                     baseType: cc.baseType,
                     quantity: cc.quantity, // Gramos por kilo (fórmula base)
-                    calculatedQuantity: Math.round(totalQty * 100) / 100, // Gramos totales para el volumen
+                    calculatedQuantity: cc.calculatedQuantity ? cc.calculatedQuantity : Math.round(totalQty * 100) / 100, // Gramos totales para el volumen
                 };
             }),
             timestamp: new Date().toISOString(),
             isMatchMode: true,
-            prepareAmount: normalizeDecimal(prepareAmount)
+            prepareAmount: normalizeDecimal(prepareAmount),
+            lote: currentLote,
+            technicalLog: technicalLog
         };
 
         localStorage.setItem('qc_context', JSON.stringify(qcContext));
-    }, [selectedMatch, componentColors, patronL, patronA, patronB, prepareAmount]);
+        window.dispatchEvent(new CustomEvent('qc-context-updated'));
+    }, [selectedMatch, componentColors, patronL, patronA, patronB, prepareAmount, sampleL, sampleA, sampleB, sampleDe]);
 
     // ----------------------------------------------------------------
     // Send to Quality Control
@@ -388,6 +544,71 @@ export default function ColorMatch() {
                 },
             },
         });
+    };
+
+    const handleSaveTechnicalSession = async () => {
+        if (!selectedMatch) return;
+
+        const f = selectedMatch.formula;
+        const body = {
+            formulaName: f.NOMBREFORMULA || f.NOMBRE || 'Fórmula sin nombre',
+            formulaCode: f.CODIGO || '',
+            lote: currentLote,
+            history: technicalLog,
+            source: selectedMatch.source,
+            originalFormulaId: f.id || f.ID,
+            currentLab: {
+                l: sampleL ? parseFloat(sampleL) : parseFloat(f.L || '0'),
+                a: sampleA ? parseFloat(sampleA) : parseFloat(f.A || '0'),
+                b: sampleB ? parseFloat(sampleB) : parseFloat(f.B || '0'),
+            },
+            currentDeltaE: sampleDe !== null ? sampleDe : selectedMatch.deltaE,
+            componentQuantities: componentColors.map(cc => ({
+                code: cc.code,
+                calculatedQuantity: cc.calculatedQuantity || 0
+            }))
+        };
+
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_BASE_URL}/api/ajustes/guardar`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify(body),
+            });
+
+            if (res.ok) {
+                alert('¡Ciclo técnico guardado con éxito!');
+            } else {
+                const err = await res.json();
+                alert(`Error al guardar: ${err.error}`);
+            }
+        } catch (error) {
+            console.error('Error saving technical session:', error);
+            alert('Error de conexión al guardar el ciclo técnico.');
+        }
+    };
+
+    const handleConsultHistory = async () => {
+        if (!currentLote) return;
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_BASE_URL}/api/ajustes/historial/${currentLote}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setHistoryItems(data);
+                setShowHistoryModal(true);
+            }
+        } catch (e) {
+            console.error("Error fetching history", e);
+        }
     };
 
     // ----------------------------------------------------------------
@@ -674,6 +895,29 @@ export default function ColorMatch() {
                                 </div>
                             </div>
 
+                            {/* Technical Log Info */}
+                            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between shadow-lg">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 bg-blue-600/20 rounded-xl flex items-center justify-center border border-blue-500/30">
+                                        <Layers className="h-5 w-5 text-blue-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Lote de Trabajo</p>
+                                        <p className="text-sm font-mono font-bold text-white uppercase">{currentLote}</p>
+                                    </div>
+                                </div>
+                                <div className="text-right flex flex-col items-end gap-1">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Estado</p>
+                                    <button
+                                        onClick={handleConsultHistory}
+                                        className="px-3 py-1 bg-violet-600/20 border border-violet-500/30 rounded-lg text-[10px] font-bold text-violet-300 hover:bg-violet-600/40 transition-all flex items-center gap-1.5"
+                                    >
+                                        <Search className="h-3 w-3" />
+                                        Ver Historial
+                                    </button>
+                                </div>
+                            </div>
+
                             {/* Quantity Input */}
                             <div className="bg-slate-900/40 rounded-2xl border border-slate-800 p-4 space-y-3">
                                 <div className="flex items-center justify-between">
@@ -693,13 +937,6 @@ export default function ColorMatch() {
                                         onBlur={() => {
                                             const val = normalizeDecimal(prepareAmount);
                                             if (val <= 0) setPrepareAmount(1.0);
-                                        }}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                const val = normalizeDecimal(prepareAmount);
-                                                if (val <= 0) setPrepareAmount(1.0);
-                                                (e.target as HTMLInputElement).blur();
-                                            }
                                         }}
                                         className="w-full bg-slate-950 border border-slate-800 rounded-xl py-4 px-4 text-center text-xl font-mono font-black text-white outline-none focus:border-blue-500/50 transition-all"
                                     />
@@ -756,7 +993,10 @@ export default function ColorMatch() {
                                                     </p>
                                                 </div>
                                                 <div className="text-[9px] font-bold text-slate-300 text-right">
-                                                    {(((cc.ml || 0) * (normalizeDecimal(prepareAmount) || 0)).toFixed(2))}g
+                                                    {cc.calculatedQuantity !== undefined
+                                                        ? cc.calculatedQuantity.toFixed(2)
+                                                        : (((cc.ml || 0) * (normalizeDecimal(prepareAmount) || 0)).toFixed(2))
+                                                    }g
                                                 </div>
                                             </div>
                                         ))}
@@ -766,15 +1006,25 @@ export default function ColorMatch() {
                                 )}
                             </div>
 
-                            {/* Send to QC Button */}
-                            <motion.button
-                                whileTap={{ scale: 0.97 }}
-                                onClick={handleSendToQC}
-                                className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs uppercase tracking-widest shadow-xl shadow-emerald-900/30 active:shadow-none transition-all"
-                            >
-                                <Sparkles className="h-4 w-4" />
-                                Enviar a Control de Calidad
-                            </motion.button>
+                            <div className="grid grid-cols-2 gap-3">
+                                <motion.button
+                                    whileTap={{ scale: 0.97 }}
+                                    onClick={handleSaveTechnicalSession}
+                                    className="flex items-center justify-center gap-3 py-4 rounded-2xl bg-slate-800 border border-slate-700 text-slate-300 font-bold text-xs uppercase tracking-widest shadow-xl active:shadow-none transition-all hover:bg-slate-700 hover:text-white"
+                                >
+                                    <Check className="h-4 w-4 text-emerald-400" />
+                                    Guardar Registro
+                                </motion.button>
+
+                                <motion.button
+                                    whileTap={{ scale: 0.97 }}
+                                    onClick={handleSendToQC}
+                                    className="flex items-center justify-center gap-3 py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs uppercase tracking-widest shadow-xl shadow-emerald-900/30 active:shadow-none transition-all"
+                                >
+                                    <Sparkles className="h-4 w-4" />
+                                    Enviar a QC
+                                </motion.button>
+                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -795,6 +1045,179 @@ export default function ColorMatch() {
                         </div>
                         <h3 className="text-xl font-bold text-white tracking-tight">Capturando Color...</h3>
                         <p className="text-slate-400 text-sm mt-2 font-medium uppercase tracking-widest animate-pulse">Leyendo valores del sensor</p>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Modal de Nueva Lectura después de sugerencia IA */}
+            <AnimatePresence>
+                {showReadingModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0A0F14]/90 backdrop-blur-md px-6"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center"
+                        >
+                            <div className="h-16 w-16 bg-violet-600/20 rounded-2xl flex items-center justify-center mb-6 border border-violet-500/30">
+                                <Scan className="h-8 w-8 text-violet-400" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2">Ajuste técnico aplicado</h3>
+                            <p className="text-sm text-slate-400 mb-8 leading-relaxed">
+                                He agregado los pigmentos sugeridos por la IA a la mezcla. ¿Deseas realizar una nueva lectura con el dispositivo para verificar el nuevo Delta E?
+                            </p>
+
+                            <div className="flex flex-col w-full gap-3">
+                                <button
+                                    onClick={() => handlePerformNewReading()}
+                                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-violet-600 to-blue-600 text-white font-bold text-xs uppercase tracking-widest shadow-xl shadow-violet-900/30 active:scale-95 transition-all flex items-center justify-center gap-3"
+                                >
+                                    <Sparkles className="h-4 w-4" />
+                                    Aceptar hacer la lectura
+                                </button>
+                                <button
+                                    onClick={() => setShowReadingModal(false)}
+                                    className="w-full py-4 rounded-2xl bg-slate-800 text-slate-400 font-bold text-xs uppercase tracking-widest hover:bg-slate-700 hover:text-white transition-all"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Modal de Historial de Ajustes */}
+            <AnimatePresence>
+                {showHistoryModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[200] flex items-center justify-center bg-[#0A0F14]/95 backdrop-blur-xl px-4 py-8"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-[2.5rem] shadow-2xl flex flex-col max-h-full overflow-hidden"
+                        >
+                            {/* Header Modal */}
+                            <div className="p-6 border-b border-slate-800 flex items-center justify-between flex-shrink-0">
+                                <div>
+                                    <h3 className="text-xl font-bold text-white tracking-tight uppercase">Historial de Ajustes</h3>
+                                    <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase mt-1">Lote: {currentLote}</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowHistoryModal(false)}
+                                    className="p-3 bg-slate-800 hover:bg-slate-700 rounded-2xl text-slate-400 hover:text-white transition-all border border-slate-700"
+                                >
+                                    <ArrowLeft className="h-5 w-5 rotate-90 sm:rotate-0" />
+                                </button>
+                            </div>
+
+                            {/* Content */}
+                            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                                {historyItems.length === 0 ? (
+                                    <div className="py-20 text-center flex flex-col items-center gap-4">
+                                        <div className="h-16 w-16 bg-slate-800 rounded-full flex items-center justify-center border border-slate-700 opacity-20">
+                                            <Search className="h-8 w-8" />
+                                        </div>
+                                        <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">No hay registros para este lote</p>
+                                    </div>
+                                ) : (
+                                    historyItems.map((item, idx) => {
+                                        const type = item.tipo_paso;
+                                        const date = new Date(item.fecha).toLocaleString();
+                                        const data = item.datos || {};
+
+                                        return (
+                                            <motion.div
+                                                initial={{ opacity: 0, x: -10 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: idx * 0.05 }}
+                                                key={item.id || idx}
+                                                className="bg-slate-950 border border-slate-800/50 rounded-3xl p-5 relative overflow-hidden"
+                                            >
+                                                <div className="flex items-start justify-between mb-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`h-10 w-10 rounded-2xl flex items-center justify-center border ${type === 'INICIO' ? 'bg-blue-600/10 border-blue-500/30 text-blue-400' :
+                                                            type === 'ADICION' ? 'bg-emerald-600/10 border-emerald-500/30 text-emerald-400' :
+                                                                type === 'LECTURA_PATRON' ? 'bg-amber-600/10 border-amber-500/30 text-amber-400' :
+                                                                    'bg-violet-600/10 border-violet-500/30 text-violet-400'
+                                                            }`}>
+                                                            {type === 'INICIO' ? <Target className="h-5 w-5" /> :
+                                                                type === 'ADICION' ? <Beaker className="h-5 w-5" /> :
+                                                                    type === 'LECTURA_PATRON' ? <Search className="h-5 w-5" /> :
+                                                                        <Scan className="h-5 w-5" />}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">{type}</p>
+                                                            <p className="text-[10px] font-bold text-slate-600">{date}</p>
+                                                        </div>
+                                                    </div>
+                                                    {data.de !== undefined && (
+                                                        <div className="px-3 py-1 bg-white rounded-full text-[10px] font-black text-black">
+                                                            ΔE: {parseFloat(data.de).toFixed(2)}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    {type === 'ADICION' && data.suggestions && (
+                                                        <div className="space-y-1.5">
+                                                            {data.suggestions.map((s: any, i: number) => (
+                                                                <div key={i} className="flex items-center justify-between text-[11px] font-bold">
+                                                                    <span className="text-slate-300 flex items-center gap-2">
+                                                                        <div className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color || '#fff' }} />
+                                                                        {s.code}
+                                                                    </span>
+                                                                    <span className="text-emerald-400">+{s.quantity}g</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {(type === 'MEDICION' || type === 'LECTURA_PATRON') && (
+                                                        <div className="grid grid-cols-3 gap-2 pt-1">
+                                                            <div className="bg-slate-900 border border-slate-800 p-2 rounded-xl text-center">
+                                                                <p className="text-[8px] text-slate-500 uppercase font-bold">L*</p>
+                                                                <p className="text-xs font-mono font-bold text-white">{parseFloat(data.l).toFixed(2)}</p>
+                                                            </div>
+                                                            <div className="bg-slate-900 border border-slate-800 p-2 rounded-xl text-center">
+                                                                <p className="text-[8px] text-slate-500 uppercase font-bold text-emerald-400">a*</p>
+                                                                <p className="text-xs font-mono font-bold text-emerald-400">{parseFloat(data.a).toFixed(2)}</p>
+                                                            </div>
+                                                            <div className="bg-slate-900 border border-slate-800 p-2 rounded-xl text-center">
+                                                                <p className="text-[8px] text-slate-500 uppercase font-bold text-blue-400">b*</p>
+                                                                <p className="text-xs font-mono font-bold text-blue-400">{parseFloat(data.b).toFixed(2)}</p>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {type === 'INICIO' && (
+                                                        <p className="text-[11px] text-slate-400 font-medium">Búsqueda inicial: ΔE {parseFloat(data.initialDeltaE).toFixed(2)}</p>
+                                                    )}
+                                                </div>
+                                            </motion.div>
+                                        );
+                                    })
+                                )}
+                            </div>
+
+                            {/* Footer */}
+                            <div className="p-6 flex-shrink-0">
+                                <button
+                                    onClick={() => setShowHistoryModal(false)}
+                                    className="w-full py-4 rounded-3xl bg-slate-800 text-white font-bold text-xs uppercase tracking-widest border border-slate-700 active:scale-95 transition-all"
+                                >
+                                    Cerrar Ventana
+                                </button>
+                            </div>
+                        </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>

@@ -381,3 +381,16 @@ model COLORANTES {
   @@map("COLORANTES")
 }
 
+model AjustesTecnicos {
+  id              Int      @id @default(autoincrement())
+  id_cliente      Int
+  formula_codigo  String?
+  formula_nombre  String?
+  lote            String
+  tipo_paso       String   // 'INICIO', 'ADICION', 'MEDICION'
+  datos           Json?
+  fecha           DateTime @default(now())
+
+  @@map("AJUSTES_TECNICOS")
+}
+

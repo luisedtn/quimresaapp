@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MessageCircle, X, Send, Wand2, Sparkles, User, Bot, Calculator, BarChart3 } from 'lucide-react';
+import { MessageCircle, X, Send, Wand2, Sparkles, User, Bot, Calculator, BarChart3, Beaker } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -32,6 +32,7 @@ export default function ColorAiChat() {
     const [isLoading, setIsLoading] = useState(false);
     const [showRecButton, setShowRecButton] = useState(false);
     const [pigmentCatalog, setPigmentCatalog] = useState<{ code: string, color: string }[]>([]);
+    const [lastSuggestions, setLastSuggestions] = useState<{ code: string, color: string, quantity: number }[]>([]);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -39,6 +40,29 @@ export default function ColorAiChat() {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
     }, [messages, isLoading]);
+
+    // Parsear sugerencias del último mensaje de la IA
+    useEffect(() => {
+        const lastMsg = messages[messages.length - 1];
+        if (lastMsg?.role === 'ai') {
+            const suggestions: any[] = [];
+            const rows = lastMsg.text.split('\n');
+            rows.forEach(row => {
+                const match = row.match(/\|\s*([^|\[]*)\s*\[(#\w+)\]\s*\|\s*([\d. ]+)\s*\|/);
+                if (match) {
+                    const code = match[1].trim();
+                    const color = match[2];
+                    const qty = parseFloat(match[3].trim());
+                    if (code && !isNaN(qty)) {
+                        suggestions.push({ code, color, quantity: qty });
+                    }
+                }
+            });
+            setLastSuggestions(suggestions);
+        } else {
+            setLastSuggestions([]);
+        }
+    }, [messages]);
 
     // Cargar catálogo de pigmentos para que la IA los conozca
     useEffect(() => {
@@ -58,6 +82,32 @@ export default function ColorAiChat() {
             }
         };
         fetchCatalog();
+    }, []);
+
+    // Escuchar cambios en el contexto de color para resetear el chat
+    useEffect(() => {
+        const handleUpdate = () => {
+            const qcData = localStorage.getItem('qc_context');
+            if (qcData) {
+                try {
+                    const data = JSON.parse(qcData);
+                    if (data.standard && data.sample) {
+                        const isNewReading = data.sample.name.includes('Muestra Ajustada');
+                        const msg = isNewReading
+                            ? 'He detectado la nueva lectura de tu mezcla. Los datos de color y el Delta E se han actualizado. ¿Deseas una nueva recomendación para seguir ajustando?'
+                            : 'He cargado los datos de la fórmula seleccionada. ¿Deseas una recomendación para mejorar el delta?';
+
+                        setMessages([{ role: 'ai', text: msg }]);
+                        setShowRecButton(true);
+                    }
+                } catch (e) {
+                    console.error("Error parsing new QC context", e);
+                }
+            }
+        };
+
+        window.addEventListener('qc-context-updated', handleUpdate);
+        return () => window.removeEventListener('qc-context-updated', handleUpdate);
     }, []);
 
     // Handle opening and loading context
@@ -169,9 +219,21 @@ En la columna 'Pigmento', usa ESTRICTAMENTE el formato: 'Código [#hex]'. Ejempl
         }
     };
 
+    const handleApplySuggestions = () => {
+        if (lastSuggestions.length === 0) return;
+
+        window.dispatchEvent(new CustomEvent('apply-ai-suggestions', {
+            detail: { suggestions: lastSuggestions }
+        }));
+
+        setIsOpen(false);
+        setLastSuggestions([]);
+    };
+
     const clearChat = () => {
         setMessages([]);
         setShowRecButton(false);
+        setLastSuggestions([]);
         localStorage.removeItem('qc_context');
     };
 
@@ -266,6 +328,17 @@ En la columna 'Pigmento', usa ESTRICTAMENTE el formato: 'Código [#hex]'. Ejempl
                                             >
                                                 {msg.text}
                                             </ReactMarkdown>
+
+                                            {/* Botón Aplicar Sugerencias (si es el último mensaje de la IA y tiene sugerencias) */}
+                                            {i === messages.length - 1 && msg.role === 'ai' && lastSuggestions.length > 0 && (
+                                                <button
+                                                    onClick={handleApplySuggestions}
+                                                    className="mt-3 w-full py-2 bg-gradient-to-r from-green-600 to-emerald-500 text-white rounded-lg font-bold uppercase tracking-widest text-[9px] shadow-lg flex items-center justify-center gap-2"
+                                                >
+                                                    <Beaker className="h-3 w-3" />
+                                                    Agregar cantidades
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                     {/* Botón de recomendación después del mensaje inicial de IA si hay contexto */}
