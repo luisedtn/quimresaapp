@@ -178,7 +178,7 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
                         {/* Área de scroll dinámica para evitar cortes horizontales */}
                         <div
                             ref={containerRef}
-                            className="flex-1 overflow-y-auto bg-slate-800 flex flex-col items-center p-4 md:p-6"
+                            className="flex-1 overflow-y-auto bg-white flex flex-col items-center p-4 md:p-6"
                         >
                             <Document
                                 file={selectedPdfUrl}
@@ -197,7 +197,7 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
                                 }
                             >
                                 {Array.from(new Array(numPages), (el, index) => (
-                                    <div key={`page_${index + 1}`} className="mb-6 shadow-2xl bg-white ring-1 ring-slate-700">
+                                    <div key={`page_${index + 1}`} className="mb-6 shadow-2xl bg-white ring-slate-700">
                                         <Page
                                             pageNumber={index + 1}
                                             width={containerWidth}

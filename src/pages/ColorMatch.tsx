@@ -309,16 +309,20 @@ export default function ColorMatch() {
             dB: (parseFloat(f.B || '0') - b).toFixed(2),
             de: selectedMatch.deltaE.toFixed(2),
             formulaSource: selectedMatch.source,
-            componentColors: componentColors.map(cc => ({
-                code: cc.code,
-                color: cc.rgb,
-                isBase: cc.isBase,
-                baseType: cc.baseType,
-                quantity: cc.quantity,
-            })),
+            componentColors: componentColors.map(cc => {
+                const totalQty = (cc.ml || 0) * (normalizeDecimal(prepareAmount) || 1.0);
+                return {
+                    code: cc.code,
+                    color: cc.rgb,
+                    isBase: cc.isBase,
+                    baseType: cc.baseType,
+                    quantity: cc.quantity, // Gramos por kilo (fórmula base)
+                    calculatedQuantity: Math.round(totalQty * 100) / 100, // Gramos totales para el volumen
+                };
+            }),
             timestamp: new Date().toISOString(),
             isMatchMode: true,
-            prepareAmount
+            prepareAmount: normalizeDecimal(prepareAmount)
         };
 
         localStorage.setItem('qc_context', JSON.stringify(qcContext));
@@ -361,7 +365,7 @@ export default function ColorMatch() {
                 color: cc.rgb,
                 isBase: cc.isBase,
                 baseType: cc.baseType,
-                quantity: cc.ml ? cc.ml / 1000 : cc.quantity / 1000, // assuming ml or g. litters = ml / 1000
+                quantity: cc.ml ? cc.ml / 1000 : (cc.quantity || 0) / 1000, // assuming ml or g. litters = ml / 1000
                 displayQuantity: (((cc.ml || 0) * (normalizeDecimal(prepareAmount) || 0)).toFixed(2)) + 'g'
             })),
             timestamp: new Date().toISOString(),

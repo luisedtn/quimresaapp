@@ -797,6 +797,24 @@ app.post('/api/componentes/colores', authenticateToken, async (req: Request, res
     }
 });
 
+app.get('/api/componentes/catalogo', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const bases: any[] = await prisma.$queryRawUnsafe(`SELECT "CODIGO", "COLOR" FROM "BASES"`);
+        const colorantes: any[] = await prisma.$queryRawUnsafe(`SELECT "PRODUCTO" as "CODIGO", "COLOR" FROM "COLORANTES"`);
+
+        const catalog = [
+            ...bases.map(b => ({ code: String(b.CODIGO), color: parseComponentColor(b.COLOR) })),
+            ...colorantes.map(c => ({ code: String(c.CODIGO), color: parseComponentColor(c.COLOR) }))
+        ];
+
+        // Remove duplicates and filter empty codes
+        const unique = Array.from(new Map(catalog.filter(p => p.code).map(p => [p.code, p])).values());
+        res.json(unique);
+    } catch (error: any) {
+        res.status(500).json({ error: 'Error al obtener catálogo', details: error.message });
+    }
+});
+
 // =================================================================
 // POST /api/upload-pdf  – Save PDF to VPS directory
 // =================================================================

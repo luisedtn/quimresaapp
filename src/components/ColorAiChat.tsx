@@ -2,10 +2,27 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageCircle, X, Send, Wand2, Sparkles, User, Bot, Calculator, BarChart3 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Message {
     role: 'user' | 'ai';
     text: string;
+}
+
+function hexToRgb(hex: string) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+}
+
+function getLuminance(hex: string) {
+    const rgb = hexToRgb(hex);
+    if (!rgb) return 1;
+    return (0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b) / 255;
 }
 
 export default function ColorAiChat() {
@@ -13,6 +30,8 @@ export default function ColorAiChat() {
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [showRecButton, setShowRecButton] = useState(false);
+    const [pigmentCatalog, setPigmentCatalog] = useState<{ code: string, color: string }[]>([]);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -20,6 +39,26 @@ export default function ColorAiChat() {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
     }, [messages, isLoading]);
+
+    // Cargar catálogo de pigmentos para que la IA los conozca
+    useEffect(() => {
+        const fetchCatalog = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+                const res = await fetch(`${API_BASE_URL}/api/componentes/catalogo`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (Array.isArray(data)) {
+                    setPigmentCatalog(data);
+                }
+            } catch (e) {
+                console.error("Error fetching pigment catalog", e);
+            }
+        };
+        fetchCatalog();
+    }, []);
 
     // Handle opening and loading context
     useEffect(() => {
@@ -29,26 +68,8 @@ export default function ColorAiChat() {
                 try {
                     const data = JSON.parse(qcData);
                     if (data.standard && data.sample) {
-                        let contextMsg = `Hola. He analizado los datos de la fórmula seleccionada: 
-            - Patrón (Target): L=${data.standard.l}, a=${data.standard.a}, b=${data.standard.b}
-            - Fórmula base: L=${data.sample.l}, a=${data.sample.a}, b=${data.sample.b}
-            - Desviación actual: dL=${data.dL || '0'}, da=${data.dA || '0'}, db=${data.dB || '0'}
-            - Delta E (CIE2000): ${data.de}`;
-
-                        if (data.componentColors && data.componentColors.length > 0) {
-                            contextMsg += `\n\nComponentes de la fórmula actual:`;
-                            data.componentColors.forEach((cc: any) => {
-                                const qty = cc.quantity ? cc.quantity.toFixed(3) : '0.000';
-                                if (cc.isBase) {
-                                    contextMsg += `\n- [BASE] ${cc.code}: ${qty} (Color: ${cc.color})`;
-                                } else {
-                                    contextMsg += `\n- [PIGMENTO] ${cc.code}: ${qty} (Color RGB: ${cc.color})`;
-                                }
-                            });
-                        }
-
-                        contextMsg += `\n\n¿Qué pigmentos y qué cantidades en gramos debo adicionar para reducir el Delta E y acercarme más al patrón?`;
-                        setMessages([{ role: 'ai', text: contextMsg }]);
+                        setMessages([{ role: 'ai', text: 'Hola. He detectado los datos de tu fórmula. ¿Deseas una recomendación para mejorar el delta?' }]);
+                        setShowRecButton(true);
                     }
                 } catch (e) {
                     console.error("Error parsing QC context", e);
@@ -57,11 +78,24 @@ export default function ColorAiChat() {
         }
     }, [isOpen]);
 
-    const handleSend = async () => {
-        if (!input.trim() || isLoading) return;
+    const handleSend = async (overrideMsg?: string, displayMsg?: string) => {
+        const userMsg = displayMsg || overrideMsg || input.trim();
+        const apiMsg = overrideMsg || input.trim();
 
-        const userMsg = input.trim();
+        if (!apiMsg && !overrideMsg) return;
+        if (isLoading) return;
+
         setInput('');
+
+        // Construir historial asegurando que el prompt técnico (si existe) siempre esté presente
+        const historyForApi = messages.filter(m => {
+            // Siempre incluir el prompt técnico inicial
+            if (m.text.includes('[SOLICITUD DE MEJORA DE DELTA]')) return true;
+            // Incluir el resto de mensajes recientes (últimos 10 por ejemplo)
+            const idx = messages.indexOf(m);
+            return idx >= messages.length - 10;
+        });
+
         setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
         setIsLoading(true);
 
@@ -74,8 +108,8 @@ export default function ColorAiChat() {
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    message: userMsg,
-                    history: messages.slice(-10)
+                    message: apiMsg,
+                    history: historyForApi
                 })
             });
 
@@ -92,8 +126,52 @@ export default function ColorAiChat() {
         }
     };
 
+    const handleRequestRecommendation = () => {
+        setShowRecButton(false);
+        const qcData = localStorage.getItem('qc_context');
+        if (!qcData) return;
+
+        try {
+            const data = JSON.parse(qcData);
+            const liters = data.prepareAmount || 1.0;
+            let technicalPrompt = `[SOLICITUD DE MEJORA DE DELTA]
+He analizado estos datos para preparar ${liters} LT de la fórmula: 
+- Volumen total: ${liters} Litros
+- Patrón (Target): L=${data.standard.l}, a=${data.standard.a}, b=${data.standard.b}
+- Color actual de la fórmula: L=${data.sample.l}, a=${data.sample.a}, b=${data.sample.b}
+- Desviación (Target - Actual): dL=${data.dL || '0'}, da=${data.dA || '0'}, db=${data.dB || '0'}
+- Diferencia Total (Delta E 2000): ${data.de}
+Componentes actuales en la mezcla:`;
+
+            if (data.componentColors && data.componentColors.length > 0) {
+                data.componentColors.forEach((cc: any) => {
+                    const qtyVal = cc.calculatedQuantity ? cc.calculatedQuantity : (cc.quantity || 0);
+                    const qtyStr = typeof qtyVal === 'number' ? qtyVal.toFixed(2) : qtyVal;
+                    // Incluir el hex para que la IA sepa el color
+                    technicalPrompt += `\n- [${cc.isBase ? 'BASE' : 'PIGMENTO'}] ${cc.code} (Color Hex: ${cc.color || '#808080'}): ${qtyStr}g`;
+                });
+            }
+
+            if (pigmentCatalog.length > 0) {
+                technicalPrompt += `\n\nCATÁLOGO DE RECURSOS DISPONIBLES (si necesitas corregir ejes que los componentes actuales no cubren):`;
+                pigmentCatalog.forEach(p => {
+                    technicalPrompt += ` ${p.code} (${p.color}),`;
+                });
+            }
+
+            technicalPrompt += `\n\nBasado en estos datos de color, componentes actuales y catálogo disponible, por favor estima qué cantidad hay que agregar de los pigmentos (existentes o del catálogo) que consideres necesarios para mejorar el delta y acercarlo lo más posible a cero. 
+IMPORTANTE: Presenta los pigmentos adicionales sugeridos EN UNA TABLA DE MARKDOWN con las columnas: Pigmento (Código), Cantidad a Agregar (g), y Razón del ajuste.
+En la columna 'Pigmento', usa ESTRICTAMENTE el formato: 'Código [#hex]'. Ejemplo: 'P-101 [#FF0000]'.`;
+
+            handleSend(technicalPrompt, 'Si, recomiéndame una mejora');
+        } catch (e) {
+            console.error("Error building recommendation prompt", e);
+        }
+    };
+
     const clearChat = () => {
         setMessages([]);
+        setShowRecButton(false);
         localStorage.removeItem('qc_context');
     };
 
@@ -117,7 +195,7 @@ export default function ColorAiChat() {
                         initial={{ opacity: 0, scale: 0.9, y: 100 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 100 }}
-                        className="fixed bottom-24 right-6 z-[60] w-[350px] max-w-[calc(100vw-48px)] h-[500px] bg-[#121820] border border-slate-700 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden"
+                        className="fixed bottom-24 right-6 z-[60] w-[400px] max-w-[calc(100vw-48px)] h-[550px] bg-[#121820] border border-slate-700 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden"
                     >
                         {/* Header */}
                         <div className="p-4 bg-slate-900 border-b border-slate-700 flex items-center justify-between">
@@ -150,14 +228,63 @@ export default function ColorAiChat() {
                                 </div>
                             )}
                             {messages.map((msg, i) => (
-                                <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                    <div className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${msg.role === 'user'
-                                        ? 'bg-violet-600 text-white rounded-br-none shadow-lg'
-                                        : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700 shadow-xl'
-                                        }`}>
-                                        {msg.text}
+                                <React.Fragment key={i}>
+                                    <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                        <div className={`max-w-[95%] rounded-xl px-3 py-2 text-xs ${msg.role === 'user'
+                                            ? 'bg-violet-600 text-white rounded-br-none shadow-lg'
+                                            : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700 shadow-xl overflow-x-auto'
+                                            }`}>
+                                            <ReactMarkdown
+                                                remarkPlugins={[remarkGfm]}
+                                                components={{
+                                                    table: ({ node, ...props }) => <table className="w-full border-collapse my-2 border border-slate-600 text-[10px]" {...props} />,
+                                                    thead: ({ node, ...props }) => <thead className="bg-slate-900" {...props} />,
+                                                    th: ({ node, ...props }) => <th className="border border-slate-600 p-1 text-left font-bold" {...props} />,
+                                                    td: ({ node, children, ...props }) => {
+                                                        const content = String(children);
+                                                        const colorMatch = content.match(/\[(#\w+)\]/);
+                                                        if (colorMatch) {
+                                                            const hex = colorMatch[1];
+                                                            const cleanText = content.replace(colorMatch[0], '').trim();
+                                                            const lum = getLuminance(hex);
+                                                            return (
+                                                                <td
+                                                                    className="border border-slate-600 p-1 font-bold text-center"
+                                                                    style={{
+                                                                        backgroundColor: hex,
+                                                                        color: lum > 0.5 ? '#000000' : '#ffffff',
+                                                                        textShadow: lum > 0.5 ? 'none' : '0 1px 2px rgba(0,0,0,0.5)'
+                                                                    }}
+                                                                >
+                                                                    {cleanText}
+                                                                </td>
+                                                            );
+                                                        }
+                                                        return <td className="border border-slate-600 p-1" {...props}>{children}</td>;
+                                                    },
+                                                }}
+                                            >
+                                                {msg.text}
+                                            </ReactMarkdown>
+                                        </div>
                                     </div>
-                                </div>
+                                    {/* Botón de recomendación después del mensaje inicial de IA si hay contexto */}
+                                    {i === 0 && msg.role === 'ai' && showRecButton && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 5 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="flex justify-start pl-2"
+                                        >
+                                            <button
+                                                onClick={handleRequestRecommendation}
+                                                className="bg-violet-600/20 border border-violet-500/50 text-violet-300 px-4 py-2 rounded-xl text-xs font-bold hover:bg-violet-600/30 transition-all flex items-center gap-2 shadow-lg shadow-violet-900/20 active:scale-95"
+                                            >
+                                                <Sparkles className="h-3.5 w-3.5" />
+                                                Si, recomiéndame una mejora
+                                            </button>
+                                        </motion.div>
+                                    )}
+                                </React.Fragment>
                             ))}
                             {isLoading && (
                                 <div className="flex justify-start">
@@ -182,7 +309,7 @@ export default function ColorAiChat() {
                                     className="w-full bg-[#0A0F14] border border-slate-700 rounded-xl py-2.5 pl-4 pr-12 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
                                 />
                                 <button
-                                    onClick={handleSend}
+                                    onClick={() => handleSend()}
                                     disabled={!input.trim() || isLoading}
                                     className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-violet-500 hover:text-violet-400 disabled:text-slate-700"
                                 >
