@@ -86,7 +86,11 @@ export default function GenerarPDF({ onClose, qcContextData }: GenerarPDFProps) 
 
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
-            const pdfBase64 = pdf.output('datauristring');
+            const pdfDataUri = pdf.output('datauristring');
+            // jsPDF puede incluir: data:application/pdf;filename=generated.pdf;base64,JVBERi...
+            // Necesitamos extraer solo la parte pura de base64
+            const pdfBase64 = pdfDataUri.split('base64,')[1];
+            console.log('[GenerarPDF] Base64 extraído correctamente. Longitud:', pdfBase64?.length);
             const loteFinal = '030226MXPUHAAA'; // El lote asignado
 
             const token = localStorage.getItem('token');

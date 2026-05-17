@@ -813,8 +813,9 @@ app.post('/api/upload-pdf', authenticateToken, async (req: Request, res: Respons
         console.log(`[UPLOAD-PDF] Recibido - Cliente: "${clientCode}", Lote: "${lote}"`);
         console.log(`[UPLOAD-PDF] Longitud del Base64 recibido: ${pdfBase64.length} caracteres`);
 
-        // Remover prefijo data:application/pdf;...base64, si existe
-        const base64Data = pdfBase64.replace(/^data:application\/[\w.-]+;base64,/, "");
+        // Extraer puramente la cadena en Base64, ignorando cualquier prefijo dinámico o "filename" que añada jsPDF
+        const parts = pdfBase64.split('base64,');
+        const base64Data = parts.length > 1 ? parts[1] : parts[0];
 
         // Crear directorios
         const baseDir = path.join(__dirname, '../controlcalidad');
