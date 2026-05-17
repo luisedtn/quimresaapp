@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Check, X, Info } from 'lucide-react';
+import { ArrowLeft, Check, X, Info, ZoomIn, ZoomOut, Sparkles, FileText } from 'lucide-react';
 import { useNixDevice } from '../hooks/useNixDevice';
 import { deltaE2000 } from '../services/NixBluetoothService';
+import GenerarPDF from '../components/GenerarPDF';
 
 function labToHex(l: number, a: number, b: number): string {
   const y = (l + 16) / 116;
@@ -21,6 +22,8 @@ function labToHex(l: number, a: number, b: number): string {
 }
 
 const ColorDeltaChart = ({ standard, sample }: { standard: any, sample: any }) => {
+  const [userChartMax, setUserChartMax] = useState<number | null>(null);
+
   if (!standard || !sample) return null;
 
   const dL = (sample.l - standard.l).toFixed(2);
@@ -34,16 +37,50 @@ const ColorDeltaChart = ({ standard, sample }: { standard: any, sample: any }) =
   // Menor a 1.0 pasa (ajustado de tu código base)
   const isPass = parseFloat(de) < 1.0;
 
-  // Lógica del mapa CIELAB
-  const chartMax = 10.0;
-  let plotX = 50 + (parseFloat(dA) / chartMax) * 50;
-  let plotY = 50 - (parseFloat(dB) / chartMax) * 50;
+  // Lógica del mapa CIELAB con escala dinámica
+  const dA_val = parseFloat(dA);
+  const dB_val = parseFloat(dB);
+  const dL_val = parseFloat(dL);
+
+  const distAb = Math.sqrt(dA_val * dA_val + dB_val * dB_val);
+
+  const availableMaxes = [2, 4, 6, 8, 10, 15, 20, 30, 50];
+  const defaultChartMax = availableMaxes.find(m => m >= distAb) || 50;
+  const chartMax = userChartMax ?? defaultChartMax;
+
+  let plotX = 50 + (dA_val / chartMax) * 50;
+  let plotY = 50 - (dB_val / chartMax) * 50;
   plotX = Math.max(0, Math.min(100, plotX));
   plotY = Math.max(0, Math.min(100, plotY));
 
-  const maxL = 5.0;
-  let plotL = 50 + (parseFloat(dL) / maxL) * 50;
+  const maxL = Math.max(5.0, Math.ceil(Math.abs(dL_val)));
+  let plotL = 50 + (dL_val / maxL) * 50;
   plotL = Math.max(0, Math.min(100, plotL));
+
+  // Anillos concéntricos dinámicos
+  const scaleDefinitions: Record<number, { step: number; count: number }> = {
+    2: { step: 0.5, count: 4 },
+    4: { step: 1, count: 4 },
+    6: { step: 2, count: 3 },
+    8: { step: 2, count: 4 },
+    10: { step: 2, count: 5 },
+    15: { step: 5, count: 3 },
+    20: { step: 5, count: 4 },
+    30: { step: 10, count: 3 },
+    50: { step: 10, count: 5 },
+  };
+  const ringDef = scaleDefinitions[chartMax as keyof typeof scaleDefinitions] || { step: chartMax / 5, count: 5 };
+  const rings = Array.from({ length: ringDef.count }, (_, i) => (i + 1) * ringDef.step);
+
+  const handleZoomIn = () => {
+    const currentIndex = availableMaxes.indexOf(chartMax);
+    if (currentIndex > 0) setUserChartMax(availableMaxes[currentIndex - 1]);
+  };
+
+  const handleZoomOut = () => {
+    const currentIndex = availableMaxes.indexOf(chartMax);
+    if (currentIndex < availableMaxes.length - 1) setUserChartMax(availableMaxes[currentIndex + 1]);
+  };
 
   return (
     <div className="w-full bg-[#f8f9fa] text-black font-sans shadow-2xl rounded-xl overflow-hidden flex flex-col border border-slate-300 mx-auto mt-4">
@@ -59,27 +96,50 @@ const ColorDeltaChart = ({ standard, sample }: { standard: any, sample: any }) =
            conic-gradient(from 0deg, #ffcc00 0%, #ff0ff0 25%, #ff00ff 30%, #0000ff 50%, #00ffff 60%, #00ff00 80%, #ffcc00 100%)
          `
       }}>
+        {/* Zoom Controls */}
+        <div className="absolute top-2 right-2 z-50 flex flex-col gap-1 bg-white/80 p-1 rounded-lg border border-slate-300 shadow-lg backdrop-blur-sm">
+          <button onClick={handleZoomIn} disabled={chartMax === availableMaxes[0]} className="w-8 h-8 flex items-center justify-center text-slate-700 hover:text-black border-b border-black/10 hover:bg-black/10 disabled:opacity-30 disabled:hover:bg-transparent transition-colors">
+            <ZoomIn className="w-5 h-5" />
+          </button>
+          <button onClick={handleZoomOut} disabled={chartMax === availableMaxes[availableMaxes.length - 1]} className="w-8 h-8 flex items-center justify-center text-slate-700 hover:text-black hover:bg-black/10 disabled:opacity-30 disabled:hover:bg-transparent transition-colors">
+            <ZoomOut className="w-5 h-5" />
+          </button>
+        </div>
+
         {/* Axis Lines */}
         <div className="absolute top-0 bottom-0 left-1/2 w-[1px] bg-black/40 -translate-x-1/2 z-0"></div>
         <div className="absolute left-0 right-0 top-1/2 h-[1px] bg-black/40 -translate-y-1/2 z-0"></div>
 
         {/* Axis Labels */}
-        <span className="absolute top-0 left-1/2 -translate-x-1/2 mt-1 text-xs font-semibold text-black/80">b</span>
-        <span className="absolute bottom-0 left-1/2 -translate-x-1/2 mb-1 text-xs font-semibold text-black/80">-b</span>
-        <span className="absolute right-0 top-1/2 -translate-y-1/2 mr-1 text-xs font-semibold text-black/80">a</span>
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 ml-1 text-xs font-semibold text-black/80">-a</span>
+        <span className="absolute top-0 left-1/2 ml-1 mt-1 text-xs font-black text-black/90 drop-shadow-md">+b*</span>
+        <span className="absolute bottom-0 left-1/2 ml-1 mb-1 text-xs font-black text-black/90 drop-shadow-md">-b*</span>
+        <span className="absolute right-0 bottom-1/2 mb-1 mr-1 text-xs font-black text-black/90 drop-shadow-md">+a*</span>
+        <span className="absolute left-0 bottom-1/2 mb-1 ml-1 text-xs font-black text-black/90 drop-shadow-md">-a*</span>
 
-        {/* Concentric Circles */}
-        {[2, 4, 6, 8, 10].map((val) => (
-          <div
-            key={val}
-            className="absolute top-1/2 left-1/2 rounded-full border border-black/30 pointer-events-none"
-            style={{
-              width: `${(val / chartMax) * 100}%`,
-              height: `${(val / chartMax) * 100}%`,
-              transform: 'translate(-50%, -50%)'
-            }}
-          ></div>
+        {/* Concentric Circles & Labels */}
+        {rings.map((val) => (
+          <div key={val} className="absolute inset-0 pointer-events-none">
+            <div
+              className="absolute top-1/2 left-1/2 rounded-full border border-black/30"
+              style={{
+                width: `${(val / chartMax) * 100}%`,
+                height: `${(val / chartMax) * 100}%`,
+                transform: 'translate(-50%, -50%)'
+              }}
+            ></div>
+            <span
+              className="absolute text-[8px] text-black/60 font-bold"
+              style={{
+                top: '50%',
+                left: `calc(50% + ${(val / chartMax) * 50}%)`,
+                transform: 'translate(-100%, -50%)',
+                marginTop: '1px',
+                paddingRight: '3px'
+              }}
+            >
+              {val}
+            </span>
+          </div>
         ))}
 
         {/* Center Dot (Standard) */}
@@ -101,31 +161,34 @@ const ColorDeltaChart = ({ standard, sample }: { standard: any, sample: any }) =
       <div className="w-full bg-white relative pt-4 pb-8 px-2">
         <div className="w-full h-10 flex bg-gradient-to-r from-black via-gray-500 to-white border border-black relative z-10 opacity-90"></div>
 
-        {/* Bar lines */}
-        <div className="absolute top-4 left-2 right-2 h-10 flex justify-between z-20 pointer-events-none">
-          {[...Array(11)].map((_, i) => (
-            <div key={i} className={`h-full w-[1px] ${i === 5 ? 'bg-black/60' : 'bg-black/20'} shrink-0`}></div>
-          ))}
+        {/* L lines and markers */}
+        <div className="absolute top-4 left-2 right-2 bottom-0 z-20 pointer-events-none">
+          {[...Array(11)].map((_, i) => {
+            const val = -maxL + (i * (maxL * 2) / 10);
+            const strVal = val > 0 ? `+${val.toFixed(1)}` : val.toFixed(1);
+            const [intPart, fracPart] = strVal.split('.');
+
+            return (
+              <div key={i} className="absolute top-0 flex flex-col items-center" style={{ left: `${i * 10}%`, transform: 'translateX(-50%)' }}>
+                {/* Bar line */}
+                <div className={`h-10 w-[1px] ${i === 5 ? 'bg-black/60' : 'bg-black/20'}`}></div>
+
+                {/* Label aligned to the dot */}
+                {i !== 0 && i !== 5 && i !== 10 && (
+                  <div className="mt-1 flex text-[10.5px] text-slate-800 font-semibold tracking-tighter">
+                    <div className="w-[18px] text-right">{intPart}</div>
+                    <div className="w-[3px] text-center">.</div>
+                    <div className="w-[18px] text-left">{fracPart}</div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <div className="absolute top-4 left-2 right-2 h-10 flex items-center justify-between text-xs px-2 font-bold pointer-events-none z-30">
           <span className="text-white drop-shadow-md">-L</span>
           <span className="text-black drop-shadow-sm">+L</span>
-        </div>
-
-        {/* L markers */}
-        <div className="absolute bottom-2 left-2 right-2 flex justify-between text-[11px] pointer-events-none text-slate-800 font-medium">
-          <span className="opacity-0">-5.0</span>
-          <span>-4.0</span>
-          <span>-3.0</span>
-          <span>-2.0</span>
-          <span>-1.0</span>
-          <span className="opacity-0">0.0</span>
-          <span>1.0</span>
-          <span>2.0</span>
-          <span>3.0</span>
-          <span>4.0</span>
-          <span className="opacity-0">5.0</span>
         </div>
 
         {/* L Dot */}
@@ -139,14 +202,18 @@ const ColorDeltaChart = ({ standard, sample }: { standard: any, sample: any }) =
       <div className="w-full bg-black h-14 relative flex justify-center items-center overflow-hidden">
         {/* Left Color (Patrón) */}
         <div
-          className="absolute left-0 top-0 bottom-0 w-1/2 rounded-r-2xl border-r border-black/20"
+          className="absolute left-0 top-0 bottom-0 w-1/2 rounded-r-2xl border-r border-black/20 flex items-center pl-4"
           style={{ backgroundColor: standard.hex }}
-        ></div>
+        >
+          <span className="text-white text-[10px] font-black uppercase tracking-widest drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">Patrón</span>
+        </div>
         {/* Right Color (Fórmula/Muestra) */}
         <div
-          className="absolute right-0 top-0 bottom-0 w-1/2 rounded-l-2xl border-l border-black/20"
+          className="absolute right-0 top-0 bottom-0 w-1/2 rounded-l-2xl border-l border-black/20 flex items-center justify-end pr-4"
           style={{ backgroundColor: sample.hex }}
-        ></div>
+        >
+          <span className="text-white text-[10px] font-black uppercase tracking-widest drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">Muestra</span>
+        </div>
 
         {/* Badge */}
         <div className="bg-white rounded-full px-4 py-[2px] text-[13px] font-black border-2 border-black relative z-40 whitespace-nowrap tracking-tight shadow-lg">
@@ -199,8 +266,20 @@ export default function QualityControl() {
   const location = useLocation();
   const [standard, setStandard] = useState<any>(null);
   const [sample, setSample] = useState<any>(null);
+  const [qcContextData, setQcContextData] = useState<any>(null);
+  const [showPDF, setShowPDF] = useState(false);
   const { isConnected, measure, isMeasuring } = useNixDevice();
   const initialStandardSet = useRef(false);
+
+  // Load context first
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('qc_context');
+      if (stored) {
+        setQcContextData(JSON.parse(stored));
+      }
+    } catch { }
+  }, []);
 
   // Auto-set standard from formula navigation state or from Colorimetro return
   useEffect(() => {
@@ -244,12 +323,17 @@ export default function QualityControl() {
       const dB = (sample.b - standard.b).toFixed(2);
       const de = deltaE2000(standard.l, standard.a, standard.b, sample.l, sample.a, sample.b).toFixed(2);
 
-      localStorage.setItem('qc_context', JSON.stringify({
-        standard,
-        sample,
-        dL, dA, dB, de,
-        timestamp: new Date().toISOString()
-      }));
+      setQcContextData((prev: any) => {
+        const newCtx = {
+          ...(prev || {}),
+          standard,
+          sample,
+          dL, dA, dB, de,
+          timestamp: new Date().toISOString()
+        };
+        localStorage.setItem('qc_context', JSON.stringify(newCtx));
+        return newCtx;
+      });
     }
   }, [standard, sample]);
 
@@ -340,57 +424,74 @@ export default function QualityControl() {
           )}
         </AnimatePresence>
 
-        {/* Standard Selection */}
-        <div className="flex flex-col gap-2">
-          <h2 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Patrón de Laboratorio</h2>
-          <motion.div
-            whileHover={{ backgroundColor: 'rgba(30, 41, 59, 0.3)' }}
-            onClick={handleCaptureStandard}
-            className="flex items-center gap-4 rounded-xl border border-slate-800 p-4 transition-all hover:border-slate-600 bg-slate-900/50 cursor-pointer group"
-          >
-            <div className="h-16 w-16 rounded-lg shadow-2xl border-2 border-slate-800 group-hover:border-slate-700 transition-colors flex items-center justify-center shrink-0 overflow-hidden" style={{ backgroundColor: standard?.hex || '#1a1a1a' }}>
-              {!standard && <div className="rounded-full bg-[#004A99] p-2 shadow-lg"><Check className="h-4 w-4 text-white" /></div>}
+        {/* Formula Information */}
+        {qcContextData && qcContextData.componentColors && (
+          <div className="bg-slate-900/40 rounded-2xl border border-slate-800 p-4 space-y-3 shadow-xl">
+            <div className="flex items-end justify-between border-b border-slate-800 pb-2">
+              <div>
+                <h3 className="text-xs font-bold text-white uppercase tracking-tight">
+                  {qcContextData.formulaName || 'Fórmula Encontrada'}
+                </h3>
+                <p className="text-[10px] text-blue-400 font-bold uppercase tracking-wide mt-1">
+                  {qcContextData.formulaProduct || 'Producto no especificado'}
+                </p>
+              </div>
+              <span className="text-[10px] text-slate-500 font-bold uppercase">
+                Prep: {qcContextData.prepareAmount || 1.0} LT
+              </span>
             </div>
-            <div className="flex-1">
-              <p className="font-bold text-sm text-white">{standard?.name || 'Tocar para escanear estándar'}</p>
-              {standard ? (
-                <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-tighter italic font-mono">L: {standard.l} | a: {standard.a} | b: {standard.b}</p>
-              ) : (
-                <p className="text-xs text-slate-600">Seleccionar color de referencia</p>
-              )}
-            </div>
-          </motion.div>
-        </div>
 
-        {/* Sample Selection */}
-        <div className="flex flex-col gap-2">
-          <h2 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Muestra Actual</h2>
-          <motion.div
-            whileHover={{ backgroundColor: 'rgba(30, 41, 59, 0.3)' }}
-            onClick={handleCaptureSample}
-            className="flex items-center gap-4 rounded-xl border border-slate-800 p-4 transition-all hover:border-slate-600 bg-slate-900/50 cursor-pointer group"
+            <div className="space-y-2 mt-2">
+              <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Componentes</h4>
+              {qcContextData.componentColors.map((cc: any, idx: number) => (
+                <div key={idx} className="flex items-center justify-between bg-slate-950/50 p-2 rounded-lg border border-slate-800/50">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="h-6 w-6 rounded-md shadow-inner border border-slate-700/50"
+                      style={{
+                        backgroundColor: cc.baseType === 'white' ? '#ffffff' : cc.baseType === 'transparent' ? '#ffffff' : (cc.color || '#555'),
+                        backgroundImage: cc.baseType === 'transparent'
+                          ? 'linear-gradient(45deg, #aaa 25%, transparent 25%), linear-gradient(-45deg, #aaa 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #aaa 75%), linear-gradient(-45deg, transparent 75%, #aaa 75%)'
+                          : undefined,
+                        backgroundSize: cc.baseType === 'transparent' ? '6px 6px' : undefined,
+                        backgroundPosition: cc.baseType === 'transparent' ? '0 0, 0 3px, 3px -3px, -3px 0px' : undefined,
+                      }}
+                    ></div>
+                    <span className="text-[10px] font-bold text-white">{cc.code}</span>
+                  </div>
+                  <div className="text-[11px] font-mono font-bold text-violet-300">
+                    {cc.quantity ? (cc.quantity * (qcContextData.prepareAmount || 1)).toFixed(3) + ' L' : cc.displayQuantity || '0.00 L'}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Generar PDF Button */}
+        {qcContextData && (
+          <button
+            onClick={() => setShowPDF(true)}
+            className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold transition-all bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-xl shadow-violet-900/30 active:scale-95 text-xs uppercase tracking-widest mt-6"
           >
-            <div className="h-16 w-16 rounded-lg shadow-2xl border-2 border-slate-800 group-hover:border-slate-700 transition-colors flex items-center justify-center shrink-0 overflow-hidden" style={{ backgroundColor: sample?.hex || '#1a1a1a' }}>
-              {!sample && <div className="rounded-full bg-[#004A99] p-2 shadow-lg"><Check className="h-4 w-4 text-white" /></div>}
-            </div>
-            <div className="flex-1">
-              <p className="font-bold text-sm text-white">{sample?.name || 'Tocar para escanear muestra'}</p>
-              {sample ? (
-                <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-tighter italic font-mono">L: {sample.l} | a: {sample.a} | b: {sample.b}</p>
-              ) : (
-                <p className="text-xs text-slate-600">Ingresar datos de muestra</p>
-              )}
-            </div>
-          </motion.div>
-        </div>
+            <FileText className="w-4 h-4" />
+            Generar Informe PDF
+          </button>
+        )}
 
         <button
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 py-4 font-bold text-slate-400 transition-all active:scale-95 text-xs uppercase tracking-widest shadow-xl"
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 py-4 font-bold text-slate-400 transition-all active:scale-95 text-xs uppercase tracking-widest shadow-xl"
           onClick={() => { setStandard(null); setSample(null); initialStandardSet.current = false; }}
         >
           Nueva Sesión / Limpiar
         </button>
       </main>
+
+      <AnimatePresence>
+        {showPDF && (
+          <GenerarPDF onClose={() => setShowPDF(false)} qcContextData={qcContextData} />
+        )}
+      </AnimatePresence>
 
       {/* Loading Overlay */}
       <AnimatePresence>

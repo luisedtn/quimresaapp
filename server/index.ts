@@ -797,6 +797,41 @@ app.post('/api/componentes/colores', authenticateToken, async (req: Request, res
     }
 });
 
+// =================================================================
+// POST /api/upload-pdf  – Save PDF to VPS directory
+// =================================================================
+app.post('/api/upload-pdf', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { clientCode, lote, pdfBase64 } = req.body;
+
+        if (!clientCode || !lote || !pdfBase64) {
+            return res.status(400).json({ error: 'Faltan parámetros: clientCode, lote, o pdfBase64' });
+        }
+
+        // Remover prefijo data:application/pdf;...base64, si existe
+        const base64Data = pdfBase64.replace(/^data:application\/[\w.-]+;base64,/, "");
+
+        // Crear directorios (usando require('path').resolve para ruta absoluta segura si es necesario, pero __dirname es correcto)
+        const baseDir = path.join(__dirname, '../controlcalidad');
+        if (!fs.existsSync(baseDir)) {
+            fs.mkdirSync(baseDir);
+        }
+
+        const clientDir = path.join(baseDir, clientCode);
+        if (!fs.existsSync(clientDir)) {
+            fs.mkdirSync(clientDir);
+        }
+
+        const filePath = path.join(clientDir, `${lote}.pdf`);
+        fs.writeFileSync(filePath, base64Data, 'base64');
+
+        res.json({ message: 'PDF guardado correctamente', path: `controlcalidad/${clientCode}/${lote}.pdf` });
+    } catch (error: any) {
+        console.error('[ERROR] /api/upload-pdf:', error.message);
+        res.status(500).json({ error: 'Error al guardar el PDF', details: error.message });
+    }
+});
+
 const distPath = path.join(__dirname, '../dist');
 app.use(express.static(distPath));
 

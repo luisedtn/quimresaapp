@@ -353,11 +353,16 @@ export default function ColorMatch() {
             dB: (parseFloat(f.B || '0') - b).toFixed(2),
             de: selectedMatch.deltaE.toFixed(2),
             formulaSource: selectedMatch.source,
+            formulaName: f.NOMBREFORMULA || f.NOMBRE || 'Fórmula Encontrada',
+            formulaProduct: f.LINEA_DEL_PRODUCTO || f.TIPO || 'Producto no especificado',
+            prepareAmount,
             componentColors: componentColors.map(cc => ({
                 code: cc.code,
                 color: cc.rgb,
                 isBase: cc.isBase,
                 baseType: cc.baseType,
+                quantity: cc.ml ? cc.ml / 1000 : cc.quantity / 1000, // assuming ml or g. litters = ml / 1000
+                displayQuantity: (((cc.ml || 0) * (normalizeDecimal(prepareAmount) || 0)).toFixed(2)) + 'g'
             })),
             timestamp: new Date().toISOString(),
         };
