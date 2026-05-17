@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, FileText, Loader2, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Document, Page, pdfjs } from 'react-pdf';
@@ -29,6 +29,8 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
 
     // Estados para control del visor interno react-pdf
     const [numPages, setNumPages] = useState<number>();
+    const [containerWidth, setContainerWidth] = useState<number>(300);
+    const pdfContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const fetchPDFs = async () => {
@@ -56,6 +58,23 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
 
         fetchPDFs();
     }, [clientCode]);
+
+    // Medir el ancho del contenedor PDF para que las páginas no se recorten
+    useEffect(() => {
+        if (!pdfContainerRef.current || !selectedPdfUrl) return;
+        const observer = new ResizeObserver(entries => {
+            for (const entry of entries) {
+                const w = entry.contentRect.width;
+                if (w > 0) {
+                    setContainerWidth(w - 16); // pequeño margen
+                }
+            }
+        });
+        observer.observe(pdfContainerRef.current);
+        // Leer el ancho inicial también
+        setContainerWidth((pdfContainerRef.current.clientWidth || 300) - 16);
+        return () => observer.disconnect();
+    }, [selectedPdfUrl]);
 
     const handleOpenPdf = (url: string) => {
         const fullUrl = `${API_BASE_URL}${url}`;
@@ -157,7 +176,7 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
                             </div>
 
                             {/* Área de renderizado en Canvas (Universal) */}
-                            <div className="flex-1 w-full bg-slate-800/50 overflow-y-auto flex flex-col items-center py-6 custom-scrollbar">
+                            <div ref={pdfContainerRef} className="flex-1 w-full bg-slate-800/50 overflow-y-auto flex flex-col items-center py-6 custom-scrollbar">
                                 <Document
                                     file={selectedPdfUrl}
                                     onLoadSuccess={onDocumentLoadSuccess}
@@ -175,13 +194,13 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
                                     }
                                 >
                                     {Array.from(new Array(numPages), (el, index) => (
-                                        <div key={`page_${index + 1}`} className="mb-6 rounded-xl overflow-hidden shadow-2xl border border-slate-700 bg-white group">
+                                        <div key={`page_${index + 1}`} className="mb-6 rounded-xl overflow-hidden shadow-2xl border border-slate-700 bg-white">
                                             <Page
                                                 pageNumber={index + 1}
+                                                width={containerWidth}
                                                 renderTextLayer={false}
                                                 renderAnnotationLayer={false}
-                                                scale={window.innerWidth < 768 ? 0.6 : 1.2}
-                                                loading={<div className="bg-slate-800 animate-pulse w-full h-[800px]"></div>}
+                                                loading={<div className="bg-slate-800 animate-pulse w-full h-96"></div>}
                                             />
                                         </div>
                                     ))}
