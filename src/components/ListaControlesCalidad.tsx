@@ -49,8 +49,10 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
     }, [clientCode]);
 
     const handleOpenPdf = (url: string) => {
-        // En vez de window.open, abrimos el PDF internamente
-        setSelectedPdfUrl(`${API_BASE_URL}${url}`);
+        const fullUrl = `${API_BASE_URL}${url}`;
+        console.log(`\n[UI] 🖱️ Click sobre reporte PDF: ${url}`);
+        console.log(`[UI] Intentando abrir en el visor interno con la URL completa: ${fullUrl}`);
+        setSelectedPdfUrl(fullUrl);
     };
 
     return (
@@ -130,17 +132,23 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
                                     <FileText className="h-4 w-4 text-red-500" /> Visor PDF Documento
                                 </h3>
                                 <button
-                                    onClick={() => setSelectedPdfUrl(null)}
+                                    onClick={() => {
+                                        console.log('[UI] Cerrando el visor del PDF modal.');
+                                        setSelectedPdfUrl(null);
+                                    }}
                                     className="bg-slate-800 hover:bg-slate-700 transition-colors p-2 rounded-lg text-white border border-slate-700"
                                 >
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>
                             <div className="flex-1 w-full bg-slate-400">
+                                {console.log('[UI] Renderizando iframe con src:', selectedPdfUrl)}
                                 <iframe
                                     src={selectedPdfUrl}
                                     className="w-full h-full border-none bg-white"
                                     title="PDF Viewer"
+                                    onLoad={() => console.log('[UI] El iframe disparó su evento onLoad. URL cargada:', selectedPdfUrl)}
+                                    onError={(e) => console.error('[UI] Error cargando iframe del PDF:', e)}
                                 />
                             </div>
                         </div>
