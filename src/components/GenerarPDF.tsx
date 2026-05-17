@@ -79,30 +79,20 @@ export default function GenerarPDF({ onClose, qcContextData }: GenerarPDFProps) 
 
             const imgData = canvas.toDataURL('image/jpeg', 0.85); // JPEG 85% calidad — 5x menor que PNG
 
+            // Forzamos que el PDF sea de una sola página ajustando su largo al contenido capturado
+            const pageWidth = 210; // Ancho estándar A4 en mm
+            const imgHeightMm = (canvas.height * pageWidth) / canvas.width;
+
+            console.log(`[GenerarPDF] Generando PDF de una sola página: ${pageWidth}mm x ${imgHeightMm.toFixed(1)}mm`);
+
             const pdf = new jsPDF({
                 orientation: 'p',
                 unit: 'mm',
-                format: 'a4',
+                format: [pageWidth, imgHeightMm],
             });
 
-            const pageWidth = pdf.internal.pageSize.getWidth();   // 210mm
-            const pageHeight = pdf.internal.pageSize.getHeight();  // 297mm
-
-            // Calcular el alto de la imagen en mm manteniendo la relación de aspecto
-            const imgHeightMm = (canvas.height * pageWidth) / canvas.width;
-
-            console.log(`[GenerarPDF] Imagen en mm: ${pageWidth}mm x ${imgHeightMm.toFixed(1)}mm | Páginas estimadas: ${Math.ceil(imgHeightMm / pageHeight)}`);
-
-            // ---- SOPORTE MULTI-PÁGINA ----
-            let positionMm = 0; // posición vertical actual en mm
-            while (positionMm < imgHeightMm) {
-                if (positionMm > 0) {
-                    pdf.addPage();
-                }
-                // Desplazar la imagen hacia arriba para mostrar sólo el trozo de esta página
-                pdf.addImage(imgData, 'JPEG', 0, -positionMm, pageWidth, imgHeightMm);
-                positionMm += pageHeight;
-            }
+            // Añadir la imagen completa en la única página creada
+            pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, imgHeightMm);
 
             const pdfDataUri = pdf.output('datauristring');
             // jsPDF puede incluir: data:application/pdf;filename=generated.pdf;base64,JVBERi...
