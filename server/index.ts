@@ -138,7 +138,7 @@ app.post('/api/login', async (req: Request, res: Response): Promise<any> => {
         const passwordMatch = await bcrypt.compare(password, usuario.pass || '');
         if (!passwordMatch) return res.status(401).json({ error: 'Credenciales inválidas' });
         const token = jwt.sign({ id: usuario.id, email: usuario.name, typeuser: usuario.typeuser, permisos: usuario.permisos, idcliente: usuario.idcliente }, JWT_SECRET, { expiresIn: '8h' });
-        res.json({ message: 'Login exitoso', token, user: { id: usuario.id, name: usuario.name, empresa: usuario.cliente?.NOMBRE || 'Desconocida' } });
+        res.json({ message: 'Login exitoso', token, user: { id: usuario.id, name: usuario.name, empresa: usuario.cliente?.NOMBRE || 'Desconocido', typeuser: usuario.typeuser, idcliente: usuario.idcliente, permisos: usuario.permisos } });
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
