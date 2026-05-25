@@ -15,12 +15,14 @@ import {
   LogOut,
   ChevronRight,
   Menu,
-  Power
+  Power,
+  Users
 } from 'lucide-react';
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import Sidebar from '../components/Sidebar';
 import HistorialControl from '../components/HistorialControl';
+import CustomerSearch from '../components/CustomerSearch';
 
 import IconoAjustes from '../assets/iconSpectro.svg';
 
@@ -34,7 +36,12 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showHistorialControl, setShowHistorialControl] = useState(false);
+  const [showCustomerSearch, setShowCustomerSearch] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    console.log("[DEBUG] Dashboard userData:", userData);
+  }, [userData]);
 
   useEffect(() => {
     const fetchLogo = async () => {
@@ -63,6 +70,19 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
     } else {
       window.close();
     }
+  };
+
+  const handleSelectClient = (cliente: any) => {
+    const updatedUserData = {
+      ...userData,
+      idcliente: cliente.ID,
+      empresa: cliente.NOMBRE,
+      logoUrl: cliente.LOGO || userData.logoUrl
+    };
+    localStorage.setItem('userData', JSON.stringify(updatedUserData));
+    setShowCustomerSearch(false);
+    // Reload to apply changes across the app
+    window.location.reload();
   };
 
   const menuItems = [
@@ -140,9 +160,11 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
           >
             <Menu className="h-6 w-6" />
           </button>
-          <div className="w-10 h-10 bg-[#004A99] overflow-hidden rounded flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-blue-900/20">
-            {logoUrl ? <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" /> : 'Q'}
-          </div>
+          {!(userData && (userData.typeuser == 0 || userData.typeuser === "0")) && (
+            <div className="w-10 h-10 bg-[#004A99] overflow-hidden rounded flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-blue-900/20">
+              {logoUrl ? <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" /> : 'Q'}
+            </div>
+          )}
           <div>
             <h1 className="text-lg font-semibold tracking-tight text-white uppercase leading-none">{userData?.empresa || 'Quimresa'}</h1>
             <div className="flex items-center gap-2 mt-1">
@@ -156,6 +178,15 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
             <p className="text-xs font-medium text-slate-300">{userData?.email || 'usuario@quimresa.com'}</p>
             <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest">Acceso Autorizado</p>
           </div>
+          {(userData && (userData.typeuser == 0 || userData.typeuser === "0")) && (
+            <button
+              onClick={() => setShowCustomerSearch(true)}
+              className="p-2 text-slate-500 hover:text-blue-400 transition-colors bg-slate-800/30 rounded-lg"
+              title="Seleccionar Cliente"
+            >
+              <Users className="h-5 w-5" />
+            </button>
+          )}
           <button
             onClick={() => navigate('/colorimetro')}
             className="p-2 text-slate-500 hover:text-blue-400 transition-colors bg-slate-800/30 rounded-lg"
@@ -223,6 +254,12 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
           <HistorialControl onClose={() => setShowHistorialControl(false)} />
         )}
       </AnimatePresence>
+
+      <CustomerSearch
+        isOpen={showCustomerSearch}
+        onClose={() => setShowCustomerSearch(false)}
+        onSelect={handleSelectClient}
+      />
     </div>
   );
 }

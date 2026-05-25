@@ -35,6 +35,7 @@ export default function Login({ onLogin }: LoginProps) {
       });
 
       const data = await response.json();
+      console.log("[DEBUG] Login response data:", data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Error al iniciar sesión');
@@ -47,6 +48,8 @@ export default function Login({ onLogin }: LoginProps) {
         email: data.user.name,
         nombre: data.user.name,
         empresa: data.user.empresa,
+        idcliente: data.user.idcliente,
+        typeuser: data.user.typeuser,
         autorizado: true,
         logoUrl: 'https://placehold.co/400x150/white/003366?text=Quimresa+S.A.'
       });
