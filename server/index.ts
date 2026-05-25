@@ -151,6 +151,13 @@ export const authenticateToken = (req: Request, res: Response, next: any) => {
     if (token == null) return res.status(401).json({ error: 'Token requerido' });
     jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
         if (err) return res.status(403).json({ error: 'Token inválido o expirado' });
+
+        // ADMIN OVERRIDE: Si es admin y envía x-client-id, sobreescribir el idcliente del token
+        const adminClientId = req.headers['x-client-id'];
+        if (user.typeuser == 0 && adminClientId) {
+            user.idcliente = Number(adminClientId);
+        }
+
         (req as any).user = user;
         next();
     });
@@ -206,6 +213,18 @@ app.delete('/api/usuarios/:id', authenticateToken, async (req: Request, res: Res
         res.json({ message: 'Usuario eliminado correctamente' });
     } catch (error) {
         res.status(500).json({ error: 'Error al eliminar usuario' });
+    }
+});
+
+app.get('/api/clientes', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const clientes = await prisma.cliente.findMany({
+            orderBy: { NOMBRE: 'asc' }
+        });
+        res.json(clientes);
+    } catch (error) {
+        console.error('Error al obtener clientes:', error);
+        res.status(500).json({ error: 'Error al obtener clientes' });
     }
 });
 

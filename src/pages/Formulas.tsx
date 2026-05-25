@@ -60,12 +60,21 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
       else setLoadingMore(true);
 
       try {
+        const userDataStr = localStorage.getItem('userData');
+        const userData = userDataStr ? JSON.parse(userDataStr) : null;
+
         const url = `${API_BASE_URL}/api/formulas?page=${page}&limit=25&q=${encodeURIComponent(debouncedSearchTerm)}&sortBy=${sortBy}`;
         console.log(`[FRONTEND] Fetching formulas from URL: ${url}`);
+
+        const headers: any = { 'Authorization': `Bearer ${token}` };
+        if (userData?.idcliente) {
+          headers['x-client-id'] = userData.idcliente.toString();
+        }
+
         const response = await fetch(
           url,
           {
-            headers: { 'Authorization': `Bearer ${token}` },
+            headers,
             signal: abortController.signal
           }
         );

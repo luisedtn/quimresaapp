@@ -103,12 +103,19 @@ export default function ColorMatch() {
         const f = selectedMatch.formula;
         try {
             const token = localStorage.getItem('token');
+            const userDataStr = localStorage.getItem('userData');
+            const userDataObj = userDataStr ? JSON.parse(userDataStr) : null;
+            const headers: any = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+            if (userDataObj?.idcliente) {
+                headers['x-client-id'] = userDataObj.idcliente.toString();
+            }
+
             await fetch(`${API_BASE_URL}/api/ajustes/registrar-paso`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers,
                 body: JSON.stringify({
                     formulaCode: f.CODIGO || '',
                     formulaName: f.NOMBREFORMULA || f.NOMBRE || 'Sin nombre',
@@ -301,12 +308,19 @@ export default function ColorMatch() {
 
         try {
             const token = localStorage.getItem('token');
+            const userDataStr = localStorage.getItem('userData');
+            const userDataObj = userDataStr ? JSON.parse(userDataStr) : null;
+            const headers: any = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            };
+            if (userDataObj?.idcliente) {
+                headers['x-client-id'] = userDataObj.idcliente.toString();
+            }
+
             const res = await fetch(`${API_BASE_URL}/api/color-match`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
+                headers,
                 body: JSON.stringify({ l, a, b, limit: maxResults }),
             });
 
@@ -370,12 +384,19 @@ export default function ColorMatch() {
 
         try {
             const token = localStorage.getItem('token');
+            const userDataStr = localStorage.getItem('userData');
+            const userDataObj = userDataStr ? JSON.parse(userDataStr) : null;
+            const headers: any = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            };
+            if (userDataObj?.idcliente) {
+                headers['x-client-id'] = userDataObj.idcliente.toString();
+            }
+
             const res = await fetch(`${API_BASE_URL}/api/componentes/colores`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
+                headers,
                 body: JSON.stringify({ codigos: codes }),
             });
             if (res.ok) {
@@ -385,10 +406,7 @@ export default function ColorMatch() {
                 // FETCH DENSIDADES
                 const resDens = await fetch(`${API_BASE_URL}/api/componentes/densidades`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                    },
+                    headers,
                     body: JSON.stringify({ codigos: codes }),
                 });
                 let densityMap: Record<string, number> = {};
@@ -611,12 +629,18 @@ export default function ColorMatch() {
 
         try {
             const token = localStorage.getItem('token');
+            const userDataStr = localStorage.getItem('userData');
+            const userDataObj = userDataStr ? JSON.parse(userDataStr) : null;
+            const headers: any = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            };
+            if (userDataObj?.idcliente) {
+                headers['x-client-id'] = userDataObj.idcliente.toString();
+            }
             const res = await fetch(`${API_BASE_URL}/api/ajustes/guardar`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
+                headers,
                 body: JSON.stringify(body),
             });
 
@@ -636,10 +660,16 @@ export default function ColorMatch() {
         if (!currentLote) return;
         try {
             const token = localStorage.getItem('token');
+            const userDataStr = localStorage.getItem('userData');
+            const userDataObj = userDataStr ? JSON.parse(userDataStr) : null;
+            const headers: any = {
+                'Authorization': `Bearer ${token}`
+            };
+            if (userDataObj?.idcliente) {
+                headers['x-client-id'] = userDataObj.idcliente.toString();
+            }
             const res = await fetch(`${API_BASE_URL}/api/ajustes/historial/${currentLote}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers
             });
             if (res.ok) {
                 const data = await res.json();

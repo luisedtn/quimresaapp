@@ -71,9 +71,15 @@ export default function ColorAiChat() {
         const fetchCatalog = async () => {
             try {
                 const token = localStorage.getItem('token');
-                if (!token) return;
+                const userDataStr = localStorage.getItem('userData');
+                const userDataObj = userDataStr ? JSON.parse(userDataStr) : null;
+                const headers: any = { 'Authorization': `Bearer ${token}` };
+                if (userDataObj?.idcliente) {
+                    headers['x-client-id'] = userDataObj.idcliente.toString();
+                }
+
                 const res = await fetch(`${API_BASE_URL}/api/componentes/catalogo`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers
                 });
                 const data = await res.json();
                 if (Array.isArray(data)) {
@@ -153,12 +159,19 @@ export default function ColorAiChat() {
 
         try {
             const token = localStorage.getItem('token');
+            const userDataStr = localStorage.getItem('userData');
+            const userDataObj = userDataStr ? JSON.parse(userDataStr) : null;
+            const headers: any = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+            if (userDataObj?.idcliente) {
+                headers['x-client-id'] = userDataObj.idcliente.toString();
+            }
+
             const response = await fetch(`${API_BASE_URL}/api/chat`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers,
                 body: JSON.stringify({
                     message: apiMsg,
                     history: historyForApi

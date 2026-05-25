@@ -55,10 +55,17 @@ export default function ListaControlesCalidad({ onClose, clientCode }: ListaCont
             try {
                 setIsLoading(true);
                 const token = localStorage.getItem('token');
+                const userDataStr = localStorage.getItem('userData');
+                const userDataObj = userDataStr ? JSON.parse(userDataStr) : null;
+                const headers: any = {
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                };
+                if (userDataObj?.idcliente) {
+                    headers['x-client-id'] = userDataObj.idcliente.toString();
+                }
+
                 const response = await fetch(`${API_BASE_URL}/api/pdfs/${clientCode}`, {
-                    headers: {
-                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                    }
+                    headers
                 });
 
                 if (!response.ok) {

@@ -48,8 +48,14 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
+
+        const headers: any = { 'Authorization': `Bearer ${token}` };
+        if (userData?.idcliente) {
+          headers['x-client-id'] = userData.idcliente.toString();
+        }
+
         const res = await fetch(`${API_BASE_URL}/api/cliente`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers
         });
         if (res.ok) {
           const data = await res.json();

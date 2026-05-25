@@ -40,8 +40,15 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
     const fetchUsuarios = async () => {
         try {
             const token = localStorage.getItem('token');
+            const userDataStr = localStorage.getItem('userData');
+            const userDataObj = userDataStr ? JSON.parse(userDataStr) : null;
+            const headers: any = { Authorization: `Bearer ${token}` };
+            if (userDataObj?.idcliente) {
+                headers['x-client-id'] = userDataObj.idcliente.toString();
+            }
+
             const res = await fetch(`${API_BASE_URL}/api/usuarios`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers
             });
             if (!res.ok) {
                 if (res.status === 401 || res.status === 403) onLogout();
@@ -139,13 +146,20 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
                 ? `${API_BASE_URL}/api/usuarios/${editingUser.id}`
                 : `${API_BASE_URL}/api/usuarios`;
 
+            const userDataStr = localStorage.getItem('userData');
+            const userDataObj = userDataStr ? JSON.parse(userDataStr) : null;
+            const headers: any = {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            };
+            if (userDataObj?.idcliente) {
+                headers['x-client-id'] = userDataObj.idcliente.toString();
+            }
+
             console.log("Haciendo llamada Fetch hacia:", url);
             const res = await fetch(url, {
                 method: editingUser ? 'PUT' : 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
+                headers,
                 body: JSON.stringify(formData),
             });
 
@@ -170,9 +184,16 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
         if (!confirm('Advertencia: El usuario se borrará permanentemente y se quedará sin acceso al sistema. ¿Seguro quieres eliminar a este usuario?')) return;
         try {
             const token = localStorage.getItem('token');
+            const userDataStr = localStorage.getItem('userData');
+            const userDataObj = userDataStr ? JSON.parse(userDataStr) : null;
+            const headers: any = { Authorization: `Bearer ${token}` };
+            if (userDataObj?.idcliente) {
+                headers['x-client-id'] = userDataObj.idcliente.toString();
+            }
+
             const res = await fetch(`${API_BASE_URL}/api/usuarios/${id}`, {
                 method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` }
+                headers
             });
             if (!res.ok) {
                 if (res.status === 401 || res.status === 403) onLogout();
