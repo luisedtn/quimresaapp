@@ -81,7 +81,7 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
   const handleSelectClient = (cliente: any) => {
     const updatedUserData = {
       ...userData,
-      idcliente: cliente.ID,
+      idcliente: cliente.CODIGO,
       empresa: cliente.NOMBRE,
       logoUrl: cliente.LOGO || userData.logoUrl
     };

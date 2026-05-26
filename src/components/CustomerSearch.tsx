@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { API_BASE_URL } from '../config';
 
 interface Cliente {
-    ID: number;
+    CODIGO: number;
     NOMBRE: string;
     LOGO: string | null;
 }
@@ -89,7 +89,7 @@ export default function CustomerSearch({ isOpen, onClose, onSelect }: CustomerSe
                             ) : filtered.length > 0 ? (
                                 filtered.map(cliente => (
                                     <button
-                                        key={cliente.ID}
+                                        key={cliente.CODIGO}
                                         onClick={() => onSelect(cliente)}
                                         className="w-full flex items-center gap-4 p-4 rounded-xl border border-slate-800 bg-slate-800/30 hover:bg-slate-800 hover:border-slate-700 transition-all group"
                                     >
@@ -102,7 +102,7 @@ export default function CustomerSearch({ isOpen, onClose, onSelect }: CustomerSe
                                         </div>
                                         <div className="text-left flex-grow">
                                             <p className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors uppercase tracking-tight">{cliente.NOMBRE}</p>
-                                            <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mt-0.5">ID: {cliente.ID}</p>
+                                            <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mt-0.5">ID: {cliente.CODIGO}</p>
                                         </div>
                                         <Check className="h-5 w-5 text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                                     </button>
