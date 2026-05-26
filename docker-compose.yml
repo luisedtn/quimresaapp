@@ -1,34 +1,55 @@
 version: '3.8'
 
 services:
-  quimresa-app:
-    image: ghcr.io/nluistorres/quimresa-app:latest
-
-    # build: . # Portainer Swarm no soporta builds locales fácilmente, mejor subir imagen o usar git
+  backend:
+    image: node:20-alpine
+    working_dir: /app
+    command: >
+      sh -c "apk add --no-cache git openssl && 
+             rm -rf * && 
+             git clone https://github.com/luisedtn/quimresaapp.git . && 
+             npm install && 
+             npx prisma db push  --accept-data-loss &&  
+             npx prisma generate --schema=./prisma/schema.prisma && 
+             npm run build && 
+             npm run server"
     environment:
-      - DATABASE_URL=postgresql://postgres:9db5e5a64387efaa96264ebd79551fd9@postgres:5432/quimresa?schema=public
+      - DATABASE_URL=postgresql://postgres:9db5e5a64387efaa96264ebd79551fd9@postgres:5432/quimresa
+      # AQUÍ ACTUALIZAS EL SECRETO
       - JWT_SECRET=${JWT_SECRET}
-      - PORT=3001
+      # AQUÍ DEFINES LA URL DE LA API PARA QUE VITE LA USE AL COMPILAR
+      - VITE_API_URL=https://api.quimresa.com
+      - GEMINI_API_KEY=AIzaSyDwn_swluA2gvQlv9FIJLVvXb1oUu-Vklk
+      - GOOGLE_PROJECT_ID=438765953304
+      - GOOGLE_LOCATION=us-east1
+      - GOOGLE_APPLICATION_CREDENTIALS=/etc/google-key.json
+    volumes:
+      # Montamos el archivo del VPS al contenedor
+      # [RUTA_EN_VPS]:[RUTA_EN_CONTENEDOR]
+      - /home/user/quimresa/google-key.json:/etc/google-key.json:ro      
     networks:
-      - traefik_public
       - general_network
+      - traefik_public
     deploy:
-      mode: replicated
-      replicas: 1
       labels:
         - "traefik.enable=true"
-        - "traefik.docker.network=traefik_public"
-        - "traefik.http.routers.quimresa.rule=Host(`api.quimresa.com`)"
-        - "traefik.http.routers.quimresa.entrypoints=websecure"
-        - "traefik.http.routers.quimresa.tls=true"
-        - "traefik.http.routers.quimresa.tls.certresolver=le"
-        - "traefik.http.services.quimresa.loadbalancer.server.port=3001"
-      placement:
-        constraints:
-          - node.role == manager
+        # Corregido: responde a api y app (o los dos que necesites)
+        - "traefik.http.routers.quim-app.rule=Host(`api.quimresa.com`) || Host(`app.quimresa.com`)"
+        - "traefik.http.routers.quim-app.entrypoints=websecure"
+        - "traefik.http.routers.quim-app.tls.certresolver=le"
+        - "traefik.http.services.quim-app.loadbalancer.server.port=3001"
+
+        # --- SOLUCIÓN PARA ERRORES DE CORS EN ANDROID ---
+        # Definimos el middleware de CORS
+        - "traefik.http.middlewares.quim-cors.headers.accesscontrolallowmethods=GET,POST,OPTIONS,PUT,DELETE"
+        - "traefik.http.middlewares.quim-cors.headers.accesscontrolalloworiginlist=https://localhost,capacitor://localhost,http://localhost"
+        - "traefik.http.middlewares.quim-cors.headers.accesscontrolallowheaders=Origin,Content-Type,Accept,Authorization,X-Requested-With,x-client-id,X-Client-Id"
+        - "traefik.http.middlewares.quim-cors.headers.accesscontrolallowcredentials=true"
+        # Aplicamos el middleware a la ruta
+        - "traefik.http.routers.quim-app.middlewares=quim-cors"
 
 networks:
-  traefik_public:
-    external: true
   general_network:
+    external: true
+  traefik_public:
     external: true

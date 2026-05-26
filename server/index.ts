@@ -327,8 +327,19 @@ app.get('/api/formulas', authenticateToken, async (req: Request, res: Response):
         const search = (req.query.q as string) || '';
         const skip = (page - 1) * limit;
 
+        const where: any = {};
+        if (idcliente) {
+            where.IDCLIENTE = idcliente;
+        }
+        if (search) {
+            where.OR = [
+                { NOMBREFORMULA: { contains: search, mode: 'insensitive' } },
+                { CODIGO: { contains: search, mode: 'insensitive' } }
+            ];
+        }
+
         const formulas = await prisma.formPersonales.findMany({
-            where: { IDCLIENTE: idcliente, OR: search ? [{ NOMBREFORMULA: { contains: search, mode: 'insensitive' } }, { CODIGO: { contains: search, mode: 'insensitive' } }] : undefined },
+            where,
             orderBy: [{ FECHA: 'desc' }],
             skip, take: limit
         });
@@ -579,13 +590,17 @@ app.post('/api/color-match', authenticateToken, async (req: Request, res: Respon
         });
 
         // 2. Fetch minimal data for personal formulas
+        const personalWhere: any = {
+            L: { not: null, notIn: [''] },
+            A: { not: null, notIn: [''] },
+            B: { not: null, notIn: [''] },
+        };
+        if (idcliente) {
+            personalWhere.IDCLIENTE = idcliente;
+        }
+
         const personalMinData = await prisma.formPersonales.findMany({
-            where: {
-                IDCLIENTE: idcliente,
-                L: { not: null, notIn: [''] },
-                A: { not: null, notIn: [''] },
-                B: { not: null, notIn: [''] },
-            },
+            where: personalWhere,
             select: {
                 ID: true,
                 L: true,
@@ -888,8 +903,13 @@ app.get('/api/ajustes/historial/:lote', authenticateToken, async (req: Request, 
 app.get('/api/ajustes/todo-historial', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
         const { idcliente } = (req as any).user;
+        const where: any = {};
+        if (idcliente) {
+            where.id_cliente = idcliente;
+        }
+
         const historial = await prisma.ajustesTecnicos.findMany({
-            where: { id_cliente: idcliente },
+            where,
             orderBy: { fecha: 'desc' }
         });
         res.json(historial);

@@ -503,7 +503,13 @@ export default function QualityControl() {
 
       <AnimatePresence>
         {showListaPDFs && (
-          <ListaControlesCalidad onClose={() => setShowListaPDFs(false)} clientCode="MADEVAL" />
+          <ListaControlesCalidad
+            onClose={() => setShowListaPDFs(false)}
+            clientCode={(() => {
+              const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+              return userData.idcliente?.toString() || (userData.empresa && userData.empresa !== 'Quimresa' ? userData.empresa : 'GENERAL');
+            })()}
+          />
         )}
       </AnimatePresence>
 
