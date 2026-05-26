@@ -46,7 +46,7 @@ export default function CustomerSearch({ isOpen, onClose, onSelect }: CustomerSe
     }, [isOpen]);
 
     const filtered = clientes.filter(c =>
-        c.NOMBRE.toLowerCase().includes(searchTerm.toLowerCase())
+        (c.NOMBRE || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
