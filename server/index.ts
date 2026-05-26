@@ -321,7 +321,9 @@ app.all('/api/chat', authenticateToken, async (req: Request, res: Response): Pro
 
 app.get('/api/formulas', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
-        const { idcliente } = (req as any).user;
+        const { idcliente, typeuser, email } = (req as any).user;
+        console.log(`[BACKEND] Solicitud /api/formulas | Usuario: ${email} | Type: ${typeuser} | idcliente: ${idcliente}`);
+
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 25;
         const search = (req.query.q as string) || '';

@@ -71,6 +71,9 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
           headers['x-client-id'] = userData.idcliente.toString();
         }
 
+        console.log('[FRONTEND] Request Headers:', headers);
+        console.log('[FRONTEND] Current UserData:', userData);
+
         const response = await fetch(
           url,
           {
