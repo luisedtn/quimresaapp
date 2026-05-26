@@ -51,12 +51,19 @@ export default function Scan({ userData, onLogout }: ScanProps) {
     setIsSaving(true);
     try {
       const token = localStorage.getItem('token');
+      const userDataStr = localStorage.getItem('userData');
+      const userDataObj = userDataStr ? JSON.parse(userDataStr) : null;
+      const headers: any = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      };
+      if (userDataObj?.idcliente) {
+        headers['x-client-id'] = userDataObj.idcliente.toString();
+      }
+
       const res = await fetch(`${API_BASE_URL}/api/mediciones`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify({
           L: lastMeasurement.color.L,
           A: lastMeasurement.color.a,

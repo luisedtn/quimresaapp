@@ -59,7 +59,7 @@ const corsOptions = {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-client-id']
 };
 
 app.use(cors(corsOptions));
@@ -71,6 +71,12 @@ app.use((req, res, next) => {
     if (origin && (allowedOrigins.includes(origin) || origin.startsWith('http://localhost'))) {
         res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, x-client-id');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    }
+    // Handle preflight
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
     }
     next();
 });
