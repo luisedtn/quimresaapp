@@ -48,38 +48,33 @@ const allowedOrigins = [
     'http://localhost:5173'
 ];
 
-const corsOptions = {
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-        if (!origin || allowedOrigins.includes(origin) || origin.startsWith('http://localhost') || origin.startsWith('http://192.168.')) {
-            callback(null, true);
-        } else {
-            // For production, maybe restrict more, but for debugging we'll reflect origin
-            callback(null, true);
-        }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-client-id']
-};
-
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
-
-// Manual CORS fallback for certain environments
+// Robust CORS configuration for Mobile/Capacitor
 app.use((req, res, next) => {
-    const origin = req.headers.origin as string;
-    if (origin && (allowedOrigins.includes(origin) || origin.startsWith('http://localhost'))) {
+    const origin = req.headers.origin;
+
+    // Si hay origen, siempre permitirlo para evitar bloqueos en Capacitor/Desarrollo
+    if (origin) {
         res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, x-client-id');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, x-client-id, X-Client-Id');
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     }
-    // Handle preflight
+
+    // Responder inmediatamente a Preflight
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
     next();
 });
+
+const corsOptions = {
+    origin: (origin: any, callback: any) => callback(null, true),
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-client-id', 'X-Client-Id']
+};
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
