@@ -135,33 +135,33 @@ export default function GuardarEscaneo({
 
   const renderMainForm = () => (
     <div className="flex flex-col flex-1 p-6">
-      <h2 className="text-center text-lg font-bold tracking-wide mb-6">Guardar medición</h2>
+      <h2 className="text-center text-lg font-bold tracking-wide mb-6 text-slate-900 dark:text-white">Guardar medición</h2>
 
       {errorMessage && (
-        <div className="mb-4 text-xs font-semibold text-red-500 bg-red-500/10 border border-red-500/20 rounded p-2 text-center">
+        <div className="mb-4 text-xs font-semibold text-red-700 dark:text-red-500 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded p-2 text-center">
           {errorMessage}
         </div>
       )}
 
       <div className="space-y-5 flex-1">
         <div className="relative">
-          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Nombre de fórmula *</label>
+          <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-500 uppercase tracking-widest mb-1">Nombre de fórmula *</label>
           <input
             type="text"
             value={colorName}
             onChange={(e) => setColorName(e.target.value)}
-            className="w-full bg-transparent border-b border-slate-800 focus:border-[#d4af37] text-sm py-1.5 focus:outline-none placeholder-slate-600 text-white font-medium"
+            className="w-full bg-transparent border-b border-slate-300 dark:border-slate-800 focus:border-blue-500 dark:focus:border-[#d4af37] text-sm py-1.5 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 text-slate-900 dark:text-white font-medium"
             placeholder="Nombre de la medición"
           />
         </div>
 
         <div className="relative">
-          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Librería *</label>
+          <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-500 uppercase tracking-widest mb-1">Librería *</label>
           <div
             onClick={() => setView('select-library')}
-            className="w-full bg-transparent border-b border-slate-800 focus:border-[#d4af37] text-sm py-1.5 focus:outline-none text-white font-medium cursor-pointer flex justify-between items-center"
+            className="w-full bg-transparent border-b border-slate-300 dark:border-slate-800 focus:border-blue-500 dark:focus:border-[#d4af37] text-sm py-1.5 focus:outline-none text-slate-900 dark:text-white font-medium cursor-pointer flex justify-between items-center"
           >
-            <span className={library ? "text-white" : "text-slate-600"}>
+            <span className={library ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-600"}>
               {library || "Seleccionar librería"}
             </span>
             <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -169,12 +169,12 @@ export default function GuardarEscaneo({
         </div>
 
         <div className="relative">
-          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Colección *</label>
+          <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-500 uppercase tracking-widest mb-1">Colección *</label>
           <div
             onClick={() => setView('select-collection')}
-            className="w-full bg-transparent border-b border-slate-800 focus:border-[#d4af37] text-sm py-1.5 focus:outline-none text-white font-medium cursor-pointer flex justify-between items-center"
+            className="w-full bg-transparent border-b border-slate-300 dark:border-slate-800 focus:border-blue-500 dark:focus:border-[#d4af37] text-sm py-1.5 focus:outline-none text-slate-900 dark:text-white font-medium cursor-pointer flex justify-between items-center"
           >
-            <span className={collection ? "text-white" : "text-slate-600"}>
+            <span className={collection ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-600"}>
               {collection || "Seleccionar colección"}
             </span>
             <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -182,23 +182,23 @@ export default function GuardarEscaneo({
         </div>
 
         <div className="relative">
-          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Notas</label>
+          <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-500 uppercase tracking-widest mb-1">Notas</label>
           <input
             type="text"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className="w-full bg-transparent border-b border-slate-800 focus:border-[#d4af37] text-sm py-1.5 focus:outline-none placeholder-slate-600 text-white font-medium"
+            className="w-full bg-transparent border-b border-slate-300 dark:border-slate-800 focus:border-blue-500 dark:focus:border-[#d4af37] text-sm py-1.5 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 text-slate-900 dark:text-white font-medium"
             placeholder="Notas adicionales"
           />
         </div>
       </div>
 
-      <div className="flex border-t border-slate-800 mt-6 -mx-6 -mb-6 h-[50px]">
+      <div className="flex border-t border-slate-200 dark:border-slate-800 mt-6 -mx-6 -mb-6 h-[50px]">
         <button
           type="button"
           onClick={onClose}
           disabled={isSaving}
-          className="flex-1 text-xs font-bold uppercase tracking-widest bg-transparent hover:bg-slate-900 text-white transition-colors"
+          className="flex-1 text-xs font-bold uppercase tracking-widest bg-transparent hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-white transition-colors"
         >
           Cancelar
         </button>
@@ -206,7 +206,7 @@ export default function GuardarEscaneo({
           type="button"
           onClick={handleSave}
           disabled={isSaving}
-          className="flex-1 text-xs font-bold uppercase tracking-widest bg-white text-black hover:bg-slate-200 transition-colors disabled:bg-slate-800 disabled:text-slate-500"
+          className="flex-1 text-xs font-bold uppercase tracking-widest bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-slate-200 transition-colors disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
         >
           {isSaving ? 'Guardando...' : 'OK'}
         </button>
@@ -225,22 +225,22 @@ export default function GuardarEscaneo({
     addText: string
   ) => (
     <div className="flex flex-col flex-1 p-6">
-      <h2 className="text-center text-lg font-bold tracking-wide mb-6">{title}</h2>
+      <h2 className="text-center text-lg font-bold tracking-wide mb-6 text-slate-900 dark:text-white">{title}</h2>
       
       <div className="space-y-4 flex-1 overflow-y-auto max-h-[300px]">
-        <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">{label}</div>
+        <div className="text-[11px] font-bold text-slate-700 dark:text-slate-500 uppercase tracking-widest mb-2">{label}</div>
         {items.length === 0 ? (
-          <div className="text-sm text-slate-600 pb-2 border-b border-slate-800">No hay elementos</div>
+          <div className="text-sm text-slate-500 dark:text-slate-600 pb-2 border-b border-slate-200 dark:border-slate-800">No hay elementos</div>
         ) : (
           items.map((item, idx) => (
             <div
               key={idx}
               onClick={() => onSelect(item)}
-              className="flex justify-between items-center py-3 border-b border-slate-800 cursor-pointer hover:bg-slate-900/50"
+              className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-slate-800 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/50"
             >
-              <span className="text-sm text-white">{item}</span>
+              <span className="text-sm text-slate-900 dark:text-white">{item}</span>
               {selectedItem === item && (
-                <svg className="w-4 h-4 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                <svg className="w-4 h-4 text-blue-600 dark:text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
               )}
             </div>
           ))
@@ -248,17 +248,17 @@ export default function GuardarEscaneo({
         
         <div 
           onClick={onAddClick}
-          className="py-4 text-sm font-medium text-white cursor-pointer hover:text-[#d4af37] transition-colors flex items-center gap-2"
+          className="py-4 text-sm font-medium text-slate-700 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-[#d4af37] transition-colors flex items-center gap-2"
         >
           <span>+ {addText}</span>
         </div>
       </div>
   
-      <div className="flex border-t border-slate-800 mt-6 -mx-6 -mb-6 h-[50px]">
+      <div className="flex border-t border-slate-200 dark:border-slate-800 mt-6 -mx-6 -mb-6 h-[50px]">
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 text-xs font-bold uppercase tracking-widest bg-transparent hover:bg-slate-900 text-white transition-colors"
+          className="flex-1 text-xs font-bold uppercase tracking-widest bg-transparent hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-white transition-colors"
         >
           Cancelar
         </button>
@@ -273,27 +273,27 @@ export default function GuardarEscaneo({
     onCancel: () => void
   ) => (
     <div className="flex flex-col flex-1 p-6">
-      <h2 className="text-center text-lg font-bold tracking-wide mb-6">{title}</h2>
+      <h2 className="text-center text-lg font-bold tracking-wide mb-6 text-slate-900 dark:text-white">{title}</h2>
       
       <div className="space-y-4 flex-1">
         <div className="relative">
-          <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">{label} *</label>
+          <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-500 uppercase tracking-widest mb-1">{label} *</label>
           <input
             type="text"
             value={newItemName}
             onChange={(e) => setNewItemName(e.target.value)}
-            className="w-full bg-transparent border-b border-slate-800 focus:border-[#d4af37] text-sm py-1.5 focus:outline-none placeholder-slate-600 text-white font-medium"
+            className="w-full bg-transparent border-b border-slate-300 dark:border-slate-800 focus:border-blue-500 dark:focus:border-[#d4af37] text-sm py-1.5 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 text-slate-900 dark:text-white font-medium"
             placeholder={`Nombre de la ${label.toLowerCase()}`}
             autoFocus
           />
         </div>
       </div>
   
-      <div className="flex border-t border-slate-800 mt-6 -mx-6 -mb-6 h-[50px]">
+      <div className="flex border-t border-slate-200 dark:border-slate-800 mt-6 -mx-6 -mb-6 h-[50px]">
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 text-xs font-bold uppercase tracking-widest bg-transparent hover:bg-slate-900 text-white transition-colors border-r border-slate-800"
+          className="flex-1 text-xs font-bold uppercase tracking-widest bg-transparent hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-white transition-colors border-r border-slate-200 dark:border-slate-800"
         >
           Cancelar
         </button>
@@ -301,7 +301,7 @@ export default function GuardarEscaneo({
           type="button"
           onClick={onSave}
           disabled={!newItemName.trim()}
-          className="flex-1 text-xs font-bold uppercase tracking-widest bg-white text-black hover:bg-slate-200 transition-colors disabled:bg-slate-800 disabled:text-slate-500"
+          className="flex-1 text-xs font-bold uppercase tracking-widest bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-slate-200 transition-colors disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
         >
           OK
         </button>
@@ -310,8 +310,8 @@ export default function GuardarEscaneo({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="w-full max-w-sm rounded-[10px] border border-slate-800 bg-[#0A0F14] text-white shadow-2xl overflow-hidden flex flex-col min-h-[280px]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 dark:bg-black/70 backdrop-blur-sm p-4">
+      <div className="w-full max-w-sm rounded-[10px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0A0F14] text-slate-900 dark:text-white shadow-2xl overflow-hidden flex flex-col min-h-[280px]">
         {view === 'main' && renderMainForm()}
         
         {view === 'select-library' && renderSelectionView(
