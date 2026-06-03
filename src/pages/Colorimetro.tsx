@@ -88,6 +88,10 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                     hex: c.hex,
                     LRV: c.LRV, Density: c.Density,
                     cmykC: c.cmyk?.C, cmykM: c.cmyk?.M, cmykY: c.cmyk?.Y, cmykK: c.cmyk?.K,
+                    blanco_referencia: settings.referenceWhite,
+                    modo_medicion: settings.measurementMode,
+                    densidad: settings.densityStatus,
+                    promedio: settings.multiPointAveraging,
                 }),
             });
             if (!res.ok) {

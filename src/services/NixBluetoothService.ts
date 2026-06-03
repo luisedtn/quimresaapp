@@ -15,7 +15,7 @@ interface NixSensorPlugin {
     startScan(): Promise<void>;
     connect(options: { id: string }): Promise<NixDeviceInfo>;
     disconnect(): Promise<void>;
-    measure(): Promise<{ color: NixColorData }>;
+    measure(options?: { mode?: string; referenceWhite?: string }): Promise<{ color: NixColorData }>;
     addListener(eventName: string, listenerFunc: (data: any) => void): any;
 }
 
@@ -376,11 +376,14 @@ export class NixBluetoothService {
         this.emit({ type: 'measuring' });
 
         try {
-            const result = await NixSensor.measure();
             const mode = options?.mode ?? 'M0';
             const refWhite = options?.referenceWhite ?? 'D50/2°';
 
-            // Re-calcular con el blanco de referencia seleccionado si tenemos LAB raw
+            const result = await NixSensor.measure({
+                mode,
+                referenceWhite: refWhite
+            });
+
             const color = result.color;
             const metrics = labToAllMetrics(color.L, color.a, color.b, refWhite);
             const C = Math.sqrt(color.a * color.a + color.b * color.b);

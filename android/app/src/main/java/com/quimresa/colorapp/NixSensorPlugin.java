@@ -200,6 +200,12 @@ public class NixSensorPlugin extends Plugin {
             return;
         }
 
+        String modeStr = call.getString("mode", "M0");
+        String refWhiteStr = call.getString("referenceWhite", "D50/2°");
+
+        ScanMode scanMode = parseScanMode(modeStr);
+        ReferenceWhite refWhite = parseReferenceWhite(refWhiteStr);
+
         activeDevice.measure(new OnDeviceResultListener() {
             @Override
             public void onDeviceResult(@NonNull CommandStatus status,
@@ -207,7 +213,7 @@ public class NixSensorPlugin extends Plugin {
                 if (status == CommandStatus.SUCCESS && results != null && !results.isEmpty()) {
                     IMeasurementData mData = results.values().iterator().next();
                     if (mData != null) {
-                        IColorData color = mData.toColorData(ReferenceWhite.D50_2, IColorData.ColorType.CIELAB);
+                        IColorData color = mData.toColorData(refWhite, IColorData.ColorType.CIELAB);
 
                         if (color != null) {
                             JSObject ret = new JSObject();
@@ -226,6 +232,40 @@ public class NixSensorPlugin extends Plugin {
                 }
                 call.reject("Error al procesar medición: " + status.name());
             }
-        });
+        }, scanMode);
+    }
+
+    private ScanMode parseScanMode(String s) {
+        if (s == null) return ScanMode.M0;
+        switch (s) {
+            case "M1": return ScanMode.M1;
+            case "M2": return ScanMode.M2;
+            default: return ScanMode.M0;
+        }
+    }
+
+    private ReferenceWhite parseReferenceWhite(String s) {
+        if (s == null) return ReferenceWhite.D50_2;
+        switch (s.replace("/", "_").replace("°", "")) {
+            case "A_2": return ReferenceWhite.A_2;
+            case "A_10": return ReferenceWhite.A_10;
+            case "C_2": return ReferenceWhite.C_2;
+            case "C_10": return ReferenceWhite.C_10;
+            case "D50_2": return ReferenceWhite.D50_2;
+            case "D50_10": return ReferenceWhite.D50_10;
+            case "D55_2": return ReferenceWhite.D55_2;
+            case "D55_10": return ReferenceWhite.D55_10;
+            case "D65_2": return ReferenceWhite.D65_2;
+            case "D65_10": return ReferenceWhite.D65_10;
+            case "D75_2": return ReferenceWhite.D75_2;
+            case "D75_10": return ReferenceWhite.D75_10;
+            case "F2_2": return ReferenceWhite.F2_2;
+            case "F2_10": return ReferenceWhite.F2_10;
+            case "F7_2": return ReferenceWhite.F7_2;
+            case "F7_10": return ReferenceWhite.F7_10;
+            case "F11_2": return ReferenceWhite.F11_2;
+            case "F11_10": return ReferenceWhite.F11_10;
+            default: return ReferenceWhite.D50_2;
+        }
     }
 }
