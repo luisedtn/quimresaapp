@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config';
+import { loadSettings } from '../components/DeviceSettings';
 
 interface GuardarEscaneoProps {
   isOpen: boolean;
@@ -134,6 +135,7 @@ export default function GuardarEscaneo({
     setIsSaving(true);
     setErrorMessage('');
     try {
+      const currentSettings = loadSettings();
       const c = measurement.color;
       const bodyPayload: any = {
         nombre: colorName.trim(),
@@ -155,9 +157,9 @@ export default function GuardarEscaneo({
         hex: c.hex,
         LRV: c.LRV,
         Density: c.Density,
-        blanco_referencia: blancoReferencia || null,
-        modo_medicion: modoMedicion || null,
-        densidad: densidad || null,
+        blanco_referencia: blancoReferencia || currentSettings.referenceWhite || null,
+        modo_medicion: modoMedicion || currentSettings.measurementMode || null,
+        densidad: densidad || currentSettings.densityStatus || null,
       };
       if (c.cmyk) {
         bodyPayload.cmykC = c.cmyk.C;
