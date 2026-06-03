@@ -254,13 +254,15 @@ app.put('/api/cliente', authenticateToken, async (req: Request, res: Response): 
 app.post('/api/mediciones', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
         const { idcliente } = (req as any).user;
-        const { L, A, B, R, G, RB, C, H, X, Y, Z, cmykC, cmykM, cmykY, cmykK, hex, LRV, Density, fecha, nombre, notas } = req.body;
+        const { L, A, B, R, G, RB, C, H, X, Y, Z, cmykC, cmykM, cmykY, cmykK, hex, LRV, Density, fecha, nombre, notas, id_libreria, id_coleccion } = req.body;
         const medicion = await prisma.medicion.create({
             data: {
                 id_cliente: idcliente,
                 nombre: nombre || 'Escaneo',
                 fecha: fecha ? new Date(fecha) : new Date(),
                 notas: notas || null,
+                id_libreria: id_libreria != null ? Number(id_libreria) : null,
+                id_coleccion: id_coleccion != null ? Number(id_coleccion) : null,
                 L: L != null ? Number(L) : null,
                 A: A != null ? Number(A) : null,
                 B: B != null ? Number(B) : null,

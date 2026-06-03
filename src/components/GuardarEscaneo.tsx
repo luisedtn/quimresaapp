@@ -9,6 +9,16 @@ interface GuardarEscaneoProps {
   onLogout?: () => void;
 }
 
+interface Libreria {
+  id: number;
+  nombre: string;
+}
+
+interface Coleccion {
+  id: number;
+  nombre: string;
+}
+
 export default function GuardarEscaneo({
   isOpen,
   onClose,
@@ -19,33 +29,17 @@ export default function GuardarEscaneo({
   const [colorName, setColorName] = useState('');
   const [notes, setNotes] = useState('');
   
-  const [library, setLibrary] = useState('');
-  const [collection, setCollection] = useState('');
+  const [libraryObj, setLibraryObj] = useState<Libreria | null>(null);
+  const [collectionObj, setCollectionObj] = useState<Coleccion | null>(null);
   
-  const [libraries, setLibraries] = useState<string[]>(['Madeval']);
-  const [collections, setCollections] = useState<string[]>(['Colores España']);
+  const [libraries, setLibraries] = useState<Libreria[]>([]);
+  const [collections, setCollections] = useState<Coleccion[]>([]);
 
   const [view, setView] = useState<'main' | 'select-library' | 'select-collection' | 'add-library' | 'add-collection'>('main');
   const [newItemName, setNewItemName] = useState('');
 
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-
-  useEffect(() => {
-    if (isOpen) {
-      if (measurement?.color?.hex) {
-        setColorName(`Color ${measurement.color.hex.toUpperCase()}`);
-      } else {
-        setColorName('Color Escaneado');
-      }
-      setNotes('');
-      setLibrary('');
-      setCollection('');
-      setErrorMessage('');
-      setView('main');
-      setNewItemName('');
-    }
-  }, [isOpen, measurement]);
 
   const getHeaders = () => {
     const token = localStorage.getItem('token');
@@ -61,16 +55,66 @@ export default function GuardarEscaneo({
     return headers;
   };
 
+  const fetchLibraries = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/librerias`, { headers: getHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        setLibraries(data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const fetchCollections = async (libId: number) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/librerias/${libId}/colecciones`, { headers: getHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        setCollections(data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      if (measurement?.color?.hex) {
+        setColorName(`Color ${measurement.color.hex.toUpperCase()}`);
+      } else {
+        setColorName('Color Escaneado');
+      }
+      setNotes('');
+      setLibraryObj(null);
+      setCollectionObj(null);
+      setErrorMessage('');
+      setView('main');
+      setNewItemName('');
+      
+      fetchLibraries();
+    }
+  }, [isOpen, measurement]);
+
+  useEffect(() => {
+    if (libraryObj) {
+      fetchCollections(libraryObj.id);
+    } else {
+      setCollections([]);
+    }
+  }, [libraryObj]);
+
   const handleSave = async () => {
     if (!colorName.trim()) {
       setErrorMessage('Por favor ingresa un nombre para el color');
       return;
     }
-    if (!library.trim()) {
+    if (!libraryObj) {
       setErrorMessage('Por favor selecciona una librería');
       return;
     }
-    if (!collection.trim()) {
+    if (!collectionObj) {
       setErrorMessage('Por favor selecciona una colección');
       return;
     }
@@ -81,8 +125,8 @@ export default function GuardarEscaneo({
       const c = measurement.color;
       const bodyPayload: any = {
         nombre: colorName.trim(),
-        libreria: library.trim(),
-        coleccion: collection.trim(),
+        id_libreria: libraryObj.id,
+        id_coleccion: collectionObj.id,
         notas: notes.trim() || null,
         fecha: measurement.timestamp || new Date().toISOString(),
         L: c.L,
@@ -161,8 +205,8 @@ export default function GuardarEscaneo({
             onClick={() => setView('select-library')}
             className="w-full bg-transparent border-b border-slate-300 dark:border-slate-800 focus:border-blue-500 dark:focus:border-[#d4af37] text-sm py-1.5 focus:outline-none text-slate-900 dark:text-white font-medium cursor-pointer flex justify-between items-center"
           >
-            <span className={library ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-600"}>
-              {library || "Seleccionar librería"}
+            <span className={libraryObj ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-600"}>
+              {libraryObj ? libraryObj.nombre : "Seleccionar librería"}
             </span>
             <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
           </div>
@@ -171,11 +215,17 @@ export default function GuardarEscaneo({
         <div className="relative">
           <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-500 uppercase tracking-widest mb-1">Colección *</label>
           <div
-            onClick={() => setView('select-collection')}
+            onClick={() => {
+              if (!libraryObj) {
+                setErrorMessage('Primero debes seleccionar una librería');
+              } else {
+                setView('select-collection');
+              }
+            }}
             className="w-full bg-transparent border-b border-slate-300 dark:border-slate-800 focus:border-blue-500 dark:focus:border-[#d4af37] text-sm py-1.5 focus:outline-none text-slate-900 dark:text-white font-medium cursor-pointer flex justify-between items-center"
           >
-            <span className={collection ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-600"}>
-              {collection || "Seleccionar colección"}
+            <span className={collectionObj ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-600"}>
+              {collectionObj ? collectionObj.nombre : "Seleccionar colección"}
             </span>
             <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
           </div>
@@ -198,7 +248,7 @@ export default function GuardarEscaneo({
           type="button"
           onClick={onClose}
           disabled={isSaving}
-          className="flex-1 text-xs font-bold uppercase tracking-widest bg-transparent hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-white transition-colors"
+          className="flex-1 flex items-center justify-center text-xs font-bold uppercase tracking-widest bg-transparent hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 transition-colors border-r border-slate-200 dark:border-slate-800"
         >
           Cancelar
         </button>
@@ -206,7 +256,7 @@ export default function GuardarEscaneo({
           type="button"
           onClick={handleSave}
           disabled={isSaving}
-          className="flex-1 text-xs font-bold uppercase tracking-widest bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-slate-200 transition-colors disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
+          className="flex-1 flex items-center justify-center text-xs font-bold uppercase tracking-widest bg-[#1e293b] text-white hover:bg-slate-700 dark:bg-[#d4af37] dark:text-black dark:hover:bg-[#c9a227] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? 'Guardando...' : 'OK'}
         </button>
@@ -217,9 +267,9 @@ export default function GuardarEscaneo({
   const renderSelectionView = (
     title: string,
     label: string,
-    items: string[],
-    selectedItem: string,
-    onSelect: (item: string) => void,
+    items: any[],
+    selectedItemId: number | undefined,
+    onSelect: (item: any) => void,
     onAddClick: () => void,
     onCancel: () => void,
     addText: string
@@ -238,8 +288,8 @@ export default function GuardarEscaneo({
               onClick={() => onSelect(item)}
               className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-slate-800 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/50"
             >
-              <span className="text-sm text-slate-900 dark:text-white">{item}</span>
-              {selectedItem === item && (
+              <span className="text-sm text-slate-900 dark:text-white">{item.nombre}</span>
+              {selectedItemId === item.id && (
                 <svg className="w-4 h-4 text-blue-600 dark:text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
               )}
             </div>
@@ -258,7 +308,7 @@ export default function GuardarEscaneo({
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 text-xs font-bold uppercase tracking-widest bg-transparent hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-white transition-colors"
+          className="flex-1 flex items-center justify-center text-xs font-bold uppercase tracking-widest bg-transparent hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 transition-colors"
         >
           Cancelar
         </button>
@@ -293,17 +343,17 @@ export default function GuardarEscaneo({
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 text-xs font-bold uppercase tracking-widest bg-transparent hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-white transition-colors border-r border-slate-200 dark:border-slate-800"
+          className="flex-1 flex items-center justify-center text-xs font-bold uppercase tracking-widest bg-transparent hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-300 transition-colors border-r border-slate-200 dark:border-slate-800"
         >
           Cancelar
         </button>
         <button
           type="button"
           onClick={onSave}
-          disabled={!newItemName.trim()}
-          className="flex-1 text-xs font-bold uppercase tracking-widest bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-slate-200 transition-colors disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
+          disabled={!newItemName.trim() || isSaving}
+          className="flex-1 flex items-center justify-center text-xs font-bold uppercase tracking-widest bg-[#1e293b] text-white hover:bg-slate-700 dark:bg-[#d4af37] dark:text-black dark:hover:bg-[#c9a227] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          OK
+          {isSaving ? 'Guardando...' : 'OK'}
         </button>
       </div>
     </div>
@@ -318,8 +368,8 @@ export default function GuardarEscaneo({
           'Seleccionar librería',
           'Librería',
           libraries,
-          library,
-          (item) => { setLibrary(item); setView('main'); },
+          libraryObj?.id,
+          (item) => { setLibraryObj(item); setCollectionObj(null); setView('main'); },
           () => { setView('add-library'); setNewItemName(''); },
           () => setView('main'),
           'Agregar nueva librería'
@@ -329,35 +379,70 @@ export default function GuardarEscaneo({
           'Seleccionar colección',
           'Colección',
           collections,
-          collection,
-          (item) => { setCollection(item); setView('main'); },
+          collectionObj?.id,
+          (item) => { setCollectionObj(item); setView('main'); },
           () => { setView('add-collection'); setNewItemName(''); },
           () => setView('main'),
           'Agregar nueva colección'
         )}
 
         {view === 'add-library' && renderAddView(
-          'Seleccionar librería', // Se mantiene el titulo para que parezca la imagen 3
+          'Seleccionar librería',
           'Librería',
-          () => {
-            if (newItemName.trim() && !libraries.includes(newItemName.trim())) {
-              setLibraries([...libraries, newItemName.trim()]);
+          async () => {
+            if (newItemName.trim()) {
+              setIsSaving(true);
+              try {
+                const res = await fetch(`${API_BASE_URL}/api/librerias`, {
+                  method: 'POST',
+                  headers: getHeaders(),
+                  body: JSON.stringify({ nombre: newItemName.trim() })
+                });
+                if (res.ok) {
+                  const data = await res.json();
+                  setLibraries([...libraries, data]);
+                  setLibraryObj(data);
+                  setCollectionObj(null);
+                  setView('main');
+                } else {
+                  throw new Error('Error al crear librería');
+                }
+              } catch (e: any) {
+                setErrorMessage(e.message || 'Ocurrió un error');
+              } finally {
+                setIsSaving(false);
+              }
             }
-            setLibrary(newItemName.trim());
-            setView('main');
           },
           () => setView('select-library')
         )}
 
         {view === 'add-collection' && renderAddView(
-          'Seleccionar colección', // Se mantiene el titulo para que parezca la imagen 3
+          'Seleccionar colección',
           'Colección',
-          () => {
-            if (newItemName.trim() && !collections.includes(newItemName.trim())) {
-              setCollections([...collections, newItemName.trim()]);
+          async () => {
+            if (newItemName.trim() && libraryObj) {
+              setIsSaving(true);
+              try {
+                const res = await fetch(`${API_BASE_URL}/api/librerias/${libraryObj.id}/colecciones`, {
+                  method: 'POST',
+                  headers: getHeaders(),
+                  body: JSON.stringify({ nombre: newItemName.trim() })
+                });
+                if (res.ok) {
+                  const data = await res.json();
+                  setCollections([...collections, data]);
+                  setCollectionObj(data);
+                  setView('main');
+                } else {
+                  throw new Error('Error al crear colección');
+                }
+              } catch (e: any) {
+                setErrorMessage(e.message || 'Ocurrió un error');
+              } finally {
+                setIsSaving(false);
+              }
             }
-            setCollection(newItemName.trim());
-            setView('main');
           },
           () => setView('select-collection')
         )}

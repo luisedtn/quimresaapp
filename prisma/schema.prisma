@@ -404,6 +404,7 @@ model Libreria {
   creado_en  DateTime    @default(now())
   cliente     Cliente     @relation(fields: [id_cliente], references: [CODIGO])
   colecciones Coleccion[]
+  mediciones  Medicion[]
 
   @@map("librerias")
 }
@@ -414,6 +415,7 @@ model Coleccion {
   id_libreria Int
   creado_en   DateTime         @default(now())
   libreria    Libreria @relation(fields: [id_libreria], references: [id], onDelete: Cascade)
+  mediciones  Medicion[]
 
   @@map("colecciones")
 }
@@ -424,6 +426,9 @@ model Medicion {
   id_cliente Int
   fecha      DateTime @default(now())
   notas      String?
+
+  id_libreria  Int?
+  id_coleccion Int?
 
   // CIE L*a*b*
   L          Float?
@@ -455,6 +460,8 @@ model Medicion {
   Density    Float?
 
   cliente    Cliente @relation(fields: [id_cliente], references: [CODIGO])
+  libreriaObj  Libreria?  @relation(fields: [id_libreria], references: [id])
+  coleccionObj Coleccion? @relation(fields: [id_coleccion], references: [id])
 
   @@map("mediciones")
 }
