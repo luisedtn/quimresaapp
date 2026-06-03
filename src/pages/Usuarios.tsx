@@ -206,7 +206,7 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
     };
 
     return (
-        <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col">
+        <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col overflow-x-hidden">
             <Sidebar
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
@@ -215,24 +215,24 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
             />
 
             {/* Header */}
-            <header className="fixed top-0 z-10 flex w-full items-center gap-4 border-b border-slate-800 bg-[#0A0F14]/80 backdrop-blur-md px-6 py-4">
+            <header className="fixed top-0 z-10 flex w-full items-center gap-4 border-b border-black/10 bg-[#CC5200] shadow-lg px-6 py-4">
                 <button
                     onClick={() => navigate('/')}
-                    className="p-2 text-slate-400 hover:text-white transition-colors hover:bg-slate-800/50 rounded-lg mr-2"
+                    className="p-2 text-black hover:text-white transition-colors hover:bg-black/10 rounded-lg mr-2"
                 >
-                    <ArrowLeft className="h-5 w-5" />
+                    <ArrowLeft className="h-5 w-5 text-black" />
                 </button>
                 <div>
                     <h1 className="text-xl font-semibold tracking-tight text-white flex items-center gap-2">
-                        <Shield className="h-5 w-5 text-[#c07204]" />
+                        <Shield className="h-5 w-5 text-black" />
                         Administración de Usuarios
                     </h1>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Gestiona los accesos a tu organización</p>
+                    <p className="text-[10px] text-white/70 uppercase tracking-widest mt-1">Gestiona los accesos a tu organización</p>
                 </div>
                 <div className="ml-auto flex items-center gap-3">
                     <button
                         onClick={() => handleOpenModal()}
-                        className="bg-[#c07204] hover:bg-[#a66203] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-[#c07204]/20 flex items-center gap-2 transition-all active:scale-[0.98]"
+                        className="bg-black/20 hover:bg-black/30 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2 transition-all active:scale-[0.98]"
                     >
                         <UserPlus className="h-4 w-4" /> <span className="hidden md:inline">Nuevo Usuario</span>
                     </button>
@@ -244,7 +244,7 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
 
                 {loading ? (
                     <div className="flex justify-center mt-20">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#004A99]"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#002C6C]"></div>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -257,7 +257,7 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
                                 className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl relative group hover:border-slate-700 transition-colors cursor-pointer"
                             >
                                 <div className="absolute top-4 right-4 flex gap-2">
-                                    <button onClick={(e) => { e.stopPropagation(); handleOpenModal(user); }} className="p-2 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 rounded-lg">
+                                    <button onClick={(e) => { e.stopPropagation(); handleOpenModal(user); }} className="p-2 bg-[#002C6C]/10 text-[#1B6FA8] hover:bg-[#002C6C]/20 rounded-lg">
                                         <Edit2 className="h-4 w-4" />
                                     </button>
                                     <button onClick={(e) => { e.stopPropagation(); handleDelete(user.id); }} className="p-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg">
@@ -344,7 +344,7 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
                                         minLength={8}
                                         pattern="[a-zA-Z0-9]{8,}"
                                         title="Solo se permiten letras y números. Mínimo 8 caracteres."
-                                        className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none"
+                                        className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-[#B85D00] outline-none"
                                     />
                                 </div>
                                 <div>
@@ -352,7 +352,7 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
                                     <input
                                         type="password" required={!editingUser} value={formData.pass} onChange={e => setFormData({ ...formData, pass: e.target.value })}
                                         placeholder={editingUser ? "Dejar en blanco para no cambiar..." : "Contraseña..."}
-                                        className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none"
+                                        className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-[#B85D00] outline-none"
                                     />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
@@ -360,20 +360,20 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
                                         <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Nivel Permiso</label>
                                         <input
                                             type="number" value={formData.permisos} onChange={e => setFormData({ ...formData, permisos: Number(e.target.value) })}
-                                            className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none"
+                                            className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-[#B85D00] outline-none"
                                         />
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Tipo</label>
                                         <input
                                             type="number" value={formData.typeuser} onChange={e => setFormData({ ...formData, typeuser: Number(e.target.value) })}
-                                            className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none"
+                                            className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-[#B85D00] outline-none"
                                         />
                                     </div>
                                 </div>
 
                                 <label className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-lg border border-slate-800 mt-2 cursor-pointer">
-                                    <div className={`w-5 h-5 rounded flex items-center justify-center ${formData.autorizado ? 'bg-[#c07204]' : 'bg-slate-700'}`}>
+                                    <div className={`w-5 h-5 rounded flex items-center justify-center ${formData.autorizado ? 'bg-[#B85D00]' : 'bg-slate-700'}`}>
                                         {formData.autorizado && <Check className="h-4 w-4 text-white" />}
                                     </div>
                                     <input
@@ -387,7 +387,7 @@ export default function Usuarios({ userData, onLogout }: { userData: any; onLogo
                                 </label>
 
                                 <div className="pt-6">
-                                    <button type="submit" className="w-full py-3 bg-[#c07204] hover:bg-[#a66203] text-white rounded-lg font-bold uppercase tracking-widest text-sm transition-all shadow-lg shadow-[#c07204]/20">
+                                    <button type="submit" className="w-full py-3 bg-[#B85D00] hover:bg-[#9E4F00] text-white rounded-lg font-bold uppercase tracking-widest text-sm transition-all shadow-lg shadow-[#B85D00]/20">
                                         {editingUser ? 'Guardar Cambios' : 'Registrar'}
                                     </button>
                                 </div>

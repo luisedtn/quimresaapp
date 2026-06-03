@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -11,8 +11,26 @@ import Colorimetro from './pages/Colorimetro';
 import StandardFormulas from './pages/StandardFormulas';
 import ColorMatch from './pages/ColorMatch';
 import ColorAiChat from './components/ColorAiChat';
+import ScreenBrightness from './services/ScreenBrightness';
 
 export default function App() {
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+
+  useEffect(() => {
+    const maxBrightness = localStorage.getItem('maxBrightness') === 'true';
+    if (maxBrightness) {
+      ScreenBrightness.setBrightness({ brightness: 1 });
+      if ('wakeLock' in navigator) {
+        navigator.wakeLock.request('screen').then(r => { wakeLockRef.current = r; }).catch(() => {});
+      }
+    }
+    return () => {
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release().catch(() => {});
+      }
+    };
+  }, []);
+
   const [userData, setUserData] = useState<any>(() => {
     const saved = localStorage.getItem('userData');
     return saved ? JSON.parse(saved) : null;
@@ -33,8 +51,8 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#0A0F14]">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#004A99] border-t-transparent"></div>
+      <div className="flex h-screen items-center justify-center" style={{ backgroundColor: 'var(--bg-app)' }}>
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-t-transparent" style={{ borderColor: 'var(--accent-color)', borderTopColor: 'transparent' }}></div>
       </div>
     );
   }

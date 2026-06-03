@@ -35,6 +35,12 @@ export interface NixColorData {
     C: number;   // Chroma
     H: number;   // Hue angle
     hex: string; // Hex color string
+    X: number;
+    Y: number;
+    Z: number;
+    cmyk: { C: number, M: number, Y: number, K: number };
+    LRV: number;
+    Density: string;
 }
 
 export interface NixSpectralData {
@@ -93,6 +99,50 @@ const NIX_TX_CHARACTERISTIC = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';   // TX (w
 const NIX_RX_CHARACTERISTIC = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';   // RX (notify from device)
 
 // ============================================================
+// TABLA DE BLANCOS DE REFERENCIA (XYZ, Observer 2° / 10°)
+// Valores normalizados (Y = 100)
+// ============================================================
+
+export type ReferenceWhite =
+    | 'D50/2°' | 'D65/10°' | 'A/2°' | 'A/10°' | 'C/2°' | 'C/10°'
+    | 'D50/10°' | 'D55/2°' | 'D55/10°' | 'D65/2°' | 'D75/2°' | 'D75/10°'
+    | 'F2/2°' | 'F2/10°' | 'F7/2°' | 'F7/10°' | 'F11/2°' | 'F11/10°';
+
+export const REFERENCE_WHITE_XYZ: Record<ReferenceWhite, [number, number, number]> = {
+    'D50/2°':  [0.96422, 1.00000, 0.82521],
+    'D65/2°':  [0.95047, 1.00000, 1.08883],
+    'D50/10°': [0.96720, 1.00000, 0.81427],
+    'D65/10°': [0.94811, 1.00000, 1.07304],
+    'D55/2°':  [0.95682, 1.00000, 0.92149],
+    'D55/10°': [0.95799, 1.00000, 0.90926],
+    'D75/2°':  [0.94972, 1.00000, 1.22638],
+    'D75/10°': [0.94416, 1.00000, 1.20641],
+    'A/2°':    [1.09850, 1.00000, 0.35585],
+    'A/10°':   [1.11144, 1.00000, 0.35200],
+    'C/2°':    [0.98074, 1.00000, 1.18232],
+    'C/10°':   [0.97285, 1.00000, 1.16145],
+    'F2/2°':   [0.99186, 1.00000, 0.67393],
+    'F2/10°':  [1.03280, 1.00000, 0.69026],
+    'F7/2°':   [0.95041, 1.00000, 1.08747],
+    'F7/10°':  [0.95792, 1.00000, 1.07687],
+    'F11/2°':  [1.00962, 1.00000, 0.64350],
+    'F11/10°': [1.03866, 1.00000, 0.65627],
+};
+
+// Byte de modo de medición en el protocolo BLE Nix
+const MODE_BYTES: Record<string, number> = { M0: 0x00, M1: 0x01, M2: 0x02 };
+
+// ============================================================
+// OPCIONES DE MEDICIÓN
+// ============================================================
+
+export interface MeasureOptions {
+    mode?: string;           // 'M0' | 'M1' | 'M2'
+    referenceWhite?: ReferenceWhite;
+    averaging?: number;      // 1-5
+}
+
+// ============================================================
 // DETECCIÓN DE PLATAFORMA
 // ============================================================
 
@@ -125,6 +175,7 @@ export class NixBluetoothService {
     private webServer: BluetoothRemoteGATTServer | null = null;
     private webTxChar: BluetoothRemoteGATTCharacteristic | null = null;
     private webRxChar: BluetoothRemoteGATTCharacteristic | null = null;
+    private _isScanCancelled = false;
 
     // ============================================================
     // API PUBLICA
@@ -143,7 +194,7 @@ export class NixBluetoothService {
         if (this._deviceInfo.connected) {
             return this._deviceInfo;
         }
-
+        this._isScanCancelled = false;
         if (isNativePlatform()) {
             return this.scanAndConnectNative();
         } else {
@@ -159,16 +210,97 @@ export class NixBluetoothService {
         }
     }
 
+    cancelScan(): void {
+        this._isScanCancelled = true;
+        // En nativo, intentar detener el scan llamando disconnect
+        if (isNativePlatform()) {
+            NixSensor.disconnect().catch(() => {});
+        }
+        // En web, el diálogo del navegador no puede cerrarse programáticamente,
+        // pero marcamos la bandera para ignorar cualquier resultado posterior.
+        // Emitimos el estado de regreso a idle.
+        this.emit({ type: 'error', error: 'Escaneo cancelado' });
+    }
+
     getDeviceInfo(): NixDeviceInfo {
         return { ...this._deviceInfo };
     }
 
-    async measure(): Promise<NixMeasurement> {
+    async measure(options?: MeasureOptions): Promise<NixMeasurement> {
         if (isNativePlatform()) {
-            return this.measureNative();
+            return this.measureNative(options);
         } else {
-            return this.measureWeb();
+            return this.measureWeb(options);
         }
+    }
+
+    /**
+     * Toma N mediciones (multiPointAveraging) y devuelve el promedio como una
+     * única NixMeasurement. Si N=1, equivale a measure().
+     */
+    async measureMultiple(n: number, options?: MeasureOptions): Promise<NixMeasurement> {
+        const count = Math.max(1, Math.min(5, n));
+        if (count === 1) return this.measure(options);
+
+        const results: NixMeasurement[] = [];
+        for (let i = 0; i < count; i++) {
+            const m = await this.measure(options);
+            results.push(m);
+        }
+
+        // Promediar valores LAB y RGB
+        const avg = (arr: number[]) => arr.reduce((s, v) => s + v, 0) / arr.length;
+        const avgL = avg(results.map(r => r.color.L));
+        const avgA = avg(results.map(r => r.color.a));
+        const avgB = avg(results.map(r => r.color.b));
+        const avgR = Math.round(avg(results.map(r => r.color.R)));
+        const avgG = Math.round(avg(results.map(r => r.color.G)));
+        const avgBv = Math.round(avg(results.map(r => r.color.B)));
+        const avgC = avg(results.map(r => r.color.C));
+        const avgH = avg(results.map(r => r.color.H));
+        const toHex = (v: number) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0');
+        const avgHex = `#${toHex(avgR)}${toHex(avgG)}${toHex(avgBv)}`;
+
+        const avgX = avg(results.map(r => r.color.X));
+        const avgY = avg(results.map(r => r.color.Y));
+        const avgZ = avg(results.map(r => r.color.Z));
+        
+        const avgCMYK_C = avg(results.map(r => r.color.cmyk.C));
+        const avgCMYK_M = avg(results.map(r => r.color.cmyk.M));
+        const avgCMYK_Y = avg(results.map(r => r.color.cmyk.Y));
+        const avgCMYK_K = avg(results.map(r => r.color.cmyk.K));
+
+        const avgLRV = avg(results.map(r => r.color.LRV));
+        
+        // Approx density for average (using avg Y)
+        const avgDensityStr = avgY > 0 ? (-Math.log10(avgY / 100)).toFixed(2) : "0.00";
+
+        const last = results[results.length - 1];
+        return {
+            ...last,
+            color: {
+                L: parseFloat(avgL.toFixed(2)),
+                a: parseFloat(avgA.toFixed(2)),
+                b: parseFloat(avgB.toFixed(2)),
+                R: avgR, G: avgG, B: avgBv,
+                C: parseFloat(avgC.toFixed(2)),
+                H: parseFloat(avgH.toFixed(2)),
+                hex: avgHex,
+                X: parseFloat(avgX.toFixed(2)),
+                Y: parseFloat(avgY.toFixed(2)),
+                Z: parseFloat(avgZ.toFixed(2)),
+                cmyk: {
+                    C: Math.round(avgCMYK_C),
+                    M: Math.round(avgCMYK_M),
+                    Y: Math.round(avgCMYK_Y),
+                    K: Math.round(avgCMYK_K)
+                },
+                LRV: parseFloat(avgLRV.toFixed(2)),
+                Density: avgDensityStr
+            },
+            scanMode: `${options?.mode ?? 'M0'} avg${count}`,
+            timestamp: new Date().toISOString(),
+        };
     }
 
     async readBattery(): Promise<number> {
@@ -240,18 +372,39 @@ export class NixBluetoothService {
         });
     }
 
-    private async measureNative(): Promise<NixMeasurement> {
+    private async measureNative(options?: MeasureOptions): Promise<NixMeasurement> {
         this.emit({ type: 'measuring' });
 
         try {
             const result = await NixSensor.measure();
+            const mode = options?.mode ?? 'M0';
+            const refWhite = options?.referenceWhite ?? 'D50/2°';
+
+            // Re-calcular con el blanco de referencia seleccionado si tenemos LAB raw
+            const color = result.color;
+            const metrics = labToAllMetrics(color.L, color.a, color.b, refWhite);
+            const C = Math.sqrt(color.a * color.a + color.b * color.b);
+            const H = (Math.atan2(color.b, color.a) * 180 / Math.PI + 360) % 360;
+            const toHex = (v: number) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0');
 
             const measurement: NixMeasurement = {
-                color: result.color,
-                spectral: null, // El plugin simple no lo devuelve todavía
+                color: {
+                    L: color.L, a: color.a, b: color.b,
+                    R: metrics.r, G: metrics.g, B: metrics.b,
+                    C: parseFloat(C.toFixed(2)),
+                    H: parseFloat(H.toFixed(2)),
+                    hex: `#${toHex(metrics.r)}${toHex(metrics.g)}${toHex(metrics.b)}`,
+                    X: metrics.X,
+                    Y: metrics.Y,
+                    Z: metrics.Z,
+                    cmyk: metrics.cmyk,
+                    LRV: metrics.LRV,
+                    Density: metrics.Density
+                },
+                spectral: null,
                 deviceInfo: { ...this._deviceInfo },
                 timestamp: new Date().toISOString(),
-                scanMode: 'M0',
+                scanMode: mode,
                 rawData: ''
             };
 
@@ -283,6 +436,11 @@ export class NixBluetoothService {
                     0x180A, // Device Info
                 ]
             });
+
+            // Si se canceló mientras esperábamos la selección del usuario
+            if (this._isScanCancelled) {
+                throw new Error('Escaneo cancelado');
+            }
 
             if (!this.webDevice) throw new Error('No se seleccionó ningún dispositivo');
 
@@ -329,7 +487,7 @@ export class NixBluetoothService {
 
             return this._deviceInfo;
         } catch (error: any) {
-            if (error.name === 'NotFoundError') {
+            if (error.name === 'NotFoundError' || error.message === 'Escaneo cancelado') {
                 this.emit({ type: 'error', error: 'Escaneo cancelado por el usuario.' });
                 throw new Error('Escaneo cancelado');
             }
@@ -408,7 +566,7 @@ export class NixBluetoothService {
         this.emit({ type: 'disconnected' });
     }
 
-    private async measureWeb(): Promise<NixMeasurement> {
+    private async measureWeb(options?: MeasureOptions): Promise<NixMeasurement> {
         if (!this.webServer?.connected || !this.webTxChar) {
             throw new Error('Dispositivo no conectado');
         }
@@ -416,12 +574,15 @@ export class NixBluetoothService {
         this.emit({ type: 'measuring' });
         this.measurementBuffer = [];
 
+        const modeByte = MODE_BYTES[options?.mode ?? 'M0'] ?? 0x00;
+
         try {
-            const command = new Uint8Array([0x01, 0x00, 0x01]);
+            // Byte 0: comando medición, Byte 1: modo M0/M1/M2, Byte 2: flags
+            const command = new Uint8Array([0x01, modeByte, 0x01]);
             await this.webTxChar.writeValue(command.buffer);
 
             const rawData = await this.waitForMeasurement(10000);
-            const measurement = this.parseMeasurementData(rawData);
+            const measurement = this.parseMeasurementData(rawData, options?.mode ?? 'M0', options?.referenceWhite);
 
             this.emit({ type: 'measurement-complete', data: measurement });
             return measurement;
@@ -473,7 +634,7 @@ export class NixBluetoothService {
         });
     }
 
-    private parseMeasurementData(rawBytes: number[]): NixMeasurement {
+    private parseMeasurementData(rawBytes: number[], mode = 'M0', refWhite: ReferenceWhite = 'D50/2°'): NixMeasurement {
         let L = 0, a = 0, b = 0;
 
         if (rawBytes.length >= 12) {
@@ -493,8 +654,8 @@ export class NixBluetoothService {
             b = rawBytes[2] ? rawBytes[2] - 128 : 0;
         }
 
-        const rgb = labToRgb(L, a, b);
-        const sR = rgb.r, sG = rgb.g, sB = rgb.b;
+        const metrics = labToAllMetrics(L, a, b, refWhite);
+        const sR = metrics.r, sG = metrics.g, sB = metrics.b;
         const C = Math.sqrt(a * a + b * b);
         const H = (Math.atan2(b, a) * 180 / Math.PI + 360) % 360;
         const hex = `#${sR.toString(16).padStart(2, '0')}${sG.toString(16).padStart(2, '0')}${sB.toString(16).padStart(2, '0')}`;
@@ -524,11 +685,17 @@ export class NixBluetoothService {
                 C: parseFloat(C.toFixed(2)),
                 H: parseFloat(H.toFixed(2)),
                 hex,
+                X: metrics.X,
+                Y: metrics.Y,
+                Z: metrics.Z,
+                cmyk: metrics.cmyk,
+                LRV: metrics.LRV,
+                Density: metrics.Density
             },
             spectral,
             deviceInfo: { ...this._deviceInfo },
             timestamp: new Date().toISOString(),
-            scanMode: 'M0',
+            scanMode: mode,
             rawData: rawBytes.map(b => b.toString(16).padStart(2, '0')).join(''),
         };
     }
@@ -538,18 +705,31 @@ export class NixBluetoothService {
 // UTILIDADES DE CONVERSIÓN DE COLOR
 // ============================================================
 
-function labToRgb(L: number, a: number, b: number): { r: number; g: number; b: number } {
+/**
+ * Convierte L*a*b* → a múltiples métricas usando el blanco de referencia especificado.
+ */
+function labToAllMetrics(
+    L: number, a: number, b: number,
+    refWhite: ReferenceWhite = 'D50/2°'
+) {
+    const [Xn, Yn, Zn] = REFERENCE_WHITE_XYZ[refWhite] ?? REFERENCE_WHITE_XYZ['D50/2°'];
+
     let fy = (L + 16) / 116;
     let fx = a / 500 + fy;
     let fz = fy - b / 200;
 
     const delta = 6 / 29;
-    let x = fx > delta ? fx * fx * fx : (116 * fx - 16) / 903.3;
-    let y = L > 8 ? Math.pow((L + 16) / 116, 3) : L / 903.3;
-    let z = fz > delta ? fz * fz * fz : (116 * fz - 16) / 903.3;
+    let x = (fx > delta ? fx * fx * fx : (116 * fx - 16) / 903.3) * Xn;
+    let y = (L > 8 ? Math.pow((L + 16) / 116, 3) : L / 903.3) * Yn;
+    let z = (fz > delta ? fz * fz * fz : (116 * fz - 16) / 903.3) * Zn;
 
-    x *= 0.9642; y *= 1.0000; z *= 0.8251;
+    const X = x * 100;
+    const Y = y * 100;
+    const Z = z * 100;
+    const LRV = Math.max(0, Y);
+    const Density = y > 0 ? (-Math.log10(y)).toFixed(2) : "0.00";
 
+    // sRGB matrix (Bradford-adapted from D50)
     let r = x * 3.1338561 + y * -1.6168667 + z * -0.4906146;
     let g = x * -0.9787684 + y * 1.9161415 + z * 0.0334540;
     let bv = x * 0.0719453 + y * -0.2289914 + z * 1.4052427;
@@ -558,10 +738,31 @@ function labToRgb(L: number, a: number, b: number): { r: number; g: number; b: n
     g = g > 0.0031308 ? 1.055 * Math.pow(g, 1 / 2.4) - 0.055 : 12.92 * g;
     bv = bv > 0.0031308 ? 1.055 * Math.pow(bv, 1 / 2.4) - 0.055 : 12.92 * bv;
 
+    r = Math.max(0, Math.min(1, r));
+    g = Math.max(0, Math.min(1, g));
+    bv = Math.max(0, Math.min(1, bv));
+
+    // CMYK Approx
+    const k = 1 - Math.max(r, g, bv);
+    const c = k === 1 ? 0 : (1 - r - k) / (1 - k);
+    const m = k === 1 ? 0 : (1 - g - k) / (1 - k);
+    const y_cmyk = k === 1 ? 0 : (1 - bv - k) / (1 - k);
+
     return {
-        r: Math.max(0, Math.min(255, Math.round(r * 255))),
-        g: Math.max(0, Math.min(255, Math.round(g * 255))),
-        b: Math.max(0, Math.min(255, Math.round(bv * 255))),
+        r: Math.round(r * 255),
+        g: Math.round(g * 255),
+        b: Math.round(bv * 255),
+        X: parseFloat(X.toFixed(2)),
+        Y: parseFloat(Y.toFixed(2)),
+        Z: parseFloat(Z.toFixed(2)),
+        cmyk: {
+            C: Math.round(c * 100),
+            M: Math.round(m * 100),
+            Y: Math.round(y_cmyk * 100),
+            K: Math.round(k * 100)
+        },
+        LRV: parseFloat(LRV.toFixed(2)),
+        Density
     };
 }
 

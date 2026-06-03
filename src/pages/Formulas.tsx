@@ -5,6 +5,29 @@ import { motion } from 'motion/react';
 import { API_BASE_URL } from '../config';
 import DetalleFormula from '../components/DetalleFormula';
 
+function labToHex(l: number, a: number, b: number): string {
+  const y = (l + 16) / 116;
+  const x = a / 500 + y;
+  const z = y - b / 200;
+  const x3 = x * x * x, y3 = y * y * y, z3 = z * z * z;
+  const xr = x3 > 0.008856 ? x3 : (x - 16 / 116) / 7.787;
+  const yr = y3 > 0.008856 ? y3 : (y - 16 / 116) / 7.787;
+  const zr = z3 > 0.008856 ? z3 : (z - 16 / 116) / 7.787;
+  const rl = xr * 3.2406 + yr * -1.5372 + zr * -0.4986;
+  const gl = xr * -0.9689 + yr * 1.8758 + zr * 0.0415;
+  const bl = xr * 0.0557 + yr * -0.2040 + zr * 1.0570;
+  const gamma = (c: number) => Math.round(Math.max(0, Math.min(255, ((c > 0.0031308 ? 1.055 * Math.pow(c, 1 / 2.4) - 0.055 : 12.92 * c)) * 255)));
+  return `#${gamma(rl).toString(16).padStart(2, '0')}${gamma(gl).toString(16).padStart(2, '0')}${gamma(bl).toString(16).padStart(2, '0')}`;
+}
+
+const getFormulaColor = (f: any) => {
+  const l = f.L !== undefined && f.L !== null ? f.L : f.l;
+  const a = f.A !== undefined && f.A !== null ? f.A : f.a;
+  const b = f.B !== undefined && f.B !== null ? f.B : f.b;
+  if (l === undefined || l === null || l === '') return '#1e293b';
+  return labToHex(parseFloat(String(l)), parseFloat(String(a || '0')), parseFloat(String(b || '0')));
+};
+
 interface FormulasProps {
   email: string | null | undefined;
   onLogout: () => void;
@@ -64,15 +87,11 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
         const userData = userDataStr ? JSON.parse(userDataStr) : null;
 
         const url = `${API_BASE_URL}/api/formulas?page=${page}&limit=25&q=${encodeURIComponent(debouncedSearchTerm)}&sortBy=${sortBy}`;
-        console.log(`[FRONTEND] Fetching formulas from URL: ${url}`);
 
         const headers: any = { 'Authorization': `Bearer ${token}` };
         if (userData?.idcliente) {
           headers['x-client-id'] = userData.idcliente.toString();
         }
-
-        console.log('[FRONTEND] Request Headers:', headers);
-        console.log('[FRONTEND] Current UserData:', userData);
 
         const response = await fetch(
           url,
@@ -92,7 +111,6 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
         }
 
         const data = await response.json();
-        console.log(`[FRONTEND] Received ${data.length} formulas`, data);
 
         if (page === 1) {
           setFormulas(data);
@@ -160,143 +178,161 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col">
-      <header className="fixed top-0 z-10 flex w-full items-center justify-between border-b border-slate-800 bg-[#0A0F14]/80 backdrop-blur-md px-4 py-4">
-        <button onClick={() => navigate(-1)} className="p-2 text-slate-400 hover:text-white transition-colors">
-          <ArrowLeft className="h-6 w-6" />
+    <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col overflow-x-hidden">
+      {/* ── Header ── */}
+      <header className="fixed top-0 z-10 flex w-full items-center justify-between border-b border-black/10 bg-[#CC5200] shadow-lg px-4 py-4">
+        <button onClick={() => navigate(-1)} className="p-2 text-black hover:text-white transition-colors">
+          <ArrowLeft className="h-6 w-6 text-black" />
         </button>
-        <h1 className="text-lg font-semibold uppercase tracking-tight">Fórmulas Personales</h1>
+        <h1 className="text-lg font-semibold uppercase tracking-tight text-white">Fórmulas Personales</h1>
         <div className="w-10"></div>
       </header>
 
       <main className="pt-24 px-4 max-w-2xl mx-auto w-full flex-grow">
-        {/* Search Bar */}
+        {/* ── Search Bar ── */}
         <div className="relative mb-4">
           <Search className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-slate-500" />
           <input
             type="text"
             placeholder="Buscar por nombre, lote, cliente o código..."
-            className="w-full rounded-xl bg-slate-900 border border-slate-800 py-3 pr-4 pl-11 text-sm text-white focus:ring-2 focus:ring-[#004A99]/50 focus:border-[#004A99] outline-none transition-all placeholder:text-slate-600"
+            className="w-full rounded-xl bg-slate-900 border border-slate-800 py-3 pr-4 pl-11 text-sm text-white focus:ring-2 focus:ring-[#1B6FA8]/50 focus:border-[#1B6FA8] outline-none transition-all placeholder:text-slate-600"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
-        {/* Sorting Toggles */}
-        <div className="flex gap-2 mb-8 items-center">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mr-2">Ordenar por:</span>
+        {/* ── Sort Toggle ── */}
+        <div className="flex gap-2 mb-6 items-center">
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mr-2">Ordenar:</span>
           <button
             onClick={() => setSortBy('FECHA')}
-            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${sortBy === 'FECHA'
-              ? 'bg-[#c07204] border-[#c07204] text-white'
-              : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-600'
-              }`}
+            className={`formula-sort-btn ${sortBy === 'FECHA' ? 'formula-sort-btn--active' : ''}`}
           >
             Más Reciente
           </button>
           <button
             onClick={() => setSortBy('NOMBREFORMULA')}
-            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${sortBy === 'NOMBREFORMULA'
-              ? 'bg-[#c07204] border-[#c07204] text-white'
-              : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-600'
-              }`}
+            className={`formula-sort-btn ${sortBy === 'NOMBREFORMULA' ? 'formula-sort-btn--active' : ''}`}
           >
             Nombre
           </button>
         </div>
 
+        {/* ── Content ── */}
         {loading ? (
           <div className="flex justify-center py-20">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#c07204] border-t-transparent"></div>
+            <div className="formula-spinner"></div>
           </div>
         ) : formulas.length > 0 ? (
           <>
             <div className="grid gap-4">
-              {formulas.map((formula, index) => (
-                <motion.div
-                  key={`${formula.ID}-${index}`}
-                  ref={formulas.length === index + 1 ? lastFormulaElementRef : null}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  onClick={() => handleFormulaClick(formula)}
-                  className="elegant-card p-0 transition-all hover:border-slate-700 bg-slate-900/40 relative overflow-hidden flex cursor-pointer active:scale-[0.98]"
-                >
-                  {/* Color Square on the Left */}
-                  <div
-                    className="w-24 min-w-[6rem] border-r border-slate-800 shadow-inner"
-                    style={{
-                      backgroundColor: formula.L && formula.A && formula.B
-                        ? `lab(${formula.L} ${formula.A} ${formula.B})`
-                        : '#1e293b'
-                    }}
+              {formulas.map((formula, index) => {
+                const formulaColor = getFormulaColor(formula);
+                return (
+                  <motion.div
+                    key={`${formula.ID}-${index}`}
+                    ref={formulas.length === index + 1 ? lastFormulaElementRef : null}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.3) }}
+                    onClick={() => handleFormulaClick(formula)}
+                    className="formula-card"
                   >
-                    <div className="h-full w-full flex flex-col items-center justify-end p-2 bg-gradient-to-t from-black/40 to-transparent">
-                      <span className="text-[9px] font-bold text-white uppercase tracking-tighter">Vista Color</span>
-                    </div>
-                  </div>
+                    {/* Top accent bar using formula color */}
+                    <div
+                      className="formula-card__accent"
+                      style={{ background: `linear-gradient(90deg, ${formulaColor}, ${formulaColor}88)` }}
+                    />
 
-                  {/* Content */}
-                  <div className="flex-grow p-4 md:p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <Tag className="h-3 w-3 text-[#c07204]" />
-                          <span className="text-[10px] font-bold text-[#c07204] uppercase tracking-widest">{formula.CODIGO || 'SIN CÓDIGO'}</span>
-                          {formula.LOTE && (
-                            <>
-                              <span className="text-slate-700">•</span>
-                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">LOTE: {formula.LOTE}</span>
-                            </>
+                    {/* Card body */}
+                    <div className="formula-card__body">
+                      {/* Row 1: Color circle + Name + Date */}
+                      <div className="flex items-start gap-3">
+                        {/* Color circle */}
+                        <div
+                          className="formula-card__color-circle"
+                          style={{ backgroundColor: formulaColor }}
+                          title="Vista de color"
+                        />
+
+                        {/* Name + Code */}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="formula-card__name">{formula.NOMBREFORMULA}</h3>
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <span className="formula-card__code">
+                              <Tag className="h-3 w-3 shrink-0" />
+                              {formula.CODIGO || 'SIN CÓDIGO'}
+                            </span>
+                            {formula.LOTE && (
+                              <span className="formula-card__lote">
+                                Lote: {formula.LOTE}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Date + Base badge (right) */}
+                        <div className="shrink-0 text-right flex flex-col items-end gap-1.5">
+                          {formula.FECHA && (
+                            <div className="formula-card__date">
+                              <Calendar className="h-3 w-3 shrink-0" />
+                              <span>{formatDate(formula.FECHA)}</span>
+                            </div>
+                          )}
+                          {formula.CBASE && (
+                            <div className="formula-card__base-badge">
+                              {formula.CBASE}
+                            </div>
                           )}
                         </div>
-                        <h3 className="text-lg font-bold text-white tracking-tight leading-tight">{formula.NOMBREFORMULA}</h3>
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <User className="h-3 w-3 text-slate-500" />
-                          <p className="text-xs text-slate-400 font-medium">{formula.NOMBRECLI}</p>
-                        </div>
                       </div>
-                      <div className="text-right">
-                        <div className="flex items-center gap-1 text-slate-500 justify-end mb-1">
-                          <Calendar className="h-3 w-3" />
-                          <span className="text-[10px] font-medium">{formatDate(formula.FECHA)}</span>
+
+                      {/* Row 2: Client name */}
+                      {formula.NOMBRECLI && (
+                        <div className="formula-card__client">
+                          <User className="h-3 w-3 shrink-0" />
+                          <span>{formula.NOMBRECLI}</span>
                         </div>
-                        <div className="text-[10px] font-bold text-slate-600 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
-                          BASE: {formula.CBASE || 'N/A'}
+                      )}
+
+                      {/* Row 3: LAB Values + Quality Control */}
+                      <div className="flex items-center gap-3 mt-3">
+                        {/* LAB values - compact inline */}
+                        <div className="formula-card__lab-row">
+                          <div className="formula-card__lab-item">
+                            <span className="formula-card__lab-label">L*</span>
+                            <span className="formula-card__lab-value">{parseFloat(formula.L || '0').toFixed(2)}</span>
+                          </div>
+                          <div className="formula-card__lab-divider" />
+                          <div className="formula-card__lab-item">
+                            <span className="formula-card__lab-label">a*</span>
+                            <span className="formula-card__lab-value">{parseFloat(formula.A || '0').toFixed(2)}</span>
+                          </div>
+                          <div className="formula-card__lab-divider" />
+                          <div className="formula-card__lab-item">
+                            <span className="formula-card__lab-label">b*</span>
+                            <span className="formula-card__lab-value">{parseFloat(formula.B || '0').toFixed(2)}</span>
+                          </div>
                         </div>
+
+                        {/* Quality control button */}
+                        <button
+                          onClick={(e) => handleQualityControl(e, formula)}
+                          className="formula-card__qc-btn"
+                        >
+                          <ClipboardCheck className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Control de Calidad</span>
+                          <span className="sm:hidden">QC</span>
+                        </button>
                       </div>
                     </div>
-
-                    {/* LAB Values */}
-                    <div className="grid grid-cols-3 gap-2 mt-4">
-                      <div className="bg-slate-950/50 rounded-lg p-2 border border-slate-800/50 text-center">
-                        <p className="text-[9px] text-slate-500 uppercase font-bold tracking-widest mb-1">L*</p>
-                        <p className="font-mono text-sm text-white font-bold">{parseFloat(formula.L || '0').toFixed(2)}</p>
-                      </div>
-                      <div className="bg-slate-950/50 rounded-lg p-2 border border-slate-800/50 text-center">
-                        <p className="text-[9px] text-slate-500 uppercase font-bold tracking-widest mb-1">a*</p>
-                        <p className="font-mono text-sm text-emerald-400 font-bold">{parseFloat(formula.A || '0').toFixed(2)}</p>
-                      </div>
-                      <div className="bg-slate-950/50 rounded-lg p-2 border border-slate-800/50 text-center">
-                        <p className="text-[9px] text-slate-500 uppercase font-bold tracking-widest mb-1">b*</p>
-                        <p className="font-mono text-sm text-amber-400 font-bold">{parseFloat(formula.B || '0').toFixed(2)}</p>
-                      </div>
-                    </div>
-
-                    {/* Control de Calidad Button */}
-                    <button
-                      onClick={(e) => handleQualityControl(e, formula)}
-                      className="mt-3 w-full flex items-center justify-center gap-2 rounded-lg border border-[#004A99]/40 bg-[#004A99]/10 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-[#004A99] hover:bg-[#004A99]/20 hover:border-[#004A99]/60 transition-all active:scale-[0.97]"
-                    >
-                      <ClipboardCheck className="h-3.5 w-3.5" />
-                      Control de Calidad
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </div>
             {loadingMore && (
               <div className="flex justify-center py-8">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#c07204] border-t-transparent"></div>
+                <div className="formula-spinner formula-spinner--sm"></div>
               </div>
             )}
             {!hasMore && formulas.length > 0 && (
@@ -329,7 +365,7 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
         >
           <button
             onClick={scrollToTop}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-[#c07204] text-white shadow-lg shadow-[#c07204]/30 hover:bg-[#a16004] transition-colors border-2 border-white/10"
+            className="formula-fab"
           >
             <ChevronUp className="h-7 w-7" />
           </button>

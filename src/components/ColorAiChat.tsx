@@ -34,6 +34,7 @@ export default function ColorAiChat() {
     const [pigmentCatalog, setPigmentCatalog] = useState<{ code: string, color: string }[]>([]);
     const [lastSuggestions, setLastSuggestions] = useState<{ code: string, color: string, quantity: number }[]>([]);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const isDragging = useRef(false);
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -244,7 +245,6 @@ En la columna 'Pigmento', usa ESTRICTAMENTE el formato: 'Código [#hex]'. Ejempl
         setIsOpen(false);
         setLastSuggestions([]);
     };
-
     const clearChat = () => {
         setMessages([]);
         setShowRecButton(false);
@@ -256,13 +256,18 @@ En la columna 'Pigmento', usa ESTRICTAMENTE el formato: 'Código [#hex]'. Ejempl
         <>
             {/* Floating Button */}
             <motion.button
-                whileHover={{ scale: 1.1 }}
+                drag
+                dragMomentum={false}
+                onDragStart={() => { isDragging.current = true; }}
+                onDragEnd={() => { setTimeout(() => { isDragging.current = false; }, 100); }}
+                whileDrag={{ scale: 1.05, cursor: 'grabbing' }}
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.9 }}
-                onClick={() => setIsOpen(true)}
-                className="fixed bottom-6 right-6 z-[60] h-14 w-14 rounded-full bg-gradient-to-tr from-violet-600 to-blue-500 text-white shadow-2xl flex items-center justify-center border-2 border-white/20 backdrop-blur-md"
+                onClick={() => { if (!isDragging.current) setIsOpen(true); }}
+                className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[60] h-14 w-14 rounded-full bg-gradient-to-tr from-[#002C6C] to-[#005EC3] text-white shadow-2xl flex items-center justify-center border-2 border-white/20 backdrop-blur-md cursor-grab active:cursor-grabbing"
             >
                 <Sparkles className="h-6 w-6" />
-                <div className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full border-2 border-[#0A0F14] animate-pulse"></div>
+                <div className="absolute -top-1 -right-1 h-2 w-2 bg-[#a38105] rounded-full border-1 border-[#0A0F14] animate-pulse"></div>
             </motion.button>
 
             {/* Chat Window */}
@@ -272,12 +277,12 @@ En la columna 'Pigmento', usa ESTRICTAMENTE el formato: 'Código [#hex]'. Ejempl
                         initial={{ opacity: 0, scale: 0.9, y: 100 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 100 }}
-                        className="fixed bottom-24 right-6 z-[60] w-[400px] max-w-[calc(100vw-48px)] h-[550px] bg-[#121820] border border-slate-700 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden"
+                        className="fixed bottom-24 left-1/2 -translate-x-1/2 md:left-6 md:translate-x-0 z-[60] w-[calc(100vw-32px)] sm:w-[400px] max-w-[calc(100vw-32px)] h-auto max-h-[80vh] sm:h-[550px] sm:max-h-[85vh] bg-[#121820] border border-slate-700 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden"
                     >
                         {/* Header */}
                         <div className="p-4 bg-slate-900 border-b border-slate-700 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="h-8 w-8 rounded-lg bg-violet-600 flex items-center justify-center">
+                                <div className="h-8 w-8 rounded-lg bg-[#002C6C] flex items-center justify-center">
                                     <Wand2 className="h-5 w-5 text-white" />
                                 </div>
                                 <div>
@@ -308,7 +313,7 @@ En la columna 'Pigmento', usa ESTRICTAMENTE el formato: 'Código [#hex]'. Ejempl
                                 <React.Fragment key={i}>
                                     <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                         <div className={`max-w-[95%] rounded-xl px-3 py-2 text-xs ${msg.role === 'user'
-                                            ? 'bg-violet-600 text-white rounded-br-none shadow-lg'
+                                            ? 'bg-[#002C6C] text-white rounded-br-none shadow-lg'
                                             : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700 shadow-xl overflow-x-auto'
                                             }`}>
                                             <ReactMarkdown
@@ -365,7 +370,7 @@ En la columna 'Pigmento', usa ESTRICTAMENTE el formato: 'Código [#hex]'. Ejempl
                                         >
                                             <button
                                                 onClick={handleRequestRecommendation}
-                                                className="bg-violet-600/20 border border-violet-500/50 text-violet-300 px-4 py-2 rounded-xl text-xs font-bold hover:bg-violet-600/30 transition-all flex items-center gap-2 shadow-lg shadow-violet-900/20 active:scale-95"
+                                                className="bg-[#002C6C]/20 border border-[#005EC3]/50 text-blue-300 px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#002C6C]/30 transition-all flex items-center gap-2 shadow-lg shadow-blue-900/20 active:scale-95"
                                             >
                                                 <Sparkles className="h-3.5 w-3.5" />
                                                 Si, recomiéndame una mejora
@@ -377,9 +382,9 @@ En la columna 'Pigmento', usa ESTRICTAMENTE el formato: 'Código [#hex]'. Ejempl
                             {isLoading && (
                                 <div className="flex justify-start">
                                     <div className="bg-slate-800 rounded-xl px-3 py-2 rounded-bl-none border border-slate-700 flex gap-1">
-                                        <div className="h-1.5 w-1.5 bg-violet-400 rounded-full animate-bounce"></div>
-                                        <div className="h-1.5 w-1.5 bg-violet-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                                        <div className="h-1.5 w-1.5 bg-violet-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                                        <div className="h-1.5 w-1.5 bg-blue-400 rounded-full animate-bounce"></div>
+                                        <div className="h-1.5 w-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                                        <div className="h-1.5 w-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
                                     </div>
                                 </div>
                             )}
@@ -394,12 +399,12 @@ En la columna 'Pigmento', usa ESTRICTAMENTE el formato: 'Código [#hex]'. Ejempl
                                     onChange={(e) => setInput(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                                     placeholder="Pregunta algo sobre color..."
-                                    className="w-full bg-[#0A0F14] border border-slate-700 rounded-xl py-2.5 pl-4 pr-12 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
+                                    className="w-full bg-[#0A0F14] border border-slate-700 rounded-xl py-2.5 pl-4 pr-12 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#005EC3] transition-colors"
                                 />
                                 <button
                                     onClick={() => handleSend()}
                                     disabled={!input.trim() || isLoading}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-violet-500 hover:text-violet-400 disabled:text-slate-700"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-blue-500 hover:text-blue-400 disabled:text-slate-700"
                                 >
                                     <Send className="h-5 w-5" />
                                 </button>

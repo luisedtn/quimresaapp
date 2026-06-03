@@ -242,23 +242,23 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                         </div>
 
                         {/* Header Area */}
-                        <div className="px-6 pb-6 pt-2">
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="flex items-center gap-4">
+                        <div className="px-4 sm:px-6 pb-4 sm:pb-6 pt-2">
+                            <div className="flex items-start justify-between mb-3 sm:mb-4">
+                                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                                     <div
-                                        className="h-14 w-14 rounded-2xl border-2 border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.5)] overflow-hidden flex-shrink-0"
+                                        className="h-10 w-10 sm:h-14 sm:w-14 rounded-2xl border-2 border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.5)] overflow-hidden flex-shrink-0"
                                         style={{ backgroundColor: `lab(${formula.L} ${formula.A} ${formula.B})` }}
                                     >
                                         <div className="h-full w-full bg-gradient-to-tr from-black/20 to-transparent" />
                                     </div>
-                                    <div className="min-w-0">
-                                        <h2 className="text-xl font-black text-white leading-tight truncate">{formula.NOMBREFORMULA}</h2>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-[10px] font-bold text-[#c07204] bg-[#c07204]/10 px-2 py-0.5 rounded border border-[#c07204]/20 uppercase tracking-widest">
+                                    <div className="min-w-0 flex-1">
+                                        <h2 className="text-base sm:text-xl font-black text-white leading-tight truncate">{formula.NOMBREFORMULA}</h2>
+                                        <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1">
+                                            <span className="text-[9px] sm:text-[10px] font-bold text-[#B85D00] bg-[#B85D00]/10 px-1.5 sm:px-2 py-0.5 rounded border border-[#B85D00]/20 uppercase tracking-widest">
                                                 {formula.CODIGO || 'SIN CÓDIGO'}
                                             </span>
                                             {mixtureDensityDisplay && (
-                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                                <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                                                     ρ mix: {mixtureDensityDisplay.toFixed(4)}
                                                 </span>
                                             )}
@@ -267,25 +267,25 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                 </div>
                                 <button
                                     onClick={onClose}
-                                    className="h-10 w-10 flex items-center justify-center rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors"
+                                    className="h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors flex-shrink-0 ml-2"
                                 >
-                                    <X className="h-5 w-5" />
+                                    <X className="h-4 w-4 sm:h-5 sm:w-5" />
                                 </button>
                             </div>
 
                             {/* Info Chips Scroller */}
-                            <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-                                <div className="flex-shrink-0 bg-slate-900/50 px-4 py-2 rounded-2xl border border-slate-800/50 flex items-center gap-2">
-                                    <User className="h-3 w-3 text-blue-400" />
-                                    <p className="text-[10px] text-white font-bold truncate max-w-[120px]">{formula.NOMBRECLI || 'N/A'}</p>
+                            <div className="flex gap-2 sm:gap-3 overflow-x-auto no-scrollbar pb-2 -mx-4 sm:mx-0 px-4 sm:px-0">
+                                <div className="flex-shrink-0 bg-slate-900/50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl border border-slate-800/50 flex items-center gap-1.5 sm:gap-2">
+                                    <User className="h-3 w-3 text-blue-400 flex-shrink-0" />
+                                    <p className="text-[9px] sm:text-[10px] text-white font-bold truncate max-w-[100px] sm:max-w-[120px]">{formula.NOMBRECLI || 'N/A'}</p>
                                 </div>
-                                <div className="flex-shrink-0 bg-slate-900/50 px-4 py-2 rounded-2xl border border-slate-800/50 flex items-center gap-2">
-                                    <Calendar className="h-3 w-3 text-emerald-400" />
-                                    <p className="text-[10px] text-white font-bold">{formatDate(formula.FECHA)}</p>
+                                <div className="flex-shrink-0 bg-slate-900/50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl border border-slate-800/50 flex items-center gap-1.5 sm:gap-2">
+                                    <Calendar className="h-3 w-3 text-emerald-400 flex-shrink-0" />
+                                    <p className="text-[9px] sm:text-[10px] text-white font-bold whitespace-nowrap">{formatDate(formula.FECHA)}</p>
                                 </div>
-                                <div className="flex-shrink-0 bg-slate-900/50 px-4 py-2 rounded-2xl border border-slate-800/50 flex items-center gap-2">
-                                    <Beaker className="h-3 w-3 text-[#c07204]" />
-                                    <p className="text-[10px] text-white font-bold">{formula.CANTIDAD || '0'} {formula.UNIDAD || 'LT'}</p>
+                                <div className="flex-shrink-0 bg-slate-900/50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl border border-slate-800/50 flex items-center gap-1.5 sm:gap-2">
+                                    <Beaker className="h-3 w-3 text-[#B85D00] flex-shrink-0" />
+                                    <p className="text-[9px] sm:text-[10px] text-white font-bold whitespace-nowrap">{formula.CANTIDAD || '0'} {formula.UNIDAD || 'LT'}</p>
                                 </div>
                             </div>
                         </div>
@@ -302,11 +302,11 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as any)}
                                     className={`flex items-center gap-2 py-4 border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id
-                                        ? 'border-[#c07204] text-white font-bold'
+                                        ? 'border-[#B85D00] text-white font-bold'
                                         : 'border-transparent text-slate-600 hover:text-slate-400'
                                         }`}
                                 >
-                                    <tab.icon className={`h-3.5 w-3.5 ${activeTab === tab.id ? 'text-[#c07204]' : ''}`} />
+                                    <tab.icon className={`h-3.5 w-3.5 ${activeTab === tab.id ? 'text-[#B85D00]' : ''}`} />
                                     <span className="text-[10px] uppercase font-bold tracking-widest">{tab.label}</span>
                                 </button>
                             ))}
@@ -317,18 +317,19 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                             {activeTab === 'mezcla' && (
                                 <div className="p-6 space-y-6">
                                     {calculating && (
-                                        <div className="flex items-center gap-3 bg-[#c07204]/10 p-3 rounded-xl border border-[#c07204]/20 animate-pulse">
-                                            <div className="h-4 w-4 rounded-full border-2 border-[#c07204] border-t-transparent animate-spin"></div>
-                                            <p className="text-[10px] font-bold text-[#c07204] uppercase tracking-widest">Calculando densidades y volumen...</p>
+                                        <div className="flex items-center gap-3 bg-[#B85D00]/10 p-3 rounded-xl border border-[#B85D00]/20 animate-pulse">
+                                            <div className="h-4 w-4 rounded-full border-2 border-[#B85D00] border-t-transparent animate-spin"></div>
+                                            <p className="text-[10px] font-bold text-[#B85D00] uppercase tracking-widest">Calculando densidades y volumen...</p>
                                         </div>
                                     )}
 
                                     {/* Summary row */}
-                                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] px-2">
-                                        <span>Componente | ρ</span>
-                                        <div className="flex gap-8">
-                                            <span>Mililitros (ml)</span>
-                                            <span className="w-16 text-right">Gramos</span>
+                                    <div className="flex items-center justify-between text-[8px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-[0.1em] sm:tracking-[0.2em] px-1 sm:px-2">
+                                        <span className="truncate min-w-0 mr-2">Componente | ρ</span>
+                                        <div className="flex gap-2 sm:gap-8 flex-shrink-0">
+                                            <span className="hidden sm:inline">Mililitros (ml)</span>
+                                            <span className="sm:hidden">ml</span>
+                                            <span className="w-12 sm:w-16 text-right">Gramos</span>
                                         </div>
                                     </div>
 
@@ -337,13 +338,13 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                             <div
                                                 key={index}
                                                 className={`p-4 rounded-3xl border flex flex-col gap-3 transition-all ${item.type === 'BASE'
-                                                    ? 'bg-[#c07204]/5 border-[#c07204]/20 shadow-[0_10px_30px_rgba(192,114,4,0.05)]'
+                                                    ? 'bg-[#B85D00]/5 border-[#B85D00]/20 shadow-[0_10px_30px_rgba(192,114,4,0.05)]'
                                                     : 'bg-slate-900 border-slate-800'
                                                     }`}
                                             >
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-3">
-                                                        <div className={`h-8 w-8 rounded-xl flex items-center justify-center ${item.type === 'BASE' ? 'bg-[#c07204] text-white shadow-lg shadow-[#c07204]/20' : 'bg-slate-800 text-slate-500'
+                                                        <div className={`h-8 w-8 rounded-xl flex items-center justify-center ${item.type === 'BASE' ? 'bg-[#B85D00] text-white shadow-lg shadow-[#B85D00]/20' : 'bg-slate-800 text-slate-500'
                                                             }`}>
                                                             <Beaker className="h-4 w-4" />
                                                         </div>
@@ -356,14 +357,14 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="text-right flex items-center gap-6">
+                                                    <div className="text-right flex items-center gap-2 sm:gap-6">
                                                         <div>
-                                                            <p className={`text-lg font-mono font-bold ${item.type === 'BASE' ? 'text-[#c07204]' : 'text-white'}`}>
+                                                            <p className={`text-sm sm:text-lg font-mono font-bold ${item.type === 'BASE' ? 'text-[#B85D00]' : 'text-white'}`}>
                                                                 {item.ml.toFixed(2)}
                                                             </p>
                                                         </div>
-                                                        <div className="w-16">
-                                                            <p className="text-sm font-mono font-bold text-slate-500">
+                                                        <div className="w-12 sm:w-16">
+                                                            <p className="text-xs sm:text-sm font-mono font-bold text-slate-500">
                                                                 {item.grams.toFixed(1)}
                                                             </p>
                                                         </div>
@@ -417,7 +418,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                     <div className="space-y-4">
                                         <div className="flex items-center justify-between px-2">
                                             <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Comparativa LAB</h4>
-                                            <Tag className="h-3.5 w-3.5 text-[#c07204]" />
+                                            <Tag className="h-3.5 w-3.5 text-[#B85D00]" />
                                         </div>
 
                                         <div className="bg-slate-900/40 rounded-[2.5rem] border border-white/5 overflow-hidden">
@@ -426,7 +427,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                                     <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Canal</span>
                                                 </div>
                                                 <div className="p-4 text-center border-r border-white/5">
-                                                    <span className="text-[9px] text-[#c07204] font-bold uppercase tracking-widest">Patrón</span>
+                                                    <span className="text-[9px] text-[#B85D00] font-bold uppercase tracking-widest">Patrón</span>
                                                 </div>
                                                 <div className="p-4 text-center">
                                                     <span className="text-[9px] text-blue-400 font-bold uppercase tracking-widest">Fórmula</span>
@@ -477,12 +478,12 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                         </div>
 
                                         {/* Total Delta E */}
-                                        <div className="relative group overflow-hidden bg-gradient-to-br from-[#c07204]/20 to-slate-900 p-8 rounded-[3rem] border border-[#c07204]/30 flex flex-col items-center justify-center gap-2 shadow-xl">
+                                        <div className="relative group overflow-hidden bg-gradient-to-br from-[#B85D00]/20 to-slate-900 p-8 rounded-[3rem] border border-[#B85D00]/30 flex flex-col items-center justify-center gap-2 shadow-xl">
                                             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_30%_20%,rgba(192,114,4,0.1),transparent)]" />
-                                            <div className="h-12 w-12 rounded-2xl bg-[#c07204] flex items-center justify-center text-white shadow-2xl shadow-[#c07204]/40 z-10">
+                                            <div className="h-12 w-12 rounded-2xl bg-[#B85D00] flex items-center justify-center text-white shadow-2xl shadow-[#B85D00]/40 z-10">
                                                 <span className="font-black text-xl">ΔE</span>
                                             </div>
-                                            <p className="text-[10px] font-bold text-[#c07204] uppercase tracking-[0.3em] z-10">Diferencia Total</p>
+                                            <p className="text-[10px] font-bold text-[#B85D00] uppercase tracking-[0.3em] z-10">Diferencia Total</p>
                                             <span className="font-mono text-5xl text-white font-black tracking-tighter drop-shadow-lg z-10">
                                                 {formula.DELTA || '0.00'}
                                             </span>
@@ -499,10 +500,10 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                             <div className="space-y-8">
                                                 {processes.map((proc, idx) => (
                                                     <div key={idx} className="relative flex items-start gap-4 pl-12">
-                                                        <div className="absolute left-4 top-1 h-4 w-4 -translate-x-1/2 rounded-full border-2 border-[#c07204] bg-[#0A0F14] z-10" />
+                                                        <div className="absolute left-4 top-1 h-4 w-4 -translate-x-1/2 rounded-full border-2 border-[#B85D00] bg-[#0A0F14] z-10" />
                                                         <div className="bg-slate-900/60 p-5 rounded-3xl border border-slate-800/50 w-full">
                                                             <div className="flex items-center gap-2 mb-3">
-                                                                <span className="h-6 w-6 rounded-lg bg-[#c07204]/20 text-[#c07204] text-[10px] font-bold flex items-center justify-center">{proc.id}</span>
+                                                                <span className="h-6 w-6 rounded-lg bg-[#B85D00]/20 text-[#B85D00] text-[10px] font-bold flex items-center justify-center">{proc.id}</span>
                                                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Paso del Proceso</span>
                                                             </div>
                                                             <p className="text-sm text-slate-300 leading-relaxed font-medium">{proc.text}</p>
@@ -524,7 +525,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                 <div className="p-6 h-full">
                                     {formula.OBSERVACIONES ? (
                                         <div className="bg-slate-900/40 p-6 rounded-[2rem] border border-slate-800/60 shadow-inner">
-                                            <MessageSquare className="h-6 w-6 text-[#c07204] mb-4 opacity-50" />
+                                            <MessageSquare className="h-6 w-6 text-[#B85D00] mb-4 opacity-50" />
                                             <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line font-medium italic">"{formula.OBSERVACIONES}"</p>
                                         </div>
                                     ) : (
@@ -539,7 +540,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
 
                         {/* Footer */}
                         <div className="p-6 bg-[#0A0F14] border-t border-slate-800">
-                            <button onClick={onClose} className="w-full py-4 bg-[#c07204] text-white rounded-2xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-[#c07204]/20">
+                            <button onClick={onClose} className="w-full py-4 bg-[#B85D00] text-white rounded-2xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-[#B85D00]/20">
                                 Cerrar Detalle
                             </button>
                         </div>

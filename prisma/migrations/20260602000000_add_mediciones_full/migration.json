@@ -1,0 +1,32 @@
+{
+  "version": "5.2",
+  "steps": [
+    {
+      "tag": "DropForeignKey",
+      "table": "mediciones",
+      "constraint": "mediciones_id_coleccion_fkey"
+    },
+    {
+      "tag": "DropForeignKey",
+      "table": "mediciones",
+      "constraint": "mediciones_id_libreria_fkey"
+    },
+    {
+      "tag": "AlterTable",
+      "table": "mediciones",
+      "operations": [
+        { "tag": "DropColumn", "column": "id_coleccion" },
+        { "tag": "DropColumn", "column": "id_libreria" },
+        { "tag": "AddColumn", "column": "Density", "type": "Double" },
+        { "tag": "AddColumn", "column": "LRV", "type": "Double" },
+        { "tag": "AddColumn", "column": "X", "type": "Double" },
+        { "tag": "AddColumn", "column": "Y", "type": "Double" },
+        { "tag": "AddColumn", "column": "Z", "type": "Double" },
+        { "tag": "AddColumn", "column": "cmykC", "type": "Double" },
+        { "tag": "AddColumn", "column": "cmykK", "type": "Double" },
+        { "tag": "AddColumn", "column": "cmykM", "type": "Double" },
+        { "tag": "AddColumn", "column": "cmykY", "type": "Double" }
+      ]
+    }
+  ]
+}

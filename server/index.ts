@@ -254,20 +254,127 @@ app.put('/api/cliente', authenticateToken, async (req: Request, res: Response): 
 app.post('/api/mediciones', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
         const { idcliente } = (req as any).user;
-        const { L, A, B, R, G, RB, C, H, FECHA } = req.body;
-        const medicion = await prisma.formPersonales.create({
+        const { L, A, B, R, G, RB, C, H, X, Y, Z, cmykC, cmykM, cmykY, cmykK, hex, LRV, Density, fecha, nombre, notas } = req.body;
+        const medicion = await prisma.medicion.create({
             data: {
-                IDCLIENTE: idcliente,
-                L: L?.toString(), A: A?.toString(), B: B?.toString(),
-                R: R?.toString(), G: G?.toString(), RB: RB?.toString(),
-                C: C?.toString(), H: H?.toString(), FECHA: FECHA || new Date().toISOString(),
+                id_cliente: idcliente,
+                nombre: nombre || 'Escaneo',
+                fecha: fecha ? new Date(fecha) : new Date(),
+                notas: notas || null,
+                L: L != null ? Number(L) : null,
+                A: A != null ? Number(A) : null,
+                B: B != null ? Number(B) : null,
+                R: R != null ? Math.round(Number(R)) : null,
+                G: G != null ? Math.round(Number(G)) : null,
+                RB: RB != null ? Math.round(Number(RB)) : null,
+                C: C != null ? Number(C) : null,
+                H: H != null ? Number(H) : null,
+                X: X != null ? Number(X) : null,
+                Y: Y != null ? Number(Y) : null,
+                Z: Z != null ? Number(Z) : null,
+                cmykC: cmykC != null ? Number(cmykC) : null,
+                cmykM: cmykM != null ? Number(cmykM) : null,
+                cmykY: cmykY != null ? Number(cmykY) : null,
+                cmykK: cmykK != null ? Number(cmykK) : null,
+                hex: hex || null,
+                LRV: LRV != null ? Number(LRV) : null,
+                Density: Density != null ? Number(Density) : null,
             }
         });
         res.status(201).json(medicion);
-    } catch (error) {
-        res.status(500).json({ error: 'Error al guardar medición' });
+    } catch (error: any) {
+        console.error('[ERROR] al guardar medicion:', error);
+        res.status(500).json({ error: 'Error al guardar medición', details: error.message });
     }
 });
+
+app.get('/api/mediciones', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { idcliente } = (req as any).user;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 50;
+        const skip = (page - 1) * limit;
+
+        const where: any = { id_cliente: idcliente };
+
+        const [mediciones, total] = await Promise.all([
+            prisma.medicion.findMany({
+                where,
+                orderBy: { fecha: 'desc' },
+                skip,
+                take: limit,
+            }),
+            prisma.medicion.count({ where })
+        ]);
+
+        res.json({ mediciones, total, page, limit });
+    } catch (error: any) {
+        console.error('[ERROR] al obtener mediciones:', error);
+        res.status(500).json({ error: 'Error al obtener mediciones', details: error.message });
+    }
+});
+
+// --- ENDPOINTS LIBRERIAS Y COLECCIONES ---
+app.get('/api/librerias', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { idcliente } = (req as any).user;
+        const librerias = await prisma.libreria.findMany({
+            where: { id_cliente: idcliente },
+            orderBy: { nombre: 'asc' }
+        });
+        res.json(librerias);
+    } catch (error: any) {
+        res.status(500).json({ error: 'Error al obtener librerías', details: error.message });
+    }
+});
+
+app.post('/api/librerias', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { idcliente } = (req as any).user;
+        const { nombre } = req.body;
+        if (!nombre) return res.status(400).json({ error: 'Nombre es requerido' });
+        const nuevaLibreria = await prisma.libreria.create({
+            data: {
+                nombre,
+                id_cliente: idcliente
+            }
+        });
+        res.status(201).json(nuevaLibreria);
+    } catch (error: any) {
+        res.status(500).json({ error: 'Error al crear librería', details: error.message });
+    }
+});
+
+app.get('/api/librerias/:id/colecciones', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { id } = req.params;
+        const colecciones = await prisma.coleccion.findMany({
+            where: { id_libreria: Number(id) },
+            orderBy: { nombre: 'asc' }
+        });
+        res.json(colecciones);
+    } catch (error: any) {
+        res.status(500).json({ error: 'Error al obtener colecciones', details: error.message });
+    }
+});
+
+app.post('/api/librerias/:id/colecciones', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { id } = req.params;
+        const { nombre } = req.body;
+        if (!nombre) return res.status(400).json({ error: 'Nombre es requerido' });
+        const nuevaColeccion = await prisma.coleccion.create({
+            data: {
+                nombre,
+                id_libreria: Number(id)
+            }
+        });
+        res.status(201).json(nuevaColeccion);
+    } catch (error: any) {
+        res.status(500).json({ error: 'Error al crear colección', details: error.message });
+    }
+});
+
 
 app.all('/api/chat', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     if (req.method === 'GET') {

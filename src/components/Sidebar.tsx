@@ -5,6 +5,7 @@ import { X, ChevronRight, User, Settings, ShoppingBag, Wrench, Mail, Bug, FileTe
 import { useNixDevice } from '../hooks/useNixDevice';
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
+import Ajustes from './Ajustes';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose, onLogout, userData }: SidebarProps) {
   const navigate = useNavigate();
   const { isConnected, deviceInfo, disconnect } = useNixDevice();
+  const [showAjustes, setShowAjustes] = useState(false);
 
   return (
     <AnimatePresence>
@@ -38,9 +40,9 @@ export default function Sidebar({ isOpen, onClose, onLogout, userData }: Sidebar
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed inset-y-0 left-0 z-50 w-full max-w-[300px] bg-[#0A0F14] border-r border-slate-800 flex flex-col shadow-2xl"
           >
-            <div className="flex items-center justify-between p-6 border-b border-slate-800">
-              <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest italic">Menú</h2>
-              <button onClick={onClose} className="p-2 text-slate-400 hover:text-white transition-colors">
+            <div className="flex items-center justify-between px-6 py-5 bg-[#a38105] shadow-md">
+              <h2 className="text-xs font-bold text-white uppercase tracking-widest">Menú de Laboratorio</h2>
+              <button onClick={onClose} className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -51,7 +53,7 @@ export default function Sidebar({ isOpen, onClose, onLogout, userData }: Sidebar
                 <div className="space-y-1">
                   <SidebarItem icon={User} label="Información de la cuenta" onClick={() => navigate('/cuenta')} />
                   <SidebarItem icon={Users} label="Usuarios de mi empresa" onClick={() => navigate('/usuarios')} />
-                  <SidebarItem icon={Settings} label="Ajustes globales de la app" />
+                  <SidebarItem icon={Settings} label="Ajustes globales de la app" onClick={() => setShowAjustes(true)} />
                 </div>
               </AccordionSection>
 
@@ -65,8 +67,8 @@ export default function Sidebar({ isOpen, onClose, onLogout, userData }: Sidebar
                           <BluetoothConnected className="h-4 w-4 text-green-400" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-white truncate">{deviceInfo.name}</p>
-                          <p className="text-[10px] text-slate-500 uppercase tracking-widest">{deviceInfo.type}</p>
+                          <p className="text-sm font-bold truncate" style={{ color: 'var(--text-primary)' }}>{deviceInfo.name}</p>
+                          <p className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>{deviceInfo.type}</p>
                         </div>
                       </div>
                       <button
@@ -81,7 +83,7 @@ export default function Sidebar({ isOpen, onClose, onLogout, userData }: Sidebar
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center py-4 bg-slate-900/20 rounded-xl border border-dashed border-slate-800">
-                      <p className="text-slate-600 text-sm italic">Sin dispositivos</p>
+                      <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>Sin dispositivos</p>
                       <button
                         onClick={() => {
                           onClose();
@@ -118,10 +120,10 @@ export default function Sidebar({ isOpen, onClose, onLogout, userData }: Sidebar
               {/* Account Actions */}
               <section className="mt-8 mb-4">
                 <div className="px-6 mb-2">
-                  <h3 className="text-lg font-bold text-white tracking-tight">Sesión</h3>
-                  <div className="h-[1px] bg-slate-800 w-full mt-2"></div>
+                  <h3 className="text-base font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Sesión</h3>
+                  <div className="h-[1px] bg-slate-200 dark:bg-slate-800 w-full mt-2"></div>
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-3">
                   <SidebarItem
                     icon={LogOut}
                     label="Cerrar sesión"
@@ -138,6 +140,8 @@ export default function Sidebar({ isOpen, onClose, onLogout, userData }: Sidebar
               <p className="text-[10px] text-slate-500 uppercase tracking-widest">Versión de la app 1.8.9 (build 392)</p>
             </div>
           </motion.div>
+
+          <Ajustes isOpen={showAjustes} onClose={() => setShowAjustes(false)} />
         </>
       )}
     </AnimatePresence>
@@ -161,17 +165,17 @@ function AccordionSection({
         onClick={() => setIsOpen(!isOpen)}
         className="w-full text-left px-6 py-2 flex items-center justify-between group focus:outline-none"
       >
-        <h3 className="text-lg font-bold text-white tracking-tight group-hover:text-blue-400 transition-colors">{title}</h3>
+        <h3 className="text-base font-bold tracking-tight group-hover:text-[#a38105] dark:group-hover:text-blue-400 transition-colors" style={{ color: 'var(--text-primary)' }}>{title}</h3>
         <motion.div
           initial={false}
           animate={{ rotate: isOpen ? 90 : 0 }}
           transition={{ duration: 0.2 }}
         >
-          <ChevronRight className="h-5 w-5 text-slate-500 group-hover:text-blue-400 transition-colors" />
+          <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-[#a38105] dark:group-hover:text-blue-400 transition-colors" />
         </motion.div>
       </button>
       <div className="px-6 mb-2">
-        <div className="h-[1px] bg-slate-800 w-full"></div>
+        <div className="h-[1px] bg-slate-200 dark:bg-slate-800 w-full"></div>
       </div>
       <AnimatePresence initial={false}>
         {isOpen && (
@@ -197,13 +201,13 @@ function SidebarItem({ icon: Icon, label, showChevron, onClick }: { icon: any, l
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-900/50 transition-colors group text-left focus:outline-none"
+      className="w-full flex items-center justify-between px-6 py-3.5 hover:bg-[#a38105]/10 dark:hover:bg-[#002C6C]/20 transition-all group text-left focus:outline-none"
     >
       <div className="flex items-center gap-4">
-        <Icon className="h-4 w-4 text-slate-500 group-hover:text-blue-400 transition-colors" />
-        <span className="text-sm font-medium text-slate-200 group-hover:text-white transition-colors">{label}</span>
+        <Icon className="h-4 w-4 text-slate-500 group-hover:text-[#a38105] dark:group-hover:text-[#38bdf8] transition-colors" />
+        <span className="text-sm font-medium transition-colors group-hover:text-slate-900 dark:group-hover:text-white" style={{ color: 'var(--text-secondary)' }}>{label}</span>
       </div>
-      {showChevron && <ChevronRight className="h-4 w-4 text-slate-600" />}
+      {showChevron && <ChevronRight className="h-4 w-4 text-slate-400 dark:text-slate-600 transition-transform group-hover:translate-x-0.5" />}
     </button>
   );
 }

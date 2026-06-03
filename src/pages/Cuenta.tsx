@@ -287,19 +287,19 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
     };
 
     return (
-        <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col">
+        <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col overflow-x-hidden">
             <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onLogout={onLogout} userData={userData} />
 
             {/* Header */}
-            <header className="fixed top-0 z-10 flex w-full items-center border-b border-slate-800 bg-[#0A0F14]/80 backdrop-blur-md px-6 py-4">
-                <button onClick={() => navigate('/')} className="p-2 text-slate-400 hover:text-white transition-colors hover:bg-slate-800/50 rounded-lg mr-2">
-                    <ArrowLeft className="h-5 w-5" />
+            <header className="fixed top-0 z-10 flex w-full items-center border-b border-black/10 bg-[#CC5200] shadow-lg px-6 py-4">
+                <button onClick={() => navigate('/')} className="p-2 text-black hover:text-white transition-colors hover:bg-black/10 rounded-lg mr-2">
+                    <ArrowLeft className="h-5 w-5 text-black" />
                 </button>
                 <div>
                     <h1 className="text-xl font-semibold tracking-tight text-white flex items-center gap-2">
-                        <User className="h-5 w-5 text-blue-400" /> Mi Cuenta
+                        <User className="h-5 w-5 text-black" /> Mi Cuenta
                     </h1>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Configuración y datos de empresa</p>
+                    <p className="text-[10px] text-white/70 uppercase tracking-widest mt-1">Configuración y datos de empresa</p>
                 </div>
             </header>
 
@@ -311,7 +311,7 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
                 )}
 
                 {loading ? (
-                    <div className="flex justify-center mt-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>
+                    <div className="flex justify-center mt-20"><div className="formula-spinner"></div></div>
                 ) : (
                     <motion.form
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }}
@@ -332,7 +332,7 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
                                         </div>
                                     )}
                                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button type="button" onClick={handleLogoUpload} className="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full transition-colors flex items-center gap-2">
+                                        <button type="button" onClick={handleLogoUpload} className="cursor-pointer bg-[#B85D00] hover:bg-[#9E4F00] text-white p-3 rounded-full transition-colors flex items-center gap-2">
                                             <CameraIcon className="w-5 h-5" />
                                         </button>
                                     </div>
@@ -345,15 +345,15 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Nombre Comercial</label>
-                                        <input type="text" value={formData.NOMBRE} onChange={e => setFormData({ ...formData, NOMBRE: e.target.value })} required className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none" />
+                                        <input type="text" value={formData.NOMBRE} onChange={e => setFormData({ ...formData, NOMBRE: e.target.value })} required className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-[#B85D00] outline-none" />
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">RUC</label>
-                                        <input type="text" value={formData.NIF} onChange={e => setFormData({ ...formData, NIF: e.target.value })} required className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none" />
+                                        <input type="text" value={formData.NIF} onChange={e => setFormData({ ...formData, NIF: e.target.value })} required className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-[#B85D00] outline-none" />
                                     </div>
                                 </div>
 
-                                <h3 className="text-xs font-bold text-blue-400 flex items-center gap-2 border-b border-slate-800 pb-2 pt-2 uppercase tracking-wide">
+                                <h3 className="text-xs font-bold text-[#B85D00] flex items-center gap-2 border-b border-slate-800 pb-2 pt-2 uppercase tracking-wide">
                                     <MapPin className="w-4 h-4" /> Ubicación
                                 </h3>
 
@@ -407,7 +407,7 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
                                     </div>
                                 </div>
 
-                                <h3 className="text-xs font-bold text-blue-400 flex items-center gap-2 border-b border-slate-800 pb-2 pt-2 uppercase tracking-wide">
+                                <h3 className="text-xs font-bold text-[#B85D00] flex items-center gap-2 border-b border-slate-800 pb-2 pt-2 uppercase tracking-wide">
                                     <Phone className="w-4 h-4" /> Contacto
                                 </h3>
 
@@ -427,7 +427,7 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
                                 </div>
 
                                 <div className="pt-6 border-t border-slate-800">
-                                    <button type="submit" disabled={saving} className="flex items-center justify-center gap-2 w-full md:w-auto ml-auto px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold uppercase tracking-widest text-sm transition-all shadow-lg shadow-blue-900/20 disabled:bg-slate-700">
+                                    <button type="submit" disabled={saving} className="flex items-center justify-center gap-2 w-full md:w-auto ml-auto px-8 py-3 bg-[#B85D00] hover:bg-[#9E4F00] text-white rounded-lg font-bold uppercase tracking-widest text-sm transition-all shadow-lg shadow-[#B85D00]/20 disabled:bg-slate-700">
                                         {saving ? 'Guardando...' : <><Save className="w-5 h-5" /> Guardar Cambios</>}
                                     </button>
                                 </div>

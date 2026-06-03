@@ -685,14 +685,14 @@ export default function ColorMatch() {
     // Render
     // ----------------------------------------------------------------
     return (
-        <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col">
+        <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col overflow-x-hidden">
             {/* Header */}
-            <header className="fixed top-0 z-10 flex w-full items-center justify-between border-b border-slate-800 bg-[#0A0F14]/80 backdrop-blur-md px-4 py-4">
-                <button onClick={() => navigate('/')} className="p-2 text-slate-400 hover:text-white transition-colors">
-                    <ArrowLeft className="h-6 w-6" />
+            <header className="fixed top-0 z-10 flex w-full items-center justify-between border-b border-black/10 bg-[#CC5200] shadow-lg px-4 py-4">
+                <button onClick={() => navigate('/')} className="p-2 text-black hover:text-white transition-colors">
+                    <ArrowLeft className="h-6 w-6 text-black" />
                 </button>
-                <h1 className="text-lg font-semibold uppercase tracking-tight flex items-center gap-2">
-                    <Target className="h-5 w-5 text-violet-400" />
+                <h1 className="text-lg font-semibold uppercase tracking-tight flex items-center gap-2 text-white">
+                    <Target className="h-5 w-5 text-black" />
                     Búsqueda de Color
                 </h1>
                 <div className="w-10" />
@@ -771,7 +771,7 @@ export default function ColorMatch() {
                                         exit={{ height: 0, opacity: 0 }}
                                         className="overflow-hidden"
                                     >
-                                        <div className="grid grid-cols-3 gap-3 pt-2">
+                                        <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-2">
                                             {[
                                                 { label: 'L*', value: patronL, setter: setPatronL, accent: 'text-white', border: 'focus:border-white/30' },
                                                 { label: 'a*', value: patronA, setter: setPatronA, accent: 'text-emerald-400', border: 'focus:border-emerald-500/50' },
@@ -882,7 +882,7 @@ export default function ColorMatch() {
                                         <div className="flex">
                                             {/* Color swatch */}
                                             <div
-                                                className="w-16 min-w-[4rem] border-r border-slate-800/50"
+                                                className="w-12 sm:w-16 min-w-[3rem] sm:min-w-[4rem] border-r border-slate-800/50"
                                                 style={{ backgroundColor: match.hex }}
                                             />
                                             <div className="flex-1 p-4">
@@ -1263,12 +1263,12 @@ export default function ColorMatch() {
                                                                 <p className="text-xs font-mono font-bold text-white">{parseFloat(data.l).toFixed(2)}</p>
                                                             </div>
                                                             <div className="bg-slate-900 border border-slate-800 p-2 rounded-xl text-center">
-                                                                <p className="text-[8px] text-slate-500 uppercase font-bold text-emerald-400">a*</p>
-                                                                <p className="text-xs font-mono font-bold text-emerald-400">{parseFloat(data.a).toFixed(2)}</p>
+                                                                <p className="text-[8px] text-slate-500 uppercase font-bold">a*</p>
+                                                                <p className="text-xs font-mono font-bold text-white">{parseFloat(data.a).toFixed(2)}</p>
                                                             </div>
                                                             <div className="bg-slate-900 border border-slate-800 p-2 rounded-xl text-center">
-                                                                <p className="text-[8px] text-slate-500 uppercase font-bold text-blue-400">b*</p>
-                                                                <p className="text-xs font-mono font-bold text-blue-400">{parseFloat(data.b).toFixed(2)}</p>
+                                                                <p className="text-[8px] text-slate-500 uppercase font-bold">b*</p>
+                                                                <p className="text-xs font-mono font-bold text-white">{parseFloat(data.b).toFixed(2)}</p>
                                                             </div>
                                                         </div>
                                                     )}

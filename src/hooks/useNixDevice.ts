@@ -11,6 +11,7 @@ import {
     NixMeasurement,
     NixEvent
 } from '../services/NixBluetoothService';
+import { loadSettings, DeviceSettingsData } from '../components/DeviceSettings';
 
 export interface UseNixDeviceReturn {
     // Estado
@@ -27,10 +28,16 @@ export interface UseNixDeviceReturn {
 
     // Acciones
     scan: () => Promise<void>;
+    cancelScan: () => void;
     disconnect: () => void;
     measure: () => Promise<NixMeasurement | null>;
+    removeMeasurement: (timestamp: string) => void;
     clearMeasurements: () => void;
     clearError: () => void;
+
+    // Configuración
+    settings: DeviceSettingsData;
+    reloadSettings: () => void;
 }
 
 export function useNixDevice(): UseNixDeviceReturn {
@@ -47,6 +54,11 @@ export function useNixDevice(): UseNixDeviceReturn {
     const [measurements, setMeasurements] = useState<NixMeasurement[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [status, setStatus] = useState(() => nixService.getDeviceInfo().connected ? `Conectado a ${nixService.getDeviceInfo().name}` : 'Desconectado');
+    const [settings, setSettings] = useState<DeviceSettingsData>(loadSettings());
+
+    const reloadSettings = useCallback(() => {
+        setSettings(loadSettings());
+    }, []);
 
     const unsubscribeRef = useRef<(() => void) | null>(null);
 
@@ -123,6 +135,10 @@ export function useNixDevice(): UseNixDeviceReturn {
         }
     }, []);
 
+    const cancelScan = useCallback(() => {
+        nixService.cancelScan();
+    }, []);
+
     const disconnect = useCallback(() => {
         nixService.disconnect();
     }, []);
@@ -130,11 +146,28 @@ export function useNixDevice(): UseNixDeviceReturn {
     const measure = useCallback(async (): Promise<NixMeasurement | null> => {
         setError(null);
         try {
-            return await nixService.measure();
+            const currentSettings = loadSettings();
+            const count = currentSettings.measurementTrigger === 'manual' ? 1 : currentSettings.multiPointAveraging;
+            return await nixService.measureMultiple(count, {
+                mode: currentSettings.measurementMode,
+                referenceWhite: currentSettings.referenceWhite
+            });
         } catch (err: any) {
             setError(err.message);
             return null;
         }
+    }, []);
+
+    const removeMeasurement = useCallback((timestamp: string) => {
+        setMeasurements(prev => {
+            const filtered = prev.filter(m => m.timestamp !== timestamp);
+            if (filtered.length === 0) {
+                setLastMeasurement(null);
+            } else if (prev[0]?.timestamp === timestamp) {
+                setLastMeasurement(filtered[0]);
+            }
+            return filtered;
+        });
     }, []);
 
     const clearMeasurements = useCallback(() => {
@@ -158,9 +191,13 @@ export function useNixDevice(): UseNixDeviceReturn {
         error,
         status,
         scan,
+        cancelScan,
         disconnect,
         measure,
+        removeMeasurement,
         clearMeasurements,
         clearError,
+        settings,
+        reloadSettings,
     };
 }

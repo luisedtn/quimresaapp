@@ -1,24 +1,96 @@
 @import "tailwindcss";
 
 @theme {
-  --color-quimresa-primary: #004A99; /* Deep Blue from Elegant Dark */
-  --color-quimresa-accent: #c07204; /* Quimresa Orange */
+  --color-quimresa-primary: var(--accent-color);
+  --color-quimresa-accent: var(--accent-orange);
+  --color-quimresa-blue: var(--accent-blue);
   --color-slate-900-50: rgba(15, 23, 42, 0.5);
   --color-slate-800-40: rgba(30, 41, 59, 0.4);
-  
+
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
+/* ----------------------------------------------------
+   SISTEMA DE DISEÑO DE TEMAS (VARIABLES CSS)
+   ---------------------------------------------------- */
 :root {
-  background-color: #0A0F14;
-  color: #e2e8f0;
+  /* Tema Oscuro Mejorado (Predeterminado) */
+  --bg-app: #05080c;
+  --bg-card: rgba(13, 20, 30, 0.75);
+  --bg-card-hover: rgba(22, 33, 49, 0.9);
+  --border-card: rgba(38, 55, 77, 0.45);
+  --border-card-hover: rgba(0, 100, 255, 0.5);
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --accent-color: #005ec3;
+  --accent-color-hover: #0076ec;
+  --accent-orange: #d97706;
+  --accent-orange-hover: #f59e0b;
+  --accent-blue: #005ec3;
+  --accent-blue-hover: #0076ec;
+  --bg-sidebar: #080d12;
+  --border-sidebar: #1e293b;
+  --shadow-premium: 0 12px 30px -10px rgba(0, 0, 0, 0.8), 0 1px 1px rgba(255, 255, 255, 0.05) inset;
+
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  color-scheme: dark;
+}
+
+.light {
+  /* Tema Claro: Naranja ocre corporativo, Azul marino profundo, Fondo crema suave */
+  --bg-app: #FCF5EB;
+  /* Crema suave premium de la imagen */
+  --bg-card: #FFFFFF;
+  /* Blanco puro */
+  --bg-card-hover: #FAF0E2;
+  /* Arena/crema suave en hover */
+  --border-card: rgba(0, 44, 108, 0.15);
+  /* Azul marino muy opaco */
+  --border-card-hover: rgba(184, 93, 0, 0.40);
+  /* Naranja ocre opaco */
+  --text-primary: #002C6C;
+  /* Azul marino profundo corporativo de la imagen */
+  --text-secondary: #3A2C24;
+  /* Marrón tierra intenso de la imagen */
+  --text-muted: #726256;
+  /* Tierra siena definido */
+  --accent-color: #002C6C;
+  /* Azul marino profundo corporativo */
+  --accent-color-hover: #001F4D;
+  --accent-orange: #B85D00;
+  /* Naranja/ocre de botón Entrar */
+  --accent-orange-hover: #9E4F00;
+  --accent-blue: #002C6C;
+  /* Azul marino */
+  --accent-blue-hover: #001F4D;
+  --bg-sidebar: #FAF0E6;
+  /* Fondo menú arena/crema de la imagen */
+  --border-sidebar: rgba(0, 44, 108, 0.18);
+  --shadow-premium: 0 12px 28px -10px rgba(0, 44, 108, 0.12), 0 1px 3px rgba(0, 44, 108, 0.05);
+
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  color-scheme: light;
+}
+
+/* Estilos de transiciones globales para cambios suaves de tema */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, text-decoration-color, fill, stroke, box-shadow;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #0A0F14;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
 #root {
@@ -26,8 +98,985 @@ body {
   min-height: 100vh;
 }
 
+/* ----------------------------------------------------
+   OVERRIDES GLOBALES DE CLASES HARDCODEADAS DE TAILWIND
+   ---------------------------------------------------- */
+
+/* Fondos principales de la aplicación */
+.bg-\[\#0A0F14\],
+.bg-\[\#070B0E\],
+div.min-h-screen.bg-\[\#0A0F14\] {
+  background-color: var(--bg-app) !important;
+}
+
+/* Encabezados y barras de navegación — color más oscuro de la paleta corporativa */
+header.bg-\[\#0A0F14\]\/80,
+header {
+  background-color: #a38105 !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35) !important;
+}
+
+header h1,
+header h2,
+header p,
+header span,
+header button,
+header svg,
+header a {
+  color: #ffffff !important;
+}
+
+header button:hover svg,
+header button:hover {
+  color: var(--accent-orange) !important;
+}
+
+/* Tarjetas y contenedores secundarios */
+.bg-slate-900,
+div.bg-slate-900,
+button.bg-slate-900 {
+  background-color: var(--bg-card) !important;
+}
+
+/* Hover de tarjetas y contenedores */
+.bg-slate-800,
+.bg-slate-800\/50,
+.bg-slate-800\/30,
+.bg-slate-900\/50,
+.bg-slate-900\/40,
+.bg-slate-900\/20,
+.hover\:bg-slate-900\/50:hover,
+.hover\:bg-slate-800\/50:hover {
+  background-color: var(--bg-card-hover) !important;
+}
+
+/* Paneles laterales y Sidebar */
+.bg-\[\#0A0F14\].border-r.border-slate-800,
+aside,
+div.fixed.inset-y-0.left-0 {
+  background-color: var(--bg-sidebar) !important;
+  border-color: var(--border-sidebar) !important;
+}
+
+/* Bordes y divisorias */
+.border-slate-800,
+.border-slate-700,
+.border-slate-800\/50,
+.border-slate-800\/80 {
+  border-color: var(--border-card) !important;
+}
+
+/* Solo el divisor horizontal recibe background-color */
+div.h-\[1px\].bg-slate-800 {
+  background-color: var(--border-card) !important;
+}
+
+
+/* Override de la tarjeta elegante base */
 .elegant-card {
-  background-color: rgba(15, 23, 42, 0.5);
-  border: 1px solid rgba(30, 41, 59, 1);
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-card) !important;
   border-radius: 0.75rem;
+  box-shadow: var(--shadow-premium) !important;
+}
+
+.elegant-card:hover {
+  background-color: var(--bg-card-hover) !important;
+  border-color: var(--border-card-hover) !important;
+}
+
+/* override del botón de acento azul */
+.bg-\[\#004A99\],
+.bg-\[\#002C6C\],
+.bg-quimresa-primary {
+  background-color: var(--accent-color) !important;
+}
+
+.bg-\[\#004A99\]:hover,
+.bg-\[\#002C6C\]:hover,
+.hover\:bg-\[\#004A99\]\/20:hover,
+.hover\:bg-\[\#002C6C\]\/20:hover {
+  background-color: var(--accent-color-hover) !important;
+}
+
+/* override del botón de acento naranja */
+.bg-\[\#c07204\],
+.bg-\[\#B85D00\],
+.bg-quimresa-accent {
+  background-color: var(--accent-orange) !important;
+}
+
+.bg-\[\#c07204\]:hover,
+.bg-\[\#B85D00\]:hover,
+.hover\:bg-\[\#a66203\]:hover,
+.hover\:bg-\[\#9E4F00\]:hover {
+  background-color: var(--accent-orange-hover) !important;
+}
+
+/* Texto de acento naranja */
+.text-\[\#c07204\],
+.text-\[\#B85D00\],
+.text-quimresa-accent,
+.group-hover\:text-blue-400,
+.hover\:text-blue-400:hover,
+.hover\:text-blue-300:hover {
+  color: var(--accent-orange) !important;
+}
+
+.light .group-hover\:text-blue-400,
+.light .hover\:text-blue-400:hover {
+  color: var(--accent-blue) !important;
+}
+
+/* override de textos */
+.text-white {
+  color: #ffffff !important;
+}
+
+.text-blanco {
+  color: #ffffff !important;
+}
+
+.light .text-white,
+.light .text-blanco {
+  color: var(--text-primary) !important;
+}
+
+/* Mantener texto blanco en botones y elementos con fondo en tema claro */
+.light button,
+.light button *,
+.light [class*="bg-"] {
+  --text-white-keep: #ffffff;
+}
+
+.light button.text-white,
+.light button .text-white,
+.light button.text-blanco,
+.light button .text-blanco,
+.light [class*="bg-"] .text-white,
+.light [class*="bg-"] .text-blanco,
+.light [class*="bg-"].text-white,
+.light [class*="bg-"].text-blanco {
+  color: #ffffff !important;
+}
+
+.text-slate-200,
+.text-slate-300 {
+  color: var(--text-secondary) !important;
+}
+
+.text-slate-400,
+.text-slate-500 {
+  color: var(--text-muted) !important;
+}
+
+/* Mejoras de contraste y visibilidad para el Tema Oscuro en textos mudos */
+:root .text-slate-500 {
+  color: #a1a1aa !important;
+  /* Más claro para excelente visibilidad */
+}
+
+/* Inputs, Textareas y Selectores de Formulario */
+input,
+select,
+textarea,
+.bg-slate-800 input {
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-card) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent-orange) !important;
+  outline: none !important;
+}
+
+/* Degradados temáticos complejos (por ejemplo, del botón Generar PDF) */
+.light .from-violet-600.to-blue-600 {
+  background-image: linear-gradient(to right, var(--accent-orange), var(--accent-blue)) !important;
+}
+
+/* override de azul en Tema Claro */
+.light .text-blue-400 {
+  color: var(--accent-blue) !important;
+}
+
+.light .bg-blue-600 {
+  background-color: var(--accent-blue) !important;
+}
+
+.light .border-blue-500,
+.light .focus\:border-blue-500:focus {
+  border-color: var(--accent-blue) !important;
+}
+
+/* override para el gráfico espectral y mapa CIELAB */
+.light .bg-\[\#f8f9fa\] {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-card) !important;
+}
+
+.light .text-black {
+  color: var(--text-primary) !important;
+}
+
+.light .bg-gray-200 {
+  background-color: var(--bg-card-hover) !important;
+}
+
+.light .bg-white {
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}
+
+.light .text-slate-800 {
+  color: var(--text-secondary) !important;
+}
+
+/* Personalización de barra de scroll premium */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-app);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-orange);
+}
+
+/* ============================================================
+   FORMULA CARDS – Harmonious Orange/Blue Design System
+   Palette:
+     Orange:  #E8722A (primary accent), #D4631F (hover), #F5A623 (warm highlight)
+     Blue:    #1B6FA8 (secondary accent), #145A8A (hover), #2A8FD4 (light)
+     Neutral: dark bg tones from existing theme vars
+   ============================================================ */
+
+/* ── Sort Buttons ── */
+.formula-sort-btn {
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border: 1px solid var(--border-card);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.formula-sort-btn:hover {
+  border-color: var(--accent-orange-hover);
+  color: var(--accent-orange);
+}
+
+.formula-sort-btn--active {
+  background: linear-gradient(135deg, var(--accent-orange), var(--accent-orange-hover)) !important;
+  border-color: var(--accent-orange) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 10px rgba(184, 93, 0, 0.25);
+}
+
+/* ── Spinner ── */
+.formula-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(184, 93, 0, 0.2);
+  border-top-color: var(--accent-orange);
+  border-radius: 50%;
+  animation: formula-spin 0.7s linear infinite;
+}
+
+.formula-spinner--sm {
+  width: 24px;
+  height: 24px;
+  border-width: 2px;
+}
+
+@keyframes formula-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Card Container ── */
+.formula-card {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid var(--border-card);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-premium);
+  transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.formula-card:hover {
+  border-color: var(--accent-color);
+  box-shadow: 0 8px 28px -8px rgba(0, 44, 108, 0.15), var(--shadow-premium);
+}
+
+.formula-card:active {
+  transform: scale(0.985);
+}
+
+/* ── Top Accent Bar ── */
+.formula-card__accent {
+  height: 4px;
+  width: 100%;
+}
+
+/* ── Card Body ── */
+.formula-card__body {
+  padding: 14px 16px 16px;
+}
+
+/* ── Color Circle ── */
+.formula-card__color-circle {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.formula-card:hover .formula-card__color-circle {
+  transform: scale(1.08);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 3px rgba(255, 255, 255, 0.15);
+}
+
+/* ── Name ── */
+.formula-card__name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* ── Code Tag ── */
+.formula-card__code {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent-orange);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── Lote Tag ── */
+.formula-card__lote {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(0, 44, 108, 0.08);
+  border: 1px solid rgba(0, 44, 108, 0.15);
+  padding: 1px 8px;
+  border-radius: 9999px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+/* ── Date ── */
+.formula-card__date {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ── Base Badge ── */
+.formula-card__base-badge {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent-color);
+  background: rgba(0, 44, 108, 0.08);
+  border: 1px solid rgba(0, 44, 108, 0.18);
+  padding: 2px 8px;
+  border-radius: 6px;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+/* ── Client ── */
+.formula-card__client {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  overflow: hidden;
+}
+
+.formula-card__client span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── LAB Values Row ── */
+.formula-card__lab-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(0, 44, 108, 0.05);
+  border: 1px solid rgba(0, 44, 108, 0.1);
+  border-radius: 10px;
+  padding: 6px 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.formula-card__lab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.formula-card__lab-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  opacity: 0.7;
+  line-height: 1;
+}
+
+.formula-card__lab-value {
+  font-family: "JetBrains Mono", "SF Mono", "Fira Code", ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.formula-card__lab-divider {
+  width: 1px;
+  height: 22px;
+  background: rgba(0, 44, 108, 0.12);
+  flex-shrink: 0;
+}
+
+/* ── Quality Control Button ── */
+.formula-card__qc-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 44, 108, 0.25);
+  background: rgba(0, 44, 108, 0.06);
+  color: var(--accent-color);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.formula-card__qc-btn:hover {
+  background: rgba(0, 44, 108, 0.14);
+  border-color: rgba(0, 44, 108, 0.4);
+  color: var(--accent-color-hover);
+}
+
+.formula-card__qc-btn:active {
+  transform: scale(0.96);
+}
+
+/* ── FAB (Scroll to Top) ── */
+.formula-fab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, var(--accent-orange), var(--accent-orange-hover));
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(184, 93, 0, 0.35);
+  transition: all 0.2s ease;
+}
+
+.formula-fab:hover {
+  background: linear-gradient(135deg, var(--accent-orange-hover), #804000);
+  box-shadow: 0 8px 25px rgba(184, 93, 0, 0.45);
+}
+
+/* ── Light Theme Overrides ── */
+.light .formula-card__color-circle {
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.light .formula-card:hover .formula-card__color-circle {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18), inset 0 1px 3px rgba(255, 255, 255, 0.4);
+}
+
+.light .formula-card__lote {
+  background: rgba(0, 44, 108, 0.08);
+  border-color: rgba(0, 44, 108, 0.15);
+}
+
+.light .formula-card__lab-row {
+  background: rgba(0, 44, 108, 0.05);
+  border-color: rgba(0, 44, 108, 0.1);
+}
+
+.light .formula-card__qc-btn {
+  background: rgba(0, 44, 108, 0.06);
+  border-color: rgba(0, 44, 108, 0.25);
+}
+
+.light .formula-card__qc-btn:hover {
+  background: rgba(0, 44, 108, 0.14);
+}
+
+.light .formula-sort-btn--active {
+  box-shadow: 0 2px 10px rgba(184, 93, 0, 0.2);
+}
+
+.light .formula-fab {
+  box-shadow: 0 6px 20px rgba(184, 93, 0, 0.25);
+}
+
+/* ----------------------------------------------------
+   NIX DEVICE SETTINGS COMPONENT STYLES
+   ---------------------------------------------------- */
+.nix-settings__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.nix-settings__panel {
+  width: 100%;
+  max-width: 400px;
+  height: 100%;
+  background-color: var(--bg-card);
+  border-left: 1px solid var(--border-card);
+  box-shadow: var(--shadow-premium);
+  display: flex;
+  flex-direction: column;
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+.nix-settings__header {
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--border-card);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-sidebar);
+}
+
+.nix-settings__header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.nix-settings__header-icon-wrap {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  background-color: rgba(204, 82, 0, 0.1);
+  color: var(--accent-orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nix-settings__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.25;
+  color: var(--text-primary) !important;
+}
+
+.nix-settings__subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0;
+  margin-top: 0.125rem;
+}
+
+.nix-settings__close-btn {
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  color: var(--text-muted);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nix-settings__close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.light .nix-settings__close-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.nix-settings__status-row {
+  padding: 0.75rem 1.25rem;
+  background-color: rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid var(--border-card);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.light .nix-settings__status-row {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.nix-settings__status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.nix-settings__status-pill--connected {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+.nix-settings__status-dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background-color: #ef4444;
+}
+
+.nix-settings__status-dot--connected {
+  background-color: #22c55e;
+}
+
+.nix-settings__status-note {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.nix-settings__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.nix-settings__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.nix-settings__section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.nix-settings__section-icon {
+  color: var(--accent-orange);
+  display: flex;
+  align-items: center;
+}
+
+.nix-settings__section-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.nix-settings__ref-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  width: 100%;
+}
+
+.light .nix-settings__ref-toggle {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.nix-settings__ref-toggle:hover {
+  border-color: var(--accent-orange);
+}
+
+.nix-settings__ref-selected {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.nix-settings__ref-chevron {
+  transition: transform 0.2s ease;
+  color: var(--text-muted);
+}
+
+.nix-settings__ref-chevron--open {
+  transform: rotate(180deg);
+}
+
+.nix-settings__ref-list-wrap {
+  overflow: hidden;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-card);
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.light .nix-settings__ref-list-wrap {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.nix-settings__ref-list {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0.25rem;
+}
+
+.nix-settings__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.nix-settings__radio-row,
+.nix-settings__check-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-card);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.light .nix-settings__radio-row,
+.light .nix-settings__check-row {
+  background-color: rgba(0, 0, 0, 0.01);
+}
+
+.nix-settings__radio-row:hover,
+.nix-settings__check-row:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(204, 82, 0, 0.4);
+}
+
+.light .nix-settings__radio-row:hover,
+.light .nix-settings__check-row:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+  border-color: rgba(184, 93, 0, 0.4);
+}
+
+.nix-settings__radio-row--active,
+.nix-settings__check-row--active {
+  background-color: rgba(204, 82, 0, 0.06) !important;
+  border-color: var(--accent-orange) !important;
+}
+
+.light .nix-settings__radio-row--active,
+.light .nix-settings__check-row--active {
+  background-color: rgba(184, 93, 0, 0.06) !important;
+  border-color: var(--accent-orange) !important;
+}
+
+.nix-settings__radio-dot {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 1px solid var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nix-settings__radio-dot--active {
+  border-color: var(--accent-orange);
+}
+
+.nix-settings__radio-inner {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: var(--accent-orange);
+}
+
+.nix-settings__checkbox {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+}
+
+.nix-settings__checkbox--active {
+  background-color: var(--accent-orange);
+  border-color: var(--accent-orange);
+}
+
+.nix-settings__radio-label,
+.nix-settings__check-label {
+  font-size: 0.825rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.nix-settings__radio-desc,
+.nix-settings__check-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.nix-settings__divider {
+  height: 1px;
+  background-color: var(--border-card);
+  margin: 0.25rem 0;
+}
+
+.nix-settings__footer {
+  padding: 1.25rem;
+  border-top: 1px solid var(--border-card);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--bg-sidebar);
+}
+
+.nix-settings__reset-btn {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-card);
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.nix-settings__reset-btn:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.light .nix-settings__reset-btn:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.nix-settings__apply-btn {
+  flex: 2;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff !important;
+  border: none;
+  background-color: var(--accent-orange);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.nix-settings__apply-btn:hover:not(:disabled) {
+  background-color: var(--accent-orange-hover);
+}
+
+.nix-settings__apply-btn--saved {
+  background-color: #10b981 !important;
+}
+
+.nix-settings__apply-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

@@ -403,22 +403,60 @@ export default function QualityControl() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col">
-      <header className="fixed top-0 z-10 flex w-full items-center justify-between border-b border-slate-800 bg-[#0A0F14]/80 backdrop-blur-md px-4 py-4">
-        <button onClick={() => navigate('/')} className="p-2 text-slate-400 hover:text-white transition-colors">
-          <ArrowLeft className="h-6 w-6" />
+    <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col overflow-x-hidden">
+      <header className="fixed top-0 z-10 flex w-full items-center justify-between border-b border-black/10 bg-[#CC5200] shadow-lg px-4 py-4">
+        <button onClick={() => navigate('/')} className="p-2 text-black hover:text-white transition-colors">
+          <ArrowLeft className="h-6 w-6 text-black" />
         </button>
-        <h1 className="text-lg font-semibold uppercase tracking-tight">Control de calidad</h1>
+        <h1 className="text-lg font-semibold uppercase tracking-tight text-white">Control de calidad</h1>
         <button
           onClick={() => setShowListaPDFs(true)}
-          className="p-2 text-slate-400 hover:text-white transition-colors relative group"
+          className="p-2 text-black hover:text-white transition-colors relative group"
         >
-          <div className="absolute inset-0 bg-violet-500/20 rounded-full scale-0 group-hover:scale-100 transition-transform"></div>
-          <FileText className="h-6 w-6 relative z-10" />
+          <div className="absolute inset-0 bg-black/10 rounded-full scale-0 group-hover:scale-100 transition-transform"></div>
+          <FileText className="h-6 w-6 text-black relative z-10" />
         </button>
       </header>
 
       <main className="flex flex-col gap-4 pt-24 pb-8 px-4 max-w-lg mx-auto w-full flex-grow">
+        {/* Capture Buttons */}
+        <div className="flex flex-col gap-4 w-full">
+          {!standard ? (
+            <motion.button
+              whileHover={{ y: -2, scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              onClick={handleCaptureStandard}
+              className="elegant-card flex items-center justify-center gap-4 p-5 text-center transition-all duration-300 group border border-slate-200/60 dark:border-slate-800/80 rounded-2xl w-full bg-slate-900/20 hover:bg-slate-900/40 shadow-sm"
+            >
+              <div className="rounded-xl p-3.5 bg-gradient-to-br from-[#a38105]/15 to-[#a38105]/5 dark:from-slate-800/80 dark:to-slate-900/80 border border-[#a38105]/15 dark:border-slate-700/50 flex-shrink-0 flex items-center justify-center transition-all duration-300 group-hover:from-[#a38105]/25 group-hover:to-[#a38105]/15">
+                <Sparkles className="h-6 w-6 text-[#a38105] dark:text-[#d4af37] transition-transform duration-300 group-hover:scale-110" />
+              </div>
+              <span className="text-base font-bold tracking-tight text-slate-200 group-hover:text-[#005EC3] dark:group-hover:text-blue-400 uppercase">1. Capturar Patrón</span>
+            </motion.button>
+          ) : !sample ? (
+            <div className="flex flex-col gap-4">
+              <div className="elegant-card flex items-center justify-between p-4 border border-slate-200/60 dark:border-slate-800/80 rounded-2xl bg-slate-900/20">
+                <div>
+                  <h4 className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mb-1">Patrón Guardado</h4>
+                  <p className="text-sm font-bold text-white tracking-tight">{standard.name || 'Patrón'}</p>
+                </div>
+                <div className="w-12 h-12 rounded-full shadow-inner border border-slate-700" style={{ backgroundColor: standard.hex }}></div>
+              </div>
+              <motion.button
+                whileHover={{ y: -2, scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={handleCaptureSample}
+                className="elegant-card flex items-center justify-center gap-4 p-5 text-center transition-all duration-300 group border border-slate-200/60 dark:border-slate-800/80 rounded-2xl w-full bg-slate-900/20 hover:bg-slate-900/40 shadow-sm"
+              >
+                <div className="rounded-xl p-3.5 bg-gradient-to-br from-[#CC5200]/15 to-[#CC5200]/5 dark:from-slate-800/80 dark:to-slate-900/80 border border-[#CC5200]/15 dark:border-slate-700/50 flex-shrink-0 flex items-center justify-center transition-all duration-300 group-hover:from-[#CC5200]/25 group-hover:to-[#CC5200]/15">
+                  <Sparkles className="h-6 w-6 text-[#CC5200] dark:text-[#ff7f3f] transition-transform duration-300 group-hover:scale-110" />
+                </div>
+                <span className="text-base font-bold tracking-tight text-slate-200 group-hover:text-[#CC5200] dark:group-hover:text-[#ff7f3f] uppercase">2. Capturar Muestra</span>
+              </motion.button>
+            </div>
+          ) : null}
+        </div>
+
         {/* Chart Component dynamically renders when both are captured */}
         <AnimatePresence>
           {standard && sample && (
@@ -434,25 +472,25 @@ export default function QualityControl() {
 
         {/* Formula Information */}
         {qcContextData && qcContextData.componentColors && (
-          <div className="bg-slate-900/40 rounded-2xl border border-slate-800 p-4 space-y-3 shadow-xl">
-            <div className="flex items-end justify-between border-b border-slate-800 pb-2">
+          <div className="elegant-card rounded-2xl border border-slate-200/60 dark:border-slate-800/80 p-5 space-y-4 bg-slate-900/20 shadow-lg">
+            <div className="flex items-end justify-between border-b border-slate-200/20 dark:border-slate-700/50 pb-3">
               <div>
-                <h3 className="text-xs font-bold text-white uppercase tracking-tight">
+                <h3 className="text-xs font-bold text-slate-200 uppercase tracking-tight">
                   {qcContextData.formulaName || 'Fórmula Encontrada'}
                 </h3>
-                <p className="text-[10px] text-blue-400 font-bold uppercase tracking-wide mt-1">
+                <p className="text-[10px] text-[#a38105] dark:text-[#d4af37] font-bold uppercase tracking-wide mt-1">
                   {qcContextData.formulaProduct || 'Producto no especificado'}
                 </p>
               </div>
-              <span className="text-[10px] text-slate-500 font-bold uppercase">
+              <span className="text-[10px] text-slate-400 font-bold uppercase bg-slate-800/40 px-2.5 py-1.5 rounded-md border border-slate-700/50">
                 Prep: {qcContextData.prepareAmount || 1.0} LT
               </span>
             </div>
 
             <div className="space-y-2 mt-2">
-              <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Componentes</h4>
+              <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-3">Componentes</h4>
               {qcContextData.componentColors.map((cc: any, idx: number) => (
-                <div key={idx} className="flex items-center justify-between bg-slate-950/50 p-2 rounded-lg border border-slate-800/50">
+                <div key={idx} className="flex items-center justify-between bg-slate-100/5 dark:bg-slate-800/30 p-2.5 rounded-xl border border-slate-200/10 dark:border-slate-700/30 hover:bg-slate-800/50 transition-colors">
                   <div className="flex items-center gap-3">
                     <div
                       className="h-6 w-6 rounded-md shadow-inner border border-slate-700/50"
@@ -465,9 +503,9 @@ export default function QualityControl() {
                         backgroundPosition: cc.baseType === 'transparent' ? '0 0, 0 3px, 3px -3px, -3px 0px' : undefined,
                       }}
                     ></div>
-                    <span className="text-[10px] font-bold text-white">{cc.code}</span>
+                    <span className="text-[10px] font-bold text-slate-200">{cc.code}</span>
                   </div>
-                  <div className="text-[11px] font-mono font-bold text-violet-300">
+                  <div className="text-[11px] font-mono font-bold text-[#CC5200] dark:text-[#ff7f3f]">
                     {cc.quantity ? (cc.quantity * (qcContextData.prepareAmount || 1)).toFixed(3) + ' L' : cc.displayQuantity || '0.00 L'}
                   </div>
                 </div>
@@ -478,21 +516,27 @@ export default function QualityControl() {
 
         {/* Generar PDF Button */}
         {qcContextData && (
-          <button
+          <motion.button
+            whileHover={{ y: -2, scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
             onClick={() => setShowPDF(true)}
-            className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold transition-all bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-xl shadow-violet-900/30 active:scale-95 text-xs uppercase tracking-widest mt-6"
+            className="w-full flex items-center justify-center gap-3 p-5 rounded-2xl transition-all duration-300 group border border-slate-800/80 bg-slate-900/20 hover:bg-slate-900/40 mt-4 shadow-sm"
           >
-            <FileText className="w-4 h-4" />
-            Generar Informe PDF
-          </button>
+            <div className="rounded-xl p-3.5 bg-gradient-to-br from-[#005EC3]/15 to-[#005EC3]/5 dark:from-slate-800/80 dark:to-slate-900/80 border border-[#005EC3]/15 dark:border-slate-700/50 flex-shrink-0 flex items-center justify-center transition-all duration-300 group-hover:from-[#005EC3]/25 group-hover:to-[#005EC3]/15">
+              <FileText className="w-5 h-5 text-[#005EC3] dark:text-blue-400 transition-transform duration-300 group-hover:scale-110" />
+            </div>
+            <span className="text-sm font-bold tracking-tight text-slate-200 group-hover:text-[#005EC3] dark:group-hover:text-blue-400 uppercase">Generar Informe PDF</span>
+          </motion.button>
         )}
 
-        <button
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 py-4 font-bold text-slate-400 transition-all active:scale-95 text-xs uppercase tracking-widest shadow-xl"
+        <motion.button
+          whileHover={{ y: -2, scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
           onClick={() => { setStandard(null); setSample(null); initialStandardSet.current = false; }}
+          className="mt-2 w-full flex items-center justify-center gap-3 p-4 rounded-2xl transition-all duration-300 group border border-slate-800/60 bg-slate-900/10 hover:bg-slate-900/30"
         >
-          Nueva Sesión / Limpiar
-        </button>
+          <span className="text-xs font-bold tracking-tight text-slate-500 group-hover:text-slate-300 uppercase">Nueva Sesión / Limpiar</span>
+        </motion.button>
       </main>
 
       <AnimatePresence>
@@ -524,8 +568,8 @@ export default function QualityControl() {
           >
             <div className="relative mb-6">
               {/* Animated rings */}
-              <div className="h-20 w-20 rounded-full border-4 border-[#004A99]/20"></div>
-              <div className="absolute top-0 left-0 h-20 w-20 animate-spin rounded-full border-4 border-[#004A99] border-t-transparent"></div>
+              <div className="h-20 w-20 rounded-full border-4 border-[#002C6C]/20"></div>
+              <div className="absolute top-0 left-0 h-20 w-20 animate-spin rounded-full border-4 border-[#002C6C] border-t-transparent"></div>
             </div>
             <h3 className="text-xl font-bold text-white tracking-tight">Capturando Color...</h3>
             <p className="text-slate-400 text-sm mt-2 font-medium uppercase tracking-widest animate-pulse">Leyendo valores del sensor</p>

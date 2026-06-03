@@ -5,6 +5,29 @@ import { motion, AnimatePresence } from 'motion/react';
 import { API_BASE_URL } from '../config';
 import DetalleFormula from '../components/DetalleFormula';
 
+function labToHex(l: number, a: number, b: number): string {
+  const y = (l + 16) / 116;
+  const x = a / 500 + y;
+  const z = y - b / 200;
+  const x3 = x * x * x, y3 = y * y * y, z3 = z * z * z;
+  const xr = x3 > 0.008856 ? x3 : (x - 16 / 116) / 7.787;
+  const yr = y3 > 0.008856 ? y3 : (y - 16 / 116) / 7.787;
+  const zr = z3 > 0.008856 ? z3 : (z - 16 / 116) / 7.787;
+  const rl = xr * 3.2406 + yr * -1.5372 + zr * -0.4986;
+  const gl = xr * -0.9689 + yr * 1.8758 + zr * 0.0415;
+  const bl = xr * 0.0557 + yr * -0.2040 + zr * 1.0570;
+  const gamma = (c: number) => Math.round(Math.max(0, Math.min(255, ((c > 0.0031308 ? 1.055 * Math.pow(c, 1 / 2.4) - 0.055 : 12.92 * c)) * 255)));
+  return `#${gamma(rl).toString(16).padStart(2, '0')}${gamma(gl).toString(16).padStart(2, '0')}${gamma(bl).toString(16).padStart(2, '0')}`;
+}
+
+const getFormulaColor = (f: any) => {
+  const l = f.L !== undefined && f.L !== null ? f.L : f.l;
+  const a = f.A !== undefined && f.A !== null ? f.A : f.a;
+  const b = f.B !== undefined && f.B !== null ? f.B : f.b;
+  if (l === undefined || l === null || l === '') return '#1e293b';
+  return labToHex(parseFloat(String(l)), parseFloat(String(a || '0')), parseFloat(String(b || '0')));
+};
+
 export default function StandardFormulas({ onLogout }: { onLogout: () => void }) {
     const navigate = useNavigate();
     const [formulas, setFormulas] = useState<any[]>([]);
@@ -144,17 +167,17 @@ export default function StandardFormulas({ onLogout }: { onLogout: () => void })
     };
 
     return (
-        <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col">
-            <header className="fixed top-0 z-10 flex w-full items-center justify-between border-b border-slate-800 bg-[#0A0F14]/80 backdrop-blur-md px-4 py-4">
-                <button onClick={() => navigate(-1)} className="p-2 text-slate-400 hover:text-white transition-colors">
-                    <ArrowLeft className="h-6 w-6" />
+        <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col overflow-x-hidden">
+            <header className="fixed top-0 z-10 flex w-full items-center justify-between border-b border-black/10 bg-[#CC5200] shadow-lg px-4 py-4">
+                <button onClick={() => navigate(-1)} className="p-2 text-black hover:text-white transition-colors">
+                    <ArrowLeft className="h-6 w-6 text-black" />
                 </button>
-                <h1 className="text-lg font-semibold uppercase tracking-tight">Fórmulas Standard</h1>
+                <h1 className="text-lg font-semibold uppercase tracking-tight text-white">Fórmulas Standard</h1>
                 <button
                     onClick={() => setShowFilters(!showFilters)}
-                    className={`p-2 rounded-lg transition-all ${showFilters ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}
+                    className={`p-2 rounded-lg transition-all ${showFilters ? 'bg-black/20 text-white' : 'text-black hover:bg-black/10'}`}
                 >
-                    <Filter className="h-5 w-5" />
+                    <Filter className="h-5 w-5 text-black" />
                 </button>
             </header>
 
@@ -165,7 +188,7 @@ export default function StandardFormulas({ onLogout }: { onLogout: () => void })
                     <input
                         type="text"
                         placeholder="Buscar por nombre de color..."
-                        className="w-full rounded-xl bg-slate-900 border border-slate-800 py-3 pr-4 pl-11 text-sm text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                        className="w-full rounded-xl bg-slate-900 border border-slate-800 py-3 pr-4 pl-11 text-sm text-white focus:ring-2 focus:ring-[#B85D00]/40 focus:border-[#B85D00] outline-none transition-all placeholder:text-slate-600"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -188,7 +211,7 @@ export default function StandardFormulas({ onLogout }: { onLogout: () => void })
                                     <select
                                         value={selectedIDMarca}
                                         onChange={e => setSelectedIDMarca(e.target.value)}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500"
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-white outline-none focus:border-[#B85D00]"
                                     >
                                         <option value="">Todas las marcas</option>
                                         {marcas.map(m => <option key={m.ID} value={m.ID}>{m.NOMBRE}</option>)}
@@ -202,7 +225,7 @@ export default function StandardFormulas({ onLogout }: { onLogout: () => void })
                                     <select
                                         value={selectedIDProducto}
                                         onChange={e => setSelectedIDProducto(e.target.value)}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500"
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-white outline-none focus:border-[#B85D00]"
                                     >
                                         <option value="">Todos los productos</option>
                                         {productos.map(p => <option key={p.ID} value={p.ID}>{p.PRODUCTO}</option>)}
@@ -216,7 +239,7 @@ export default function StandardFormulas({ onLogout }: { onLogout: () => void })
                                     <select
                                         value={selectedIDCarta}
                                         onChange={e => setSelectedIDCarta(e.target.value)}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500"
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-white outline-none focus:border-[#B85D00]"
                                     >
                                         <option value="">Todas las cartas</option>
                                         {cartas.map(c => <option key={c.ID} value={c.ID}>{c.CARTA}</option>)}
@@ -225,7 +248,7 @@ export default function StandardFormulas({ onLogout }: { onLogout: () => void })
 
                                 <button
                                     onClick={() => { setSelectedIDMarca(''); setSelectedIDProducto(''); setSelectedIDCarta(''); setSearchTerm(''); }}
-                                    className="mt-2 text-[10px] font-bold text-blue-400 uppercase tracking-widest hover:text-blue-300 transition-colors"
+                                    className="mt-2 text-[10px] font-bold text-[#B85D00] uppercase tracking-widest hover:text-[#9E4F00] transition-colors"
                                 >
                                     Limpiar Filtros
                                 </button>
@@ -236,7 +259,7 @@ export default function StandardFormulas({ onLogout }: { onLogout: () => void })
 
                 {loading ? (
                     <div className="flex justify-center py-20">
-                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+                        <div className="formula-spinner"></div>
                     </div>
                 ) : formulas.length > 0 ? (
                     <div className="grid gap-4">
@@ -251,17 +274,19 @@ export default function StandardFormulas({ onLogout }: { onLogout: () => void })
                             >
                                 <div
                                     className="w-20 min-w-[5rem] border-r border-slate-800"
-                                    style={{ backgroundColor: `lab(${f.L} ${f.A} ${f.B})` }}
+                                    style={{
+                                        backgroundColor: getFormulaColor(f)
+                                    }}
                                 />
                                 <div className="flex-grow p-4">
                                     <h3 className="text-sm font-bold text-white mb-1">{f.NOMBRE}</h3>
                                     <div className="flex flex-wrap gap-2 mb-3">
-                                        {f.marca && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-blue-900/30 text-blue-400 border border-blue-800/50 uppercase">{f.marca.NOMBRE}</span>}
-                                        {f.producto && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-emerald-900/30 text-emerald-400 border border-emerald-800/50 uppercase">{f.producto.PRODUCTO}</span>}
+                                        {f.marca && <span className="formula-card__base-badge">{f.marca.NOMBRE}</span>}
+                                        {f.producto && <span className="formula-card__code text-[8px]">{f.producto.PRODUCTO}</span>}
                                     </div>
                                     <button
                                         onClick={(e) => handleQualityControl(e, f)}
-                                        className="w-full flex items-center justify-center gap-2 rounded-lg border border-slate-800 bg-slate-900/50 px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+                                        className="formula-card__qc-btn w-full"
                                     >
                                         <ClipboardCheck className="h-3 w-3" />
                                         Control de Calidad
@@ -271,7 +296,7 @@ export default function StandardFormulas({ onLogout }: { onLogout: () => void })
                         ))}
                         {loadingMore && (
                             <div className="flex justify-center py-4">
-                                <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                                <div className="formula-spinner formula-spinner--sm"></div>
                             </div>
                         )}
                     </div>

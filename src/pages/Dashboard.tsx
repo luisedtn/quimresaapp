@@ -8,6 +8,7 @@ import {
   History,
   Library,
   Heart,
+  Search,
   MessageCircle,
   Cloud,
   Settings,
@@ -92,14 +93,14 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
   };
 
   const menuItems = [
-    { id: 'formulas', icon: PaintBucket, title: 'Fórmulas de Color', desc: 'Ver tus formulaciones de color específicas.', path: '/formulas' },
+    { id: 'scan', icon: Scan, title: 'Escaneo único', desc: 'Obtén datos espectrales, RGB, HEX, CIELAB y más.', path: '/scan' },
     { id: 'qc', icon: Layers, title: 'Control de calidad', desc: 'Compara muestras contra un estándar e identifica si pasan o fallan.', path: '/quality-control' },
     { id: 'qc-history', icon: History, title: 'Historial de control', desc: 'Tu registro de sesiones de control de calidad.' },
+    { id: 'formulas', icon: PaintBucket, title: 'Fórmulas de Color', desc: 'Ver tus formulaciones de color específicas.', path: '/formulas' },
     // { id: 'colorimetro', icon: Scan, title: 'Colorímetro Bluetooth', desc: 'Conecta tu Nix para escanear y capturar colores.', path: '/colorimetro' },
-    { id: 'scan', icon: Scan, title: 'Escaneo único', desc: 'Obtén datos espectrales, RGB, HEX, CIELAB y más.', path: '/scan' },
-    { id: 'match', icon: Layers, title: 'Búsqueda de color', desc: 'Encuentra la coincidencia más cercana en bibliotecas de pintura.', path: '/color-match' },
+    { id: 'match', icon: Search, title: 'Búsqueda de color', desc: 'Encuentra la coincidencia más cercana en bibliotecas de pintura.', path: '/color-match' },
     { id: 'libraries', icon: Library, title: 'Fórmulas stándard', desc: 'Explora tus fórmulas stándard.', path: '/libraries' },
-    { id: 'favorites', icon: Heart, title: 'Colores favoritos', desc: 'Accede, descarga y edita tus colores favoritos.' },
+    { id: 'favorites', icon: Heart, title: 'Colecciones', desc: 'Accede, descarga y edita tus colores favoritos.' },
     // { id: 'cloud', icon: Cloud, title: 'Panel en la nube', desc: 'Comparte colores, ve analíticas y gestiona usuarios.' },
   ];
 
@@ -158,16 +159,16 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
       </AnimatePresence>
 
       {/* Top Navigation / Header */}
-      <header className="fixed top-0 z-10 flex w-full items-center justify-between border-b border-slate-800 bg-[#0A0F14]/80 backdrop-blur-md px-6 py-4">
+      <header className="fixed top-0 z-10 flex w-full items-center justify-between border-b border-black/10 bg-[#CC5200] shadow-lg px-6 py-4">
         <div className="flex items-center gap-4">
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="p-2 text-slate-400 hover:text-white transition-colors hover:bg-slate-800/50 rounded-lg"
+            className="p-2 text-black hover:text-white transition-colors hover:bg-black/10 rounded-lg"
           >
-            <Menu className="h-6 w-6" />
+            <Menu className="h-6 w-6 text-white" />
           </button>
           {!(userData && (userData.typeuser == 0 || userData.typeuser === "0")) && (
-            <div className="w-10 h-10 bg-[#004A99] overflow-hidden rounded flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-blue-900/20">
+            <div className="w-10 h-10 bg-black/20 overflow-hidden rounded flex items-center justify-center font-bold text-white text-xl shadow-lg">
               {logoUrl ? <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" /> : 'Q'}
             </div>
           )}
@@ -175,37 +176,37 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
             <h1 className="text-lg font-semibold tracking-tight text-white uppercase leading-none">{userData?.empresa || 'Quimresa'}</h1>
             <div className="flex items-center gap-2 mt-1">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              <p className="text-[10px] text-slate-400"><span className="text-slate-200 uppercase tracking-wider">Quimresa Color Lab</span></p>
+              <p className="text-[10px] text-white/70"><span className="text-white/90 uppercase tracking-wider">Quimresa Color Lab</span></p>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="hidden md:flex flex-col text-right mr-2">
-            <p className="text-xs font-medium text-slate-300">{userData?.email || 'usuario@quimresa.com'}</p>
+            <p className="text-xs font-medium text-white">{userData?.email || 'usuario@quimresa.com'}</p>
             <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest">Acceso Autorizado</p>
           </div>
           {(userData && (userData.typeuser == 0 || userData.typeuser === "0")) && (
             <button
               onClick={() => setShowCustomerSearch(true)}
-              className="p-2 text-slate-500 hover:text-blue-400 transition-colors bg-slate-800/30 rounded-lg"
+              className="p-2 text-black hover:text-white transition-colors bg-black/10 rounded-lg"
               title="Seleccionar Cliente"
             >
-              <Users className="h-5 w-5" />
+              <Users className="h-5 w-5 text-white" />
             </button>
           )}
           <button
             onClick={() => navigate('/colorimetro')}
-            className="p-2 text-slate-500 hover:text-blue-400 transition-colors bg-slate-800/30 rounded-lg"
+            className="p-2 text-black hover:text-white transition-colors bg-black/10 rounded-lg"
             title="Colorímetro y Escáner"
           >
             <img src={IconoAjustes} alt="Icono" className="h-5 w-5" />
           </button>
           <button
             onClick={() => setShowExitConfirm(true)}
-            className="p-2 text-slate-500 hover:text-red-400 transition-colors bg-slate-800/30 rounded-lg"
+            className="p-2 text-black hover:text-white transition-colors bg-black/10 rounded-lg"
             title="Salir de la aplicación"
           >
-            <Power className="h-5 w-5" />
+            <Power className="h-5 w-5 text-white" />
           </button>
         </div>
       </header>
@@ -219,8 +220,8 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
           {menuItems.map((item) => (
             <motion.button
               key={item.id}
-              whileHover={{ y: -2, backgroundColor: 'rgba(30, 41, 59, 0.3)' }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ y: -2, scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
               onClick={() => {
                 if (item.id === 'qc-history') {
                   setShowHistorialControl(true);
@@ -228,17 +229,21 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
                   navigate(item.path);
                 }
               }}
-              className="elegant-card flex flex-col items-start gap-4 p-6 text-left transition-all hover:border-slate-600 group"
+              className="elegant-card flex items-center gap-4 p-5 text-left transition-all duration-300 group border border-slate-200/60 dark:border-slate-800/80 rounded-2xl w-full"
             >
-              <div className="rounded-lg bg-slate-800/50 p-3 group-hover:bg-[#004A99]/20 transition-colors">
-                <item.icon className="h-6 w-6 text-slate-300 group-hover:text-blue-400" />
+              <div className="rounded-xl p-3.5 bg-gradient-to-br from-[#a38105]/15 to-[#a38105]/5 dark:from-slate-800/80 dark:to-slate-900/80 border border-[#a38105]/15 dark:border-slate-700/50 flex-shrink-0 flex items-center justify-center transition-all duration-300 group-hover:from-[#a38105]/25 group-hover:to-[#a38105]/15">
+                <item.icon className="h-6 w-6 text-[#a38105] dark:text-[#d4af37] transition-transform duration-300 group-hover:scale-110" />
               </div>
-              <div className="flex-1 w-full">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base font-semibold text-white">{item.title}</h3>
-                  <ChevronRight className="h-4 w-4 text-slate-700 group-hover:text-slate-400" />
-                </div>
-                <p className="text-xs text-slate-500 mt-1 line-clamp-2">{item.desc}</p>
+              <div className="flex-grow min-w-0 pr-2">
+                <h3 className="text-base font-bold tracking-tight transition-colors group-hover:text-[#005EC3] dark:group-hover:text-blue-400" style={{ color: 'var(--text-primary)' }}>
+                  {item.title}
+                </h3>
+                <p className="text-xs mt-1 leading-relaxed line-clamp-2" style={{ color: 'var(--text-secondary)', opacity: 0.9 }}>
+                  {item.desc}
+                </p>
+              </div>
+              <div className="flex-shrink-0 bg-slate-100 dark:bg-slate-800/60 p-2 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300">
+                <ChevronRight className="h-4 w-4 text-slate-600 dark:text-slate-400 group-hover:translate-x-0.5 transition-transform" />
               </div>
             </motion.button>
           ))}

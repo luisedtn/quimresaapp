@@ -4,8 +4,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowLeft, Settings, Bluetooth, Check, RefreshCcw,
   Scan as ScanIcon, Battery, Wifi, AlertTriangle, BluetoothOff,
-  BluetoothSearching, BluetoothConnected, Save
+  BluetoothSearching, BluetoothConnected, Save, Share2, List
 } from 'lucide-react';
+import { Share as CapShare } from '@capacitor/share';
+import DeviceSettings from '../components/DeviceSettings';
+import GuardarEscaneo from '../components/GuardarEscaneo';
 import { useNixDevice } from '../hooks/useNixDevice';
 import { API_BASE_URL } from '../config';
 import { deltaE2000 } from '../services/NixBluetoothService';
@@ -19,6 +22,12 @@ export default function Scan({ userData, onLogout }: ScanProps) {
   const navigate = useNavigate();
   const [saveMessage, setSaveMessage] = useState({ type: '', text: '' });
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeviceSettingsOpen, setIsDeviceSettingsOpen] = useState(false);
+
+  const fmt = (val: any) => {
+    const n = Number(val);
+    return isNaN(n) ? val : n.toFixed(2);
+  };
 
   const {
     isSupported,
@@ -35,6 +44,9 @@ export default function Scan({ userData, onLogout }: ScanProps) {
     disconnect,
     measure,
     clearError,
+    clearMeasurements,
+    settings,
+    reloadSettings,
   } = useNixDevice();
 
   // Calculate Delta E if we have at least 2 measurements
@@ -45,89 +57,81 @@ export default function Scan({ userData, onLogout }: ScanProps) {
     )
     : null;
 
-  const handleSaveMeasurement = async () => {
+  const handleShare = async () => {
     if (!lastMeasurement) return;
 
-    setIsSaving(true);
+    const c = lastMeasurement.color;
+    const lines: string[] = [];
+    lines.push(`Color Escaneado Nix · ${settings.referenceWhite} · ${settings.measurementMode}`);
+    if (settings.displayColorFields.includes('HTX')) lines.push(`HEX: ${c.hex}`);
+    if (settings.displayColorFields.includes('CIELAB')) lines.push(`CIELAB: ${fmt(c.L)}, ${fmt(c.a)}, ${fmt(c.b)}`);
+    if (settings.displayColorFields.includes('sRGB')) lines.push(`sRGB: ${c.R}, ${c.G}, ${c.B}`);
+    if (settings.displayColorFields.includes('LCH(ab)')) lines.push(`LCH(ab): ${fmt(c.L)}, ${fmt(c.C)}, ${fmt(c.H)}°`);
+    if (settings.displayColorFields.includes('CIEXYZ')) lines.push(`CIEXYZ: ${fmt(c.X)}, ${fmt(c.Y)}, ${fmt(c.Z)}`);
+    if (settings.displayColorFields.includes('CMYK')) lines.push(`CMYK: ${fmt(c.cmyk.C)}%, ${fmt(c.cmyk.M)}%, ${fmt(c.cmyk.Y)}%, ${fmt(c.cmyk.K)}%`);
+    if (settings.displayColorFields.includes('LRV')) lines.push(`LRV: ${c.LRV}`);
+    if (settings.displayColorFields.includes('Density')) lines.push(`Densidad: ${c.Density}`);
+    const textToShare = lines.join('\n');
+
     try {
-      const token = localStorage.getItem('token');
-      const userDataStr = localStorage.getItem('userData');
-      const userDataObj = userDataStr ? JSON.parse(userDataStr) : null;
-      const headers: any = {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      };
-      if (userDataObj?.idcliente) {
-        headers['x-client-id'] = userDataObj.idcliente.toString();
-      }
-
-      const res = await fetch(`${API_BASE_URL}/api/mediciones`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          L: lastMeasurement.color.L,
-          A: lastMeasurement.color.a,
-          B: lastMeasurement.color.b,
-          R: lastMeasurement.color.R.toString(),
-          G: lastMeasurement.color.G.toString(),
-          RB: lastMeasurement.color.B.toString(),
-          C: lastMeasurement.color.C.toString(),
-          H: lastMeasurement.color.H.toString(),
-          FECHA: lastMeasurement.timestamp,
-        }),
+      await CapShare.share({
+        title: 'Color Escaneado con Nix',
+        text: textToShare,
+        dialogTitle: 'Compartir Color',
       });
-
-      if (!res.ok) {
-        if ((res.status === 401 || res.status === 403) && onLogout) {
-          onLogout();
-        }
-        throw new Error('Error al guardar la medición');
-      }
-
-      setSaveMessage({ type: 'success', text: '¡Medición guardada correctamente!' });
-    } catch (err: any) {
-      setSaveMessage({ type: 'error', text: err.message });
-    } finally {
-      setIsSaving(false);
+    } catch (err) {
+      console.error('Error al compartir', err);
+      // Fallback
+      navigator.clipboard.writeText(textToShare);
+      setSaveMessage({ type: 'success', text: 'Copiado al portapapeles' });
       setTimeout(() => setSaveMessage({ type: '', text: '' }), 3000);
     }
   };
 
+  const [isGuardarEscaneoOpen, setIsGuardarEscaneoOpen] = useState(false);
+
+  const handleSaveMeasurement = () => {
+    if (!lastMeasurement) return;
+    setIsGuardarEscaneoOpen(true);
+  };
+
+  const handleSaveSuccess = (savedMedicion: any) => {
+    setSaveMessage({ type: 'success', text: '¡Medición guardada correctamente!' });
+    setTimeout(() => setSaveMessage({ type: '', text: '' }), 3000);
+  };
+
+
   return (
-    <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col">
+    <div className="min-h-screen bg-white dark:bg-[#0A0F14] text-slate-900 dark:text-slate-200 font-sans flex flex-col overflow-x-hidden">
       {/* Header */}
-      <header className="fixed top-0 z-10 flex w-full items-center justify-between border-b border-slate-800 bg-[#0A0F14]/80 backdrop-blur-md px-4 py-4">
+      <header className="fixed top-0 z-10 flex w-full items-center justify-between border-b border-black/10 bg-[#CC5200] shadow-lg px-4 py-4">
         <div className="flex items-center gap-2">
-          <button onClick={() => navigate('/')} className="p-2 text-slate-400 hover:text-white transition-colors">
-            <ArrowLeft className="h-6 w-6" />
+          <button onClick={() => navigate('/')} className="p-2 text-white/70 hover:text-white transition-colors">
+            <ArrowLeft className="h-6 w-6 text-white" />
           </button>
-          <h1 className="text-lg font-semibold uppercase tracking-tight">Escaneo único</h1>
+          <h1 className="text-lg font-semibold uppercase tracking-tight text-white">Escaneo único</h1>
         </div>
 
-        {isConnected && deviceInfo && (
-          <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-            <span className="flex items-center gap-1 text-green-400">
-              <BluetoothConnected className="w-3 h-3" /> {deviceInfo.name}
-            </span>
-            <span className="flex items-center gap-1">
-              <Battery className="w-3 h-3" /> {deviceInfo.batteryLevel}%
-            </span>
-          </div>
-        )}
-
-        <button className="p-2 text-slate-400 hover:text-white transition-colors">
-          <Settings className="h-6 w-6" />
+        <button onClick={() => setIsDeviceSettingsOpen(true)} className="p-2 text-white/70 hover:text-white transition-colors">
+          <Settings className="h-6 w-6 text-white" />
         </button>
       </header>
+
+      <DeviceSettings
+        isOpen={isDeviceSettingsOpen}
+        onClose={() => setIsDeviceSettingsOpen(false)}
+        isConnected={isConnected}
+        onSettingsChange={reloadSettings}
+      />
 
       <main className="flex flex-col items-center pt-24 px-6 max-w-lg mx-auto w-full flex-grow">
 
         {/* Browser support alert */}
         {!isSupported && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6 w-full">
+          <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl p-4 mb-6 w-full">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-slate-300">
+              <AlertTriangle className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-red-900 dark:text-slate-300">
                 Web Bluetooth no disponible. Use Chrome o Edge.
               </p>
             </div>
@@ -142,8 +146,8 @@ export default function Scan({ userData, onLogout }: ScanProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               className={`p-4 rounded-xl mb-6 w-full text-xs font-semibold ${(error || saveMessage.type === 'error')
-                ? 'bg-red-500/10 text-red-400 border border-red-500/20'
-                : 'bg-green-500/10 text-green-400 border border-green-500/20'
+                ? 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-500/20'
+                : 'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-500/20'
                 }`}
             >
               <div className="flex justify-between items-center">
@@ -159,39 +163,40 @@ export default function Scan({ userData, onLogout }: ScanProps) {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex h-64 w-full items-center justify-center rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl relative overflow-hidden"
+              className="flex h-64 w-full items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 shadow-2xl relative overflow-hidden"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-900/10 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-[#a38105]/10 to-transparent"></div>
               <div className="relative">
-                <Bluetooth className="h-16 w-16 text-blue-500/40" />
-                <div className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-blue-500/20 border border-blue-500/50"></div>
+                <Bluetooth className="h-16 w-16 text-[#d4af37]/40" />
+                <div className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-[#d4af37]/20 border border-[#d4af37]/50"></div>
               </div>
             </motion.div>
             <div>
-              <h2 className="text-xl font-bold tracking-tight text-white">Conecta tu dispositivo Nix</h2>
-              <p className="mt-2 text-slate-500 text-sm">Coloca tu dispositivo Nix cerca de tu smartphone y presiona 'Conectar a Nix' para comenzar.</p>
+              <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Conecta tu dispositivo Nix</h2>
+              <p className="mt-2 text-slate-600 dark:text-slate-500 text-sm">Coloca tu dispositivo Nix cerca de tu smartphone y presiona 'Conectar a Nix' para comenzar.</p>
             </div>
             <button
-              onClick={() => navigate('/colorimetro', { state: { returnTo: '/scan' } })}
+              onClick={() => navigate('/colorimetro', { state: { returnTo: '/scan', autoScan: true } })}
               disabled={!isSupported || isScanning || isConnecting}
-              className="w-full rounded-lg bg-[#004A99] hover:bg-blue-600 py-4 font-bold transition-all active:scale-95 shadow-lg shadow-blue-900/20 uppercase tracking-widest text-sm disabled:opacity-50 disabled:bg-slate-800"
+              className="w-full rounded-lg bg-[#d4af37] hover:bg-[#e6c84d] py-4 font-bold text-slate-900 transition-all active:scale-95 shadow-lg shadow-[#a38105]/20 uppercase tracking-widest text-sm disabled:opacity-50 disabled:bg-slate-700"
             >
               {isScanning ? 'Buscando...' : 'Conectar a Nix'}
             </button>
           </div>
         ) : isConnecting ? (
-          <div className="flex w-full flex-col items-center rounded-2xl bg-slate-900 border border-slate-800 p-8 shadow-2xl mt-12">
-            <h2 className="mb-8 text-xl font-bold text-white tracking-tight">Conectando a Nix</h2>
+          <div className="flex w-full flex-col items-center rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 shadow-2xl mt-12 relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#a38105] to-[#d4af37]"></div>
+            <h2 className="mb-8 text-xl font-bold text-slate-900 dark:text-white tracking-tight">Conectando a Nix</h2>
             <div className="space-y-6 w-full">
               <div className="flex items-center gap-4 text-sm">
                 <div className="rounded-full bg-emerald-500/20 p-1"><Check className="h-4 w-4 text-emerald-500" /></div>
-                <span className="text-slate-300">Dispositivo encontrado</span>
+                <span className="text-slate-700 dark:text-slate-300">Dispositivo encontrado</span>
               </div>
               <div className="flex items-center gap-4 text-sm">
-                <div className="h-6 w-6 rounded-full border-2 border-blue-500/30 border-t-blue-500 animate-spin"></div>
-                <span className="text-white font-medium">Sincronizando...</span>
+                <div className="h-6 w-6 rounded-full border-2 border-[#d4af37]/30 border-t-[#d4af37] animate-spin"></div>
+                <span className="text-slate-900 dark:text-white font-medium">Sincronizando...</span>
               </div>
-              <div className="flex items-center gap-4 text-sm text-slate-600 font-medium">
+              <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-600 font-medium">
                 <div className="w-6 h-6"></div>
                 <span>Preparando interface...</span>
               </div>
@@ -199,24 +204,34 @@ export default function Scan({ userData, onLogout }: ScanProps) {
           </div>
         ) : (
           <div className="flex w-full flex-col gap-6">
+            {/* Device Info */}
+            {isConnected && deviceInfo && (
+              <div className="flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 shadow-md">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                  <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-widest">{deviceInfo.name}</span>
+                </div>
+                <div className="flex items-center gap-4 text-xs font-bold text-slate-700 dark:text-slate-400 uppercase tracking-widest">
+                  <span className="flex items-center gap-1">
+                    <Battery className="w-4 h-4 text-slate-700 dark:text-slate-400" /> {deviceInfo.batteryLevel}%
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Color Result Card */}
             <motion.div
               layoutId="color-card"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="h-80 w-full rounded-3xl overflow-hidden shadow-2xl relative border-4 border-slate-900 transition-all duration-500 ease-out"
-              style={{ backgroundColor: lastMeasurement?.color.hex || '#1a1a1a' }}
+              className="h-48 sm:h-64 md:h-80 w-full rounded-3xl overflow-hidden shadow-2xl relative transition-all duration-500 ease-out"
+              style={{ backgroundColor: lastMeasurement?.color.hex || '#ffffff' }}
             >
-              <div className="absolute top-4 right-4 flex gap-2">
-                <div className="px-2 py-1 bg-black/40 backdrop-blur-md rounded text-[10px] font-bold text-white/90 tracking-widest uppercase border border-white/10">
-                  {deviceInfo?.type || 'Nix Device'}
-                </div>
-              </div>
 
               {isMeasuring && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-md">
-                  <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent mb-4"></div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-blue-400 animate-pulse">Capturando Datos</p>
+                  <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#d4af37] border-t-transparent mb-4"></div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-[#d4af37] animate-pulse">Capturando Datos</p>
                 </div>
               )}
 
@@ -228,13 +243,23 @@ export default function Scan({ userData, onLogout }: ScanProps) {
                     </span>
                   </div>
 
-                  <button
-                    onClick={handleSaveMeasurement}
-                    disabled={isSaving}
-                    className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full border border-white/10 text-white transition-all active:scale-90"
-                  >
-                    {isSaving ? <RefreshCcw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleShare}
+                      disabled={settings.measurementTrigger === 'manual' && measurements.length < settings.multiPointAveraging}
+                      className="p-3 bg-black/30 hover:bg-[#a38105]/40 backdrop-blur-md rounded-full border border-white/10 hover:border-[#a38105]/60 text-white transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
+                      title="Compartir"
+                    >
+                      <Share2 className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={handleSaveMeasurement}
+                      disabled={isSaving || (settings.measurementTrigger === 'manual' && measurements.length < settings.multiPointAveraging)}
+                      className="p-3 bg-black/30 hover:bg-[#a38105]/40 backdrop-blur-md rounded-full border border-white/10 hover:border-[#a38105]/60 text-white transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      {isSaving ? <RefreshCcw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
               )}
             </motion.div>
@@ -242,51 +267,142 @@ export default function Scan({ userData, onLogout }: ScanProps) {
             <div className="mt-2 space-y-2">
               <div className="flex items-center justify-between mb-4 px-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                  <p className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">D50, 2°, M2</p>
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#d4af37]"></div>
+                  <p className="text-slate-700 dark:text-slate-400 text-[10px] uppercase font-bold tracking-widest">{settings.referenceWhite.replace('/', ', ')} · {settings.measurementMode}</p>
                   {dE !== null && (
-                    <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-800">
-                      <span className="text-[10px] uppercase font-bold tracking-widest text-slate-500">ΔE₀₀:</span>
-                      <span className={`text-[10px] font-bold ${dE < 1.0 ? 'text-green-400' : dE < 2.5 ? 'text-yellow-400' : 'text-red-400'}`}>
+                    <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-200 dark:border-slate-800">
+                      <span className="text-[10px] uppercase font-bold tracking-widest text-slate-700 dark:text-slate-400">ΔE₀₀:</span>
+                      <span className={`text-[10px] font-bold ${dE < 1.0 ? 'text-green-600 dark:text-green-400' : dE < 2.5 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}>
                         {dE.toFixed(2)}
                       </span>
                     </div>
                   )}
                 </div>
                 {lastMeasurement && (
-                  <p className="text-slate-600 text-[10px] uppercase font-bold tracking-widest">
+                  <p className="text-slate-700 dark:text-slate-400 text-[10px] uppercase font-bold tracking-widest">
                     {new Date(lastMeasurement.timestamp).toLocaleTimeString()}
                   </p>
                 )}
               </div>
 
-              <div className="bg-slate-900/50 border border-slate-800 rounded-2xl px-5 divide-y divide-slate-800/50 shadow-inner">
-                <div className="py-4 flex justify-between items-center transition-all hover:translate-x-1">
-                  <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">CIELAB</span>
-                  <span className="font-mono text-base text-white">
-                    {lastMeasurement ? `${lastMeasurement.color.L}, ${lastMeasurement.color.a}, ${lastMeasurement.color.b}` : '--'}
-                  </span>
-                </div>
-                <div className="py-4 flex justify-between items-center transition-all hover:translate-x-1">
-                  <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">RGB</span>
-                  <span className="font-mono text-base text-white uppercase">
-                    {lastMeasurement ? `${lastMeasurement.color.R}, ${lastMeasurement.color.G}, ${lastMeasurement.color.B}` : '--'}
-                  </span>
-                </div>
-                <div className="py-4 flex justify-between items-center transition-all hover:translate-x-1">
-                  <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">CHROMA / HUE</span>
-                  <span className="font-mono text-base text-white">
-                    {lastMeasurement ? `${lastMeasurement.color.C} / ${lastMeasurement.color.H}°` : '--'}
-                  </span>
-                </div>
+              <div className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl divide-y divide-slate-200 dark:divide-slate-800/50 shadow-inner overflow-hidden">
+                <div className="h-1 bg-gradient-to-r from-[#a38105] to-[#d4af37]"></div>
+                {settings.displayColorFields.includes('CIELAB') && (
+                  <div className="px-5 py-4 flex justify-between items-center transition-all hover:bg-slate-100 dark:hover:bg-slate-800/30 hover:translate-x-1">
+                    <span className="text-slate-700 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest">CIELAB</span>
+                    <span className="font-mono text-base text-slate-900 dark:text-white">
+                      {lastMeasurement ? `${fmt(lastMeasurement.color.L)}, ${fmt(lastMeasurement.color.a)}, ${fmt(lastMeasurement.color.b)}` : '--'}
+                    </span>
+                  </div>
+                )}
+                {settings.displayColorFields.includes('sRGB') && (
+                  <div className="px-5 py-4 flex justify-between items-center transition-all hover:bg-slate-100 dark:hover:bg-slate-800/30 hover:translate-x-1">
+                    <span className="text-slate-700 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest">sRGB</span>
+                    <span className="font-mono text-base text-slate-900 dark:text-white uppercase">
+                      {lastMeasurement ? `${lastMeasurement.color.R}, ${lastMeasurement.color.G}, ${lastMeasurement.color.B}` : '--'}
+                    </span>
+                  </div>
+                )}
+                {settings.displayColorFields.includes('LCH(ab)') && (
+                  <div className="px-5 py-4 flex justify-between items-center transition-all hover:bg-slate-100 dark:hover:bg-slate-800/30 hover:translate-x-1">
+                    <span className="text-slate-700 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest">LCH(ab)</span>
+                    <span className="font-mono text-base text-slate-900 dark:text-white">
+                      {lastMeasurement ? `${fmt(lastMeasurement.color.L)}, ${fmt(lastMeasurement.color.C)}, ${fmt(lastMeasurement.color.H)}°` : '--'}
+                    </span>
+                  </div>
+                )}
+                {settings.displayColorFields.includes('HTX') && (
+                  <div className="px-5 py-4 flex justify-between items-center transition-all hover:bg-slate-100 dark:hover:bg-slate-800/30 hover:translate-x-1">
+                    <span className="text-slate-700 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest">HEX</span>
+                    <span className="font-mono text-base text-slate-900 dark:text-white uppercase">
+                      {lastMeasurement ? lastMeasurement.color.hex : '--'}
+                    </span>
+                  </div>
+                )}
+                {settings.displayColorFields.includes('CIEXYZ') && (
+                  <div className="px-5 py-4 flex justify-between items-center transition-all hover:bg-slate-100 dark:hover:bg-slate-800/30 hover:translate-x-1">
+                    <span className="text-slate-700 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest">CIEXYZ</span>
+                    <span className="font-mono text-base text-slate-900 dark:text-white">
+                      {lastMeasurement ? `${fmt(lastMeasurement.color.X)}, ${fmt(lastMeasurement.color.Y)}, ${fmt(lastMeasurement.color.Z)}` : '--'}
+                    </span>
+                  </div>
+                )}
+                {settings.displayColorFields.includes('CMYK') && (
+                  <div className="px-5 py-4 flex justify-between items-center transition-all hover:bg-slate-100 dark:hover:bg-slate-800/30 hover:translate-x-1">
+                    <span className="text-slate-700 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest">CMYK</span>
+                    <span className="font-mono text-base text-slate-900 dark:text-white">
+                      {lastMeasurement ? `${fmt(lastMeasurement.color.cmyk.C)}%, ${fmt(lastMeasurement.color.cmyk.M)}%, ${fmt(lastMeasurement.color.cmyk.Y)}%, ${fmt(lastMeasurement.color.cmyk.K)}%` : '--'}
+                    </span>
+                  </div>
+                )}
+                {(settings.displayColorFields.includes('LRV') || settings.displayColorFields.includes('Density')) && (
+                  <div className="px-5 py-4 flex justify-between items-center transition-all hover:bg-slate-100 dark:hover:bg-slate-800/30 hover:translate-x-1">
+                    <span className="text-slate-700 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest">EXT</span>
+                    <span className="font-mono text-base text-slate-900 dark:text-white">
+                      {lastMeasurement
+                        ? [
+                          ...(settings.displayColorFields.includes('LRV') ? [`LRV: ${lastMeasurement.color.LRV}`] : []),
+                          ...(settings.displayColorFields.includes('Density') ? [`Dens: ${lastMeasurement.color.Density}`] : []),
+                        ].join(' · ')
+                        : '--'}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
+            {settings.measurementTrigger === 'manual' && measurements.length > 0 && (
+              <div className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+                <div className="px-4 py-3 flex items-center justify-between border-b border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <List className="w-4 h-4 text-slate-700 dark:text-slate-400" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-700 dark:text-slate-400">Historial</span>
+                    <span className="text-[10px] font-bold text-[#d4af37]">{measurements.length} medida{measurements.length !== 1 ? 's' : ''}</span>
+                  </div>
+                  <button
+                    onClick={clearMeasurements}
+                    className="text-[9px] uppercase font-bold tracking-widest text-red-400 hover:text-red-300 transition-colors"
+                  >
+                    Limpiar
+                  </button>
+                </div>
+                <div className="divide-y divide-slate-200 dark:divide-slate-800 max-h-64 overflow-y-auto">
+                  {[...measurements].reverse().map((m, idx) => {
+                    const num = measurements.length - idx;
+                    return (
+                      <div key={m.timestamp} className="px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800/30 transition-colors">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[9px] font-bold text-[#d4af37] uppercase tracking-widest">Medida #{num}</span>
+                          <span className="text-[9px] text-slate-500 dark:text-slate-500 font-mono">
+                            {new Date(m.timestamp).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 font-mono flex-wrap">
+                          {settings.displayColorFields.includes('HTX') && (
+                            <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-bold uppercase tracking-wider" style={{ color: m.color.hex }}>{m.color.hex}</span>
+                          )}
+                          {settings.displayColorFields.includes('CIELAB') && (
+                            <span>L*{fmt(m.color.L)} a*{fmt(m.color.a)} b*{fmt(m.color.b)}</span>
+                          )}
+                          {settings.displayColorFields.includes('sRGB') && (
+                            <span>RGB {m.color.R},{m.color.G},{m.color.B}</span>
+                          )}
+                          {settings.displayColorFields.includes('LCH(ab)') && (
+                            <span>LCH {fmt(m.color.L)},{fmt(m.color.C)},{fmt(m.color.H)}°</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-3 mt-4">
               <button
-                disabled={isMeasuring}
+                disabled={isMeasuring || (settings.measurementTrigger === 'manual' && measurements.length >= settings.multiPointAveraging)}
                 onClick={measure}
-                className="flex-[2] flex items-center justify-center gap-3 rounded-2xl bg-white hover:bg-slate-200 py-5 font-bold text-black transition-all active:scale-95 disabled:bg-slate-700 disabled:text-slate-400 group overflow-hidden relative shadow-xl shadow-white/5"
+                className="flex-[2] flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-br from-[#d4af37] to-[#e6c84d] hover:from-[#e6c84d] hover:to-[#f0d860] py-5 font-bold text-slate-900 transition-all active:scale-95 disabled:bg-slate-700 disabled:text-slate-400 group overflow-hidden relative shadow-xl shadow-[#a38105]/20"
               >
                 {isMeasuring ? (
                   <RefreshCcw className="h-5 w-5 animate-spin" />
@@ -294,7 +410,12 @@ export default function Scan({ userData, onLogout }: ScanProps) {
                   <ScanIcon className="h-5 w-5 group-hover:scale-110 transition-transform" />
                 )}
                 <span className="uppercase tracking-widest text-xs font-extrabold">
-                  {isMeasuring ? 'Procesando...' : 'Escanear con Nix'}
+                  {isMeasuring
+                    ? 'Procesando...'
+                    : settings.measurementTrigger === 'manual'
+                      ? `Medida ${Math.min(measurements.length + 1, settings.multiPointAveraging)}/${settings.multiPointAveraging}`
+                      : 'Escanear con Nix'
+                  }
                 </span>
               </button>
 
@@ -310,10 +431,17 @@ export default function Scan({ userData, onLogout }: ScanProps) {
       </main>
 
       <footer className="p-6 text-center">
-        <p className="text-[9px] text-slate-700 uppercase font-bold tracking-[0.2em]">
+        <p className="text-[9px] text-slate-500 uppercase font-bold tracking-[0.2em]">
           {status} {deviceInfo?.serialNumber ? `· S/N: ${deviceInfo.serialNumber}` : ''}
         </p>
       </footer>
+      <GuardarEscaneo
+        isOpen={isGuardarEscaneoOpen}
+        onClose={() => setIsGuardarEscaneoOpen(false)}
+        measurement={lastMeasurement}
+        onSaveSuccess={handleSaveSuccess}
+        onLogout={onLogout}
+      />
     </div>
   );
 }

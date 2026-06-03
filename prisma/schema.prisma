@@ -45,6 +45,8 @@ model Cliente {
   LONGITUD   String?
   formulas   FormPersonales[]
   usuarios   Usuario[]
+  librerias  Libreria[]
+  mediciones Medicion[]
 
   @@map("CLIENTES")
 }
@@ -394,4 +396,68 @@ model AjustesTecnicos {
 
   @@map("AJUSTES_TECNICOS")
 }
+
+model Libreria {
+  id         Int         @id @default(autoincrement())
+  nombre     String
+  id_cliente Int
+  creado_en  DateTime    @default(now())
+  cliente     Cliente     @relation(fields: [id_cliente], references: [CODIGO])
+  colecciones Coleccion[]
+
+  @@map("librerias")
+}
+
+model Coleccion {
+  id          Int              @id @default(autoincrement())
+  nombre      String
+  id_libreria Int
+  creado_en   DateTime         @default(now())
+  libreria    Libreria @relation(fields: [id_libreria], references: [id], onDelete: Cascade)
+
+  @@map("colecciones")
+}
+
+model Medicion {
+  id         Int      @id @default(autoincrement())
+  nombre     String
+  id_cliente Int
+  fecha      DateTime @default(now())
+  notas      String?
+
+  // CIE L*a*b*
+  L          Float?
+  A          Float?
+  B          Float?
+
+  // sRGB
+  R          Int?
+  G          Int?
+  RB         Int?
+
+  // LCH(ab)
+  C          Float?
+  H          Float?
+
+  // CIEXYZ
+  X          Float?
+  Y          Float?
+  Z          Float?
+
+  // CMYK
+  cmykC      Float?
+  cmykM      Float?
+  cmykY      Float?
+  cmykK      Float?
+
+  hex        String?
+  LRV        Float?
+  Density    Float?
+
+  cliente    Cliente @relation(fields: [id_cliente], references: [CODIGO])
+
+  @@map("mediciones")
+}
+
+
 

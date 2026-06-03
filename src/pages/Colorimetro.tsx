@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
     ArrowLeft, Bluetooth, BluetoothSearching, BluetoothConnected, BluetoothOff,
-    Scan, Battery, Wifi, AlertTriangle, Check, Trash2, Save, Palette
+    Scan, Battery, AlertTriangle, Trash2, Palette, Settings
 } from 'lucide-react';
+import DeviceSettings from '../components/DeviceSettings';
 import { API_BASE_URL } from '../config';
 
 import Sidebar from '../components/Sidebar';
@@ -15,10 +16,18 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
     const navigate = useNavigate();
     const location = useLocation();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isDeviceSettingsOpen, setIsDeviceSettingsOpen] = useState(false);
     const [savingId, setSavingId] = useState<string | null>(null);
     const [saveMessage, setSaveMessage] = useState({ type: '', text: '' });
+    const [isReturning, setIsReturning] = useState(false);
 
     const returnTo = location.state?.returnTo;
+    const autoScan = location.state?.autoScan;
+
+    const formatDecimals = (val: any) => {
+        const num = Number(val);
+        return isNaN(num) ? val : num.toFixed(2);
+    };
 
     const {
         isSupported,
@@ -32,15 +41,28 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
         error,
         status,
         scan,
+        cancelScan,
         disconnect,
         measure,
+        removeMeasurement,
         clearMeasurements,
         clearError,
+        settings,
+        reloadSettings,
     } = useNixDevice();
+
+    // Auto-scan on mount if coming from Scan with autoScan flag
+    useEffect(() => {
+        if (autoScan && !isConnected && isSupported) {
+            scan();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Auto-return logic when connected if we came from Scan
     useEffect(() => {
         if (isConnected && returnTo) {
+            setIsReturning(true);
             const timer = setTimeout(() => {
                 navigate(returnTo, { state: location.state });
             }, 1000);
@@ -52,14 +74,20 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
         setSavingId(m.timestamp);
         try {
             const token = localStorage.getItem('token');
+            const c = m.color;
             const res = await fetch(`${API_BASE_URL}/api/mediciones`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({
-                    L: m.color.L, A: m.color.a, B: m.color.b,
-                    R: m.color.R.toString(), G: m.color.G.toString(), RB: m.color.B.toString(),
-                    C: m.color.C.toString(), H: m.color.H.toString(),
-                    FECHA: m.timestamp,
+                    nombre: `Color ${c.hex.toUpperCase()}`,
+                    fecha: m.timestamp,
+                    L: c.L, A: c.a, B: c.b,
+                    R: c.R, G: c.G, RB: c.B,
+                    C: c.C, H: c.H,
+                    X: c.X, Y: c.Y, Z: c.Z,
+                    hex: c.hex,
+                    LRV: c.LRV, Density: c.Density,
+                    cmykC: c.cmyk?.C, cmykM: c.cmyk?.M, cmykY: c.cmyk?.Y, cmykK: c.cmyk?.K,
                 }),
             });
             if (!res.ok) {
@@ -75,34 +103,117 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
         }
     };
 
+    const averages = useMemo(() => {
+        if (measurements.length === 0) return null;
+        const sum = { L: 0, a: 0, b: 0, R: 0, G: 0, B: 0, C: 0, H: 0, X: 0, Y: 0, Z: 0, cmykC: 0, cmykM: 0, cmykY: 0, cmykK: 0, LRV: 0 };
+        const hexToRgb = (hex: string) => {
+            const h = hex.replace('#', '');
+            const m = h.match(/^([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$/);
+            return m ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) } : null;
+        };
+        measurements.forEach(m => {
+            sum.L += m.color.L;
+            sum.a += m.color.a;
+            sum.b += m.color.b;
+            const rgb = hexToRgb(m.color.hex);
+            if (rgb) {
+                sum.R += rgb.r;
+                sum.G += rgb.g;
+                sum.B += rgb.b;
+            } else {
+                sum.R += m.color.R || 0;
+                sum.G += m.color.G || 0;
+                sum.B += m.color.B || 0;
+            }
+            sum.C += m.color.C;
+            sum.H += m.color.H;
+            
+            sum.X += m.color.X || 0;
+            sum.Y += m.color.Y || 0;
+            sum.Z += m.color.Z || 0;
+            sum.cmykC += m.color.cmyk?.C || 0;
+            sum.cmykM += m.color.cmyk?.M || 0;
+            sum.cmykY += m.color.cmyk?.Y || 0;
+            sum.cmykK += m.color.cmyk?.K || 0;
+            sum.LRV += m.color.LRV || 0;
+        });
+        const n = measurements.length;
+        const avgL = sum.L / n;
+        const avgA = sum.a / n;
+        const avgB = sum.b / n;
+        const avgR = Math.round(sum.R / n);
+        const avgG = Math.round(sum.G / n);
+        const avgBval = Math.round(sum.B / n);
+        const avgC = sum.C / n;
+        const avgH = sum.H / n;
+        const avgX = sum.X / n;
+        const avgY = sum.Y / n;
+        const avgZ = sum.Z / n;
+        const cmyk = {
+            C: Math.round(sum.cmykC / n),
+            M: Math.round(sum.cmykM / n),
+            Y: Math.round(sum.cmykY / n),
+            K: Math.round(sum.cmykK / n)
+        };
+        const LRV = sum.LRV / n;
+        const Density = avgY > 0 ? (-Math.log10(avgY / 100)).toFixed(2) : "0.00";
+        
+        const toHex = (v: number) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0');
+        const avgHex = `#${toHex(avgR)}${toHex(avgG)}${toHex(avgBval)}`.toUpperCase();
+        return { avgL, avgA, avgB_lab: avgB, avgR, avgG, avgB_rgb: avgBval, avgC, avgH, avgX, avgY, avgZ, cmyk, LRV, Density, avgHex };
+    }, [measurements]);
+
     return (
-        <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col">
+        <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col overflow-x-hidden">
+            {/* Returning overlay — oculta todo el contenido mientras vuelve a la pantalla anterior */}
+            {isReturning && (
+                <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0A0F14]">
+                    <div className="flex flex-col items-center gap-5">
+                        <div className="relative">
+                            <div className="w-16 h-16 rounded-full bg-green-500/20 border-2 border-green-500/50 flex items-center justify-center">
+                                <BluetoothConnected className="w-8 h-8 text-green-400" />
+                            </div>
+                            <div className="absolute -inset-2 rounded-full border border-green-500/20 animate-ping" />
+                        </div>
+                        <p className="text-sm font-bold uppercase tracking-widest text-green-400">Dispositivo conectado</p>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-widest">Regresando...</p>
+                    </div>
+                </div>
+            )}
             <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onLogout={onLogout} userData={userData} />
 
             {/* Header */}
-            <header className="fixed top-0 z-10 flex w-full items-center border-b border-slate-800 bg-[#0A0F14]/80 backdrop-blur-md px-6 py-4">
-                <button onClick={() => navigate(returnTo || '/', { state: location.state })} className="p-2 text-slate-400 hover:text-white transition-colors hover:bg-slate-800/50 rounded-lg mr-2">
-                    <ArrowLeft className="h-5 w-5" />
+            <header className="fixed top-0 z-10 flex w-full items-center border-b border-black/10 bg-[#CC5200] shadow-lg px-6 py-4">
+                <button onClick={() => navigate(returnTo || '/', { state: location.state })} className="p-2 text-black hover:text-white transition-colors hover:bg-black/10 rounded-lg mr-2">
+                    <ArrowLeft className="h-5 w-5 text-black" />
                 </button>
                 <div className="flex-grow">
                     <h1 className="text-xl font-semibold tracking-tight text-white flex items-center gap-2">
-                        <Palette className="h-5 w-5 text-violet-400" /> Colorímetro
+                        <Palette className="h-5 w-5 text-black" /> Colorímetro
                     </h1>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Escaneo de Color Bluetooth · Nix Sensor</p>
+                    <p className="text-[10px] text-white/70 uppercase tracking-widest mt-1">Escaneo de Color Bluetooth · Nix Sensor</p>
                 </div>
-                {isConnected && deviceInfo && (
-                    <div className="flex items-center gap-3 text-xs">
-                        <span className="flex items-center gap-1 text-green-400">
-                            <BluetoothConnected className="w-4 h-4" /> {deviceInfo.name}
-                        </span>
-                        <span className="flex items-center gap-1 text-slate-400">
-                            <Battery className="w-4 h-4" /> {deviceInfo.batteryLevel}%
-                        </span>
-                    </div>
-                )}
+                {/* Settings button */}
+                <button
+                    id="colorimetro-device-settings-btn"
+                    onClick={() => setIsDeviceSettingsOpen(true)}
+                    className="ml-2 p-2 rounded-lg transition-all hover:bg-black/10 flex items-center justify-center"
+                    aria-label="Configuración del dispositivo"
+                    title="Configuración del dispositivo"
+                >
+                    <Settings className="h-5 w-5" />
+                </button>
             </header>
 
-            <main className="pt-24 pb-12 px-6 flex-grow container mx-auto max-w-5xl">
+            {/* Device Settings Panel */}
+            <DeviceSettings
+                isOpen={isDeviceSettingsOpen}
+                onClose={() => setIsDeviceSettingsOpen(false)}
+                isConnected={isConnected}
+                onSettingsChange={reloadSettings}
+            />
+
+            <main className="pt-28 md:pt-32 pb-12 px-6 flex-grow container mx-auto max-w-5xl">
 
                 {/* Soporte del navegador */}
                 {!isSupported && (
@@ -141,49 +252,77 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
 
                 {/* Panel de Conexión */}
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                    {/* Estado del dispositivo */}
-                    <div className="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col items-center justify-center gap-4">
-                        <div className={`w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500 ${isConnected ? 'bg-green-500/20 border-2 border-green-500/50' :
-                            isScanning || isConnecting ? 'bg-blue-500/20 border-2 border-blue-500/50 animate-pulse' :
-                                'bg-slate-800 border-2 border-slate-700'
-                            }`}>
-                            {isConnected ? <BluetoothConnected className="w-10 h-10 text-green-400" /> :
-                                isScanning || isConnecting ? <BluetoothSearching className="w-10 h-10 text-blue-400 animate-spin" /> :
-                                    <BluetoothOff className="w-10 h-10 text-slate-500" />
-                            }
-                        </div>
 
-                        <div className="text-center">
-                            <p className="text-sm font-bold text-white">{status}</p>
-                            {isConnected && deviceInfo && (
-                                <div className="mt-2 text-xs text-slate-400 space-y-1">
-                                    <p>Tipo: <span className="text-slate-300">{deviceInfo.type}</span></p>
-                                    {deviceInfo.firmwareVersion && <p>FW: <span className="text-slate-300">{deviceInfo.firmwareVersion}</span></p>}
-                                    {deviceInfo.serialNumber && <p>S/N: <span className="text-slate-300">{deviceInfo.serialNumber}</span></p>}
-                                </div>
-                            )}
+                    {/* Estado del dispositivo */}
+                    <div className="lg:col-span-1 elegant-card p-6 flex flex-col items-center justify-between min-h-[310px]">
+                        <div className="w-full flex flex-col items-center">
+                            <div className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500 mb-4 ${isConnected ? 'bg-green-500/20 border-2 border-green-500/50' :
+                                isScanning || isConnecting ? 'bg-blue-500/20 border-2 border-blue-500/50 animate-pulse' :
+                                    'bg-slate-800 border-2 border-slate-700'
+                                }`}>
+                                {isConnected ? <BluetoothConnected className="w-9 h-9 text-green-400" /> :
+                                    isScanning || isConnecting ? <BluetoothSearching className="w-9 h-9 text-blue-400 animate-spin" /> :
+                                        <BluetoothOff className="w-9 h-9 text-slate-500" />
+                                }
+                            </div>
+
+                            <div className="text-center w-full">
+                                <p className="text-sm font-bold text-slate-800 dark:text-white mb-2">{status}</p>
+                                {isConnected && deviceInfo && (
+                                    <div className="flex items-center justify-center gap-1.5 mt-1 mb-2">
+                                        <Battery className="w-4 h-4 text-green-500 dark:text-green-400" />
+                                        <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{deviceInfo.batteryLevel}%</span>
+                                    </div>
+                                )}
+                                {isConnected && deviceInfo && (deviceInfo.firmwareVersion || deviceInfo.serialNumber) && (
+                                    <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-700/20 pt-3 text-[11px] w-full">
+                                        {deviceInfo.firmwareVersion && (
+                                            <div className="text-center">
+                                                <p className="font-bold uppercase tracking-wider text-[8px] text-[#a38105] mb-0.5">FW</p>
+                                                <p className="text-slate-600 dark:text-slate-300 font-medium truncate">{deviceInfo.firmwareVersion}</p>
+                                            </div>
+                                        )}
+                                        {deviceInfo.serialNumber && (
+                                            <div className="text-center border-l border-slate-700/10">
+                                                <p className="font-bold uppercase tracking-wider text-[8px] text-[#a38105] mb-0.5">S/N</p>
+                                                <p className="text-slate-600 dark:text-slate-300 font-medium truncate">{deviceInfo.serialNumber}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Botones */}
-                        <div className="w-full space-y-2">
+                        <div className="w-full space-y-2.5 mt-5">
                             {!isConnected ? (
-                                <button
-                                    onClick={scan}
-                                    disabled={!isSupported || isScanning || isConnecting}
-                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-bold uppercase tracking-widest text-xs transition-all disabled:bg-slate-700 disabled:text-slate-500"
-                                >
-                                    {isScanning || isConnecting ? (
-                                        <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Buscando...</>
-                                    ) : (
-                                        <><Bluetooth className="w-4 h-4" /> Conectar Nix</>
+                                <>
+                                    <button
+                                        onClick={scan}
+                                        disabled={!isSupported || isScanning || isConnecting}
+                                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#a38105] hover:bg-[#c49f0a] text-white rounded-lg font-bold uppercase tracking-widest text-xs transition-all disabled:bg-slate-700 disabled:text-slate-500"
+                                    >
+                                        {isScanning || isConnecting ? (
+                                            <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Buscando...</>
+                                        ) : (
+                                            <><Bluetooth className="w-4 h-4" /> Conectar Nix</>
+                                        )}
+                                    </button>
+                                    {(isScanning || isConnecting) && (
+                                        <button
+                                            onClick={cancelScan}
+                                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-red-600/20 hover:bg-red-600/40 border border-red-600/30 text-red-400 hover:text-red-300 rounded-lg font-bold uppercase tracking-widest text-xs transition-all"
+                                        >
+                                            <BluetoothOff className="w-4 h-4" /> Cancelar búsqueda
+                                        </button>
                                     )}
-                                </button>
+                                </>
                             ) : (
                                 <>
                                     <button
                                         onClick={measure}
                                         disabled={isMeasuring}
-                                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold uppercase tracking-widest text-xs transition-all disabled:bg-slate-700 disabled:text-slate-500"
+                                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#a38105] hover:bg-[#c49f0a] text-white rounded-lg font-bold uppercase tracking-widest text-xs transition-all disabled:bg-slate-700 disabled:text-slate-500"
                                     >
                                         {isMeasuring ? (
                                             <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Escaneando...</>
@@ -193,49 +332,151 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                                     </button>
                                     <button
                                         onClick={disconnect}
-                                        className="w-full flex items-center justify-center gap-2 px-6 py-2 bg-red-600/20 hover:bg-red-600/40 text-red-400 rounded-lg font-bold uppercase tracking-widest text-[10px] transition-all"
+                                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-red-600/20 hover:bg-red-600/40 text-red-600 dark:text-red-400 rounded-lg font-bold uppercase tracking-widest text-xs transition-all"
                                     >
-                                        <BluetoothOff className="w-3 h-3" /> Desconectar
+                                        <BluetoothOff className="w-4 h-4" /> Desconectar
                                     </button>
                                 </>
                             )}
                         </div>
                     </div>
 
-                    {/* Vista previa del color */}
-                    <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-6">
-                        <h3 className="text-xs font-bold text-violet-400 uppercase tracking-widest mb-4">Última Medición</h3>
+                    {/* Vista previa del color — Última Medición */}
+                    <div className="lg:col-span-2 elegant-card p-6">
+                        <h3 className="text-xs font-bold text-[#a38105] uppercase tracking-widest mb-4">Última Medición</h3>
 
                         {lastMeasurement ? (
-                            <div className="flex flex-col md:flex-row gap-6">
+                            <div className="flex flex-col md:flex-row gap-5">
                                 {/* Swatch grande */}
-                                <div className="flex flex-col items-center gap-3">
+                                <div className="flex flex-col items-center gap-2 flex-shrink-0">
                                     <div
-                                        className="w-40 h-40 rounded-2xl border-4 border-slate-700 shadow-2xl transition-all duration-500"
+                                        className="w-32 h-32 rounded-2xl shadow-2xl transition-all duration-500 border border-slate-300/20 dark:border-slate-700/50"
                                         style={{ backgroundColor: lastMeasurement.color.hex }}
                                     />
-                                    <span className="text-lg font-mono font-bold text-white tracking-wider">
-                                        {lastMeasurement.color.hex.toUpperCase()}
-                                    </span>
                                 </div>
 
-                                {/* Datos */}
-                                <div className="flex-grow grid grid-cols-2 md:grid-cols-3 gap-3">
-                                    {[
-                                        { label: 'L*', value: lastMeasurement.color.L, color: 'text-yellow-400' },
-                                        { label: 'a*', value: lastMeasurement.color.a, color: 'text-red-400' },
-                                        { label: 'b*', value: lastMeasurement.color.b, color: 'text-blue-400' },
-                                        { label: 'R', value: lastMeasurement.color.R, color: 'text-red-400' },
-                                        { label: 'G', value: lastMeasurement.color.G, color: 'text-green-400' },
-                                        { label: 'B', value: lastMeasurement.color.B, color: 'text-blue-400' },
-                                        { label: 'C', value: lastMeasurement.color.C, color: 'text-purple-400' },
-                                        { label: 'H°', value: lastMeasurement.color.H, color: 'text-orange-400' },
-                                    ].map(item => (
-                                        <div key={item.label} className="bg-slate-800/60 rounded-lg p-3 text-center">
-                                            <p className={`text-[10px] font-bold uppercase tracking-widest ${item.color}`}>{item.label}</p>
-                                            <p className="text-lg font-mono font-bold text-white">{item.value}</p>
+                                {/* Datos agrupados por filas */}
+                                <div className="flex-grow flex flex-col gap-2 justify-center">
+
+                                    {/* Fila 1: L* a* b* */}
+                                    {settings.displayColorFields.includes('CIELAB') && (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 w-10 flex-shrink-0">L*a*b*</span>
+                                            <div className="flex flex-1 gap-1.5">
+                                                {[
+                                                    { label: 'L*', value: lastMeasurement.color.L },
+                                                    { label: 'a*', value: lastMeasurement.color.a },
+                                                    { label: 'b*', value: lastMeasurement.color.b },
+                                                ].map(item => (
+                                                    <div key={item.label} className="flex-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg px-2 py-1.5 text-center border border-slate-200/50 dark:border-slate-700/30">
+                                                        <p className="text-[8px] font-bold uppercase tracking-widest text-slate-500">{item.label}</p>
+                                                        <p className="text-sm font-mono font-bold text-slate-900 dark:text-white">{formatDecimals(item.value)}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
-                                    ))}
+                                    )}
+
+                                    {/* Fila 2: R G B */}
+                                    {settings.displayColorFields.includes('sRGB') && (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 w-10 flex-shrink-0">RGB</span>
+                                            <div className="flex flex-1 gap-1.5">
+                                                {[
+                                                    { label: 'R', value: lastMeasurement.color.R },
+                                                    { label: 'G', value: lastMeasurement.color.G },
+                                                    { label: 'B', value: lastMeasurement.color.B },
+                                                ].map(item => (
+                                                    <div key={item.label} className="flex-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg px-2 py-1.5 text-center border border-slate-200/50 dark:border-slate-700/30">
+                                                        <p className="text-[8px] font-bold uppercase tracking-widest text-slate-500">{item.label}</p>
+                                                        <p className="text-sm font-mono font-bold text-slate-900 dark:text-white">{formatDecimals(item.value)}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Fila 3: C, H° y Hex */}
+                                    {(settings.displayColorFields.includes('LCH(ab)') || settings.displayColorFields.includes('HTX')) && (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 w-10 flex-shrink-0">C / H</span>
+                                            <div className="flex flex-1 gap-1.5">
+                                                {[
+                                                    ...(settings.displayColorFields.includes('LCH(ab)') ? [
+                                                        { label: 'C', value: lastMeasurement.color.C },
+                                                        { label: 'H°', value: lastMeasurement.color.H }
+                                                    ] : []),
+                                                    ...(settings.displayColorFields.includes('HTX') ? [
+                                                        { label: 'Hex', value: lastMeasurement.color.hex.toUpperCase() }
+                                                    ] : [])
+                                                ].map(item => (
+                                                    <div key={item.label} className="flex-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg px-2 py-1.5 text-center border border-slate-200/50 dark:border-slate-700/30">
+                                                        <p className="text-[8px] font-bold uppercase tracking-widest text-slate-500">{item.label}</p>
+                                                        <p className="text-sm font-mono font-bold text-slate-900 dark:text-white">{item.value}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* XYZ */}
+                                    {settings.displayColorFields.includes('CIEXYZ') && (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 w-10 flex-shrink-0">XYZ</span>
+                                            <div className="flex flex-1 gap-1.5">
+                                                {[
+                                                    { label: 'X', value: lastMeasurement.color.X },
+                                                    { label: 'Y', value: lastMeasurement.color.Y },
+                                                    { label: 'Z', value: lastMeasurement.color.Z },
+                                                ].map(item => (
+                                                    <div key={item.label} className="flex-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg px-2 py-1.5 text-center border border-slate-200/50 dark:border-slate-700/30">
+                                                        <p className="text-[8px] font-bold uppercase tracking-widest text-slate-500">{item.label}</p>
+                                                        <p className="text-sm font-mono font-bold text-slate-900 dark:text-white">{formatDecimals(item.value)}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* CMYK */}
+                                    {settings.displayColorFields.includes('CMYK') && (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 w-10 flex-shrink-0">CMYK</span>
+                                            <div className="flex flex-1 gap-1.5">
+                                                {[
+                                                    { label: 'C', value: lastMeasurement.color.cmyk.C },
+                                                    { label: 'M', value: lastMeasurement.color.cmyk.M },
+                                                    { label: 'Y', value: lastMeasurement.color.cmyk.Y },
+                                                    { label: 'K', value: lastMeasurement.color.cmyk.K },
+                                                ].map(item => (
+                                                    <div key={item.label} className="flex-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg px-2 py-1.5 text-center border border-slate-200/50 dark:border-slate-700/30">
+                                                        <p className="text-[8px] font-bold uppercase tracking-widest text-slate-500">{item.label}</p>
+                                                        <p className="text-sm font-mono font-bold text-slate-900 dark:text-white">{item.value}%</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* LRV & Density */}
+                                    {(settings.displayColorFields.includes('LRV') || settings.displayColorFields.includes('Density')) && (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 w-10 flex-shrink-0">EXT</span>
+                                            <div className="flex flex-1 gap-1.5">
+                                                {[
+                                                    ...(settings.displayColorFields.includes('LRV') ? [{ label: 'LRV', value: lastMeasurement.color.LRV }] : []),
+                                                    ...(settings.displayColorFields.includes('Density') ? [{ label: 'Dens', value: lastMeasurement.color.Density }] : []),
+                                                ].map(item => (
+                                                    <div key={item.label} className="flex-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg px-2 py-1.5 text-center border border-slate-200/50 dark:border-slate-700/30">
+                                                        <p className="text-[8px] font-bold uppercase tracking-widest text-slate-500">{item.label}</p>
+                                                        <p className="text-sm font-mono font-bold text-slate-900 dark:text-white">{item.value}</p>
+                                                    </div>
+                                                ))}
+                                                <div className="flex-1" />
+                                            </div>
+                                        </div>
+                                    )}
+
                                 </div>
                             </div>
                         ) : (
@@ -248,12 +489,141 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                     </div>
                 </motion.div>
 
+                {/* Promedio de mediciones */}
+                {averages && (
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                        className="elegant-card p-6">
+                        <h3 className="text-xs font-bold text-[#a38105] uppercase tracking-widest mb-4">
+                            Promedio de Mediciones ({measurements.length})
+                        </h3>
+                        <div className="flex flex-col md:flex-row gap-5">
+                            <div className="flex flex-col items-center gap-2 flex-shrink-0">
+                                <div
+                                    className="w-24 h-24 rounded-2xl shadow-2xl border border-slate-300/20 dark:border-slate-700/50"
+                                    style={{ backgroundColor: averages.avgHex }}
+                                />
+                                <span className="text-xs font-mono font-bold text-slate-900 dark:text-white tracking-wider">{averages.avgHex}</span>
+                            </div>
+                            <div className="flex-grow flex flex-col gap-2 justify-center">
+                                {settings.displayColorFields.includes('CIELAB') && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 w-10 flex-shrink-0">L*a*b*</span>
+                                        <div className="flex flex-1 gap-1.5">
+                                            {[
+                                                { label: 'L*', value: averages.avgL },
+                                                { label: 'a*', value: averages.avgA },
+                                                { label: 'b*', value: averages.avgB_lab },
+                                            ].map(item => (
+                                                <div key={item.label} className="flex-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg px-2 py-1.5 text-center border border-slate-200/50 dark:border-slate-700/30">
+                                                    <p className="text-[8px] font-bold uppercase tracking-widest text-slate-500">{item.label}</p>
+                                                    <p className="text-sm font-mono font-bold text-slate-900 dark:text-white">{formatDecimals(item.value)}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {settings.displayColorFields.includes('sRGB') && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 w-10 flex-shrink-0">RGB</span>
+                                        <div className="flex flex-1 gap-1.5">
+                                            {[
+                                                { label: 'R', value: averages.avgR },
+                                                { label: 'G', value: averages.avgG },
+                                                { label: 'B', value: averages.avgB_rgb },
+                                            ].map(item => (
+                                                <div key={item.label} className="flex-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg px-2 py-1.5 text-center border border-slate-200/50 dark:border-slate-700/30">
+                                                    <p className="text-[8px] font-bold uppercase tracking-widest text-slate-500">{item.label}</p>
+                                                    <p className="text-sm font-mono font-bold text-slate-900 dark:text-white">{formatDecimals(item.value)}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {(settings.displayColorFields.includes('LCH(ab)') || settings.displayColorFields.includes('HTX')) && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 w-10 flex-shrink-0">C / H</span>
+                                        <div className="flex flex-1 gap-1.5">
+                                            {[
+                                                ...(settings.displayColorFields.includes('LCH(ab)') ? [
+                                                    { label: 'C', value: averages.avgC },
+                                                    { label: 'H°', value: averages.avgH }
+                                                ] : []),
+                                                ...(settings.displayColorFields.includes('HTX') ? [
+                                                    { label: 'Hex', value: averages.avgHex }
+                                                ] : [])
+                                            ].map(item => (
+                                                <div key={item.label} className="flex-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg px-2 py-1.5 text-center border border-slate-200/50 dark:border-slate-700/30">
+                                                    <p className="text-[8px] font-bold uppercase tracking-widest text-slate-500">{item.label}</p>
+                                                    <p className="text-sm font-mono font-bold text-slate-900 dark:text-white">{formatDecimals(item.value)}</p>
+                                                </div>
+                                            ))}
+                                            <div className="flex-1" />
+                                        </div>
+                                    </div>
+                                )}
+                                {settings.displayColorFields.includes('CIEXYZ') && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 w-10 flex-shrink-0">XYZ</span>
+                                        <div className="flex flex-1 gap-1.5">
+                                            {[
+                                                { label: 'X', value: averages.avgX || 0 },
+                                                { label: 'Y', value: averages.avgY || 0 },
+                                                { label: 'Z', value: averages.avgZ || 0 },
+                                            ].map(item => (
+                                                <div key={item.label} className="flex-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg px-2 py-1.5 text-center border border-slate-200/50 dark:border-slate-700/30">
+                                                    <p className="text-[8px] font-bold uppercase tracking-widest text-slate-500">{item.label}</p>
+                                                    <p className="text-sm font-mono font-bold text-slate-900 dark:text-white">{formatDecimals(item.value)}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {settings.displayColorFields.includes('CMYK') && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 w-10 flex-shrink-0">CMYK</span>
+                                        <div className="flex flex-1 gap-1.5">
+                                            {[
+                                                { label: 'C', value: averages.cmyk?.C || 0 },
+                                                { label: 'M', value: averages.cmyk?.M || 0 },
+                                                { label: 'Y', value: averages.cmyk?.Y || 0 },
+                                                { label: 'K', value: averages.cmyk?.K || 0 },
+                                            ].map(item => (
+                                                <div key={item.label} className="flex-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg px-2 py-1.5 text-center border border-slate-200/50 dark:border-slate-700/30">
+                                                    <p className="text-[8px] font-bold uppercase tracking-widest text-slate-500">{item.label}</p>
+                                                    <p className="text-sm font-mono font-bold text-slate-900 dark:text-white">{item.value}%</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {(settings.displayColorFields.includes('LRV') || settings.displayColorFields.includes('Density')) && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 w-10 flex-shrink-0">EXT</span>
+                                        <div className="flex flex-1 gap-1.5">
+                                            {[
+                                                ...(settings.displayColorFields.includes('LRV') ? [{ label: 'LRV', value: averages.LRV || 0 }] : []),
+                                                ...(settings.displayColorFields.includes('Density') ? [{ label: 'Dens', value: averages.Density || '0.00' }] : []),
+                                            ].map(item => (
+                                                <div key={item.label} className="flex-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg px-2 py-1.5 text-center border border-slate-200/50 dark:border-slate-700/30">
+                                                    <p className="text-[8px] font-bold uppercase tracking-widest text-slate-500">{item.label}</p>
+                                                    <p className="text-sm font-mono font-bold text-slate-900 dark:text-white">{item.value}</p>
+                                                </div>
+                                            ))}
+                                            <div className="flex-1" />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
                 {/* Historial de mediciones */}
                 {measurements.length > 0 && (
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                        className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+                        className="elegant-card p-6">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xs font-bold text-violet-400 uppercase tracking-widest">
+                            <h3 className="text-xs font-bold text-[#a38105] uppercase tracking-widest">
                                 Historial de Mediciones ({measurements.length})
                             </h3>
                             <button onClick={clearMeasurements}
@@ -268,37 +638,32 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                                 const dE = prevMeasurement ? deltaE2000(m.color.L, m.color.a, m.color.b, prevMeasurement.color.L, prevMeasurement.color.a, prevMeasurement.color.b) : null;
 
                                 return (
-                                    <div key={m.timestamp} className="flex items-center gap-4 bg-slate-800/40 rounded-lg p-3 hover:bg-slate-800/60 transition-colors">
+                                    <div key={m.timestamp} className="flex items-center gap-4 bg-slate-100 dark:bg-slate-800/40 rounded-xl p-3 border border-slate-200/50 dark:border-slate-800/80 hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors">
                                         {/* Swatch */}
-                                        <div className="w-12 h-12 rounded-lg border-2 border-slate-700 flex-shrink-0" style={{ backgroundColor: m.color.hex }} />
+                                        <div className="w-12 h-12 rounded-lg flex-shrink-0" style={{ backgroundColor: m.color.hex }} />
 
                                         {/* Datos */}
                                         <div className="flex-grow min-w-0">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-mono text-sm font-bold text-white">{m.color.hex.toUpperCase()}</span>
-                                                <span className="text-[10px] text-slate-500">{new Date(m.timestamp).toLocaleTimeString()}</span>
+                                                <span className="font-mono text-sm font-bold text-slate-800 dark:text-slate-200">{m.color.hex.toUpperCase()}</span>
+                                                <span className="text-[10px] text-slate-500 dark:text-slate-400">{new Date(m.timestamp).toLocaleTimeString()}</span>
                                             </div>
-                                            <p className="text-xs text-slate-400 mt-0.5">
-                                                L*{m.color.L} a*{m.color.a} b*{m.color.b}
+                                            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                                                L*{formatDecimals(m.color.L)} a*{formatDecimals(m.color.a)} b*{formatDecimals(m.color.b)}
                                                 {dE !== null && (
-                                                    <span className={`ml-2 font-bold ${dE < 1 ? 'text-green-400' : dE < 3 ? 'text-yellow-400' : 'text-red-400'}`}>
-                                                        ΔE={dE.toFixed(2)}
+                                                    <span className={`ml-2 font-bold ${dE < 1 ? 'text-green-600 dark:text-green-400' : dE < 3 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}>
+                                                        ΔE={formatDecimals(dE)}
                                                     </span>
                                                 )}
                                             </p>
                                         </div>
 
-                                        {/* Acciones */}
+                                        {/* Eliminar */}
                                         <button
-                                            onClick={() => handleSaveMeasurement(m)}
-                                            disabled={savingId === m.timestamp}
-                                            className="flex items-center gap-1 px-3 py-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex-shrink-0 disabled:opacity-50"
+                                            onClick={() => removeMeasurement(m.timestamp)}
+                                            className="flex items-center gap-1 px-2 py-2 bg-red-500/10 hover:bg-red-500/30 text-red-400 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex-shrink-0"
                                         >
-                                            {savingId === m.timestamp ? (
-                                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-400" />
-                                            ) : (
-                                                <><Save className="w-3 h-3" /> Guardar</>
-                                            )}
+                                            <Trash2 className="w-3.5 h-3.5" />
                                         </button>
                                     </div>
                                 );
