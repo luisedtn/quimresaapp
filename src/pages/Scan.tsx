@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  ArrowLeft, Settings, Bluetooth, Check, RefreshCcw,
+  ArrowLeft, Settings, Bluetooth, Check, RefreshCcw, RotateCcw,
   Scan as ScanIcon, Battery, Wifi, AlertTriangle, BluetoothOff,
   BluetoothSearching, BluetoothConnected, Save, Share2, List,
-  History, X
+  History, X, Trash2
 } from 'lucide-react';
 import { Share as CapShare } from '@capacitor/share';
 import DeviceSettings from '../components/DeviceSettings';
@@ -72,6 +72,7 @@ export default function Scan({ userData, onLogout }: ScanProps) {
     measure,
     clearError,
     clearMeasurements,
+    removeMeasurement,
     settings,
     reloadSettings,
   } = useNixDevice();
@@ -426,12 +427,6 @@ export default function Scan({ userData, onLogout }: ScanProps) {
                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-700 dark:text-slate-400">Historial</span>
                     <span className="text-[10px] font-bold text-[#d4af37]">{measurements.length} medida{measurements.length !== 1 ? 's' : ''}</span>
                   </div>
-                  <button
-                    onClick={clearMeasurements}
-                    className="text-[9px] uppercase font-bold tracking-widest text-red-400 hover:text-red-300 transition-colors"
-                  >
-                    Limpiar
-                  </button>
                 </div>
                 <div className="divide-y divide-slate-200 dark:divide-slate-800 max-h-64 overflow-y-auto">
                   {[...measurements].reverse().map((m, idx) => {
@@ -439,7 +434,16 @@ export default function Scan({ userData, onLogout }: ScanProps) {
                     return (
                       <div key={m.timestamp} className="px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800/30 transition-colors">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-[9px] font-bold text-[#d4af37] uppercase tracking-widest">Medida #{num}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[9px] font-bold text-[#d4af37] uppercase tracking-widest">Medida #{num}</span>
+                            <button
+                              onClick={() => removeMeasurement(m.timestamp)}
+                              className="p-0.5 rounded hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
+                              title="Eliminar medida"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
                           <span className="text-[9px] text-slate-500 dark:text-slate-500 font-mono">
                             {new Date(m.timestamp).toLocaleTimeString()}
                           </span>
@@ -488,10 +492,10 @@ export default function Scan({ userData, onLogout }: ScanProps) {
                 </button>
 
                 <button
-                  onClick={disconnect}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-red-600/10 hover:bg-red-600/20 border border-red-600/20 py-5 text-red-500 transition-all active:scale-95"
+                  onClick={() => { clearMeasurements(); setHistoryMeasurement(null); }}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-slate-600/10 hover:bg-slate-600/20 border border-slate-600/20 py-5 text-slate-400 hover:text-slate-300 transition-all active:scale-95"
                 >
-                  <BluetoothOff className="w-5 h-5" />
+                  <RotateCcw className="w-5 h-5" />
                 </button>
               </div>
             )}
