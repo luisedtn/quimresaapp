@@ -7,6 +7,9 @@ interface GuardarEscaneoProps {
   measurement: any;
   onSaveSuccess: (savedMedicion: any) => void;
   onLogout?: () => void;
+  blancoReferencia?: string;
+  modoMedicion?: string;
+  densidad?: string;
 }
 
 interface Libreria {
@@ -24,7 +27,10 @@ export default function GuardarEscaneo({
   onClose,
   measurement,
   onSaveSuccess,
-  onLogout
+  onLogout,
+  blancoReferencia,
+  modoMedicion,
+  densidad
 }: GuardarEscaneoProps) {
   const [colorName, setColorName] = useState('');
   const [notes, setNotes] = useState('');
@@ -61,6 +67,9 @@ export default function GuardarEscaneo({
       if (res.ok) {
         const data = await res.json();
         setLibraries(data);
+        if (data.length > 0) {
+          setLibraryObj(data[0]);
+        }
       }
     } catch (e) {
       console.error(e);
@@ -73,6 +82,9 @@ export default function GuardarEscaneo({
       if (res.ok) {
         const data = await res.json();
         setCollections(data);
+        if (data.length > 0) {
+          setCollectionObj(data[0]);
+        }
       }
     } catch (e) {
       console.error(e);
@@ -143,6 +155,9 @@ export default function GuardarEscaneo({
         hex: c.hex,
         LRV: c.LRV,
         Density: c.Density,
+        blanco_referencia: blancoReferencia || null,
+        modo_medicion: modoMedicion || null,
+        densidad: densidad || null,
       };
       if (c.cmyk) {
         bodyPayload.cmykC = c.cmyk.C;

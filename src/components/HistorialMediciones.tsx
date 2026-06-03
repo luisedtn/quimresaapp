@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
-import { X, Search, Calendar, Layers, Library, Trash2, Filter } from 'lucide-react';
+import { X, Search, Calendar, Layers, Library, Filter } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
 interface Medicion {
@@ -21,6 +21,9 @@ interface Medicion {
   id_coleccion: number | null;
   libreriaObj?: { id: number; nombre: string } | null;
   coleccionObj?: { id: number; nombre: string } | null;
+  blanco_referencia?: string | null;
+  modo_medicion?: string | null;
+  densidad?: string | null;
 }
 
 interface Libreria {
@@ -36,9 +39,10 @@ interface Coleccion {
 interface HistorialMedicionesProps {
   isOpen: boolean;
   onClose: () => void;
+  onSelectMeasurement?: (medicion: Medicion) => void;
 }
 
-export default function HistorialMediciones({ isOpen, onClose }: HistorialMedicionesProps) {
+export default function HistorialMediciones({ isOpen, onClose, onSelectMeasurement }: HistorialMedicionesProps) {
   const [mediciones, setMediciones] = useState<Medicion[]>([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
@@ -301,7 +305,8 @@ export default function HistorialMediciones({ isOpen, onClose }: HistorialMedici
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.02 }}
-                className="flex items-center gap-4 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-all group"
+                onClick={() => { onSelectMeasurement?.(m); onClose(); }}
+                className="flex items-center gap-4 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 hover:bg-[#d4af37]/10 dark:hover:bg-[#d4af37]/10 hover:border-[#d4af37]/40 transition-all cursor-pointer group"
               >
                 <div
                   className="h-12 w-12 rounded-xl border border-slate-200 dark:border-slate-700 shadow-inner flex-shrink-0"
@@ -330,17 +335,21 @@ export default function HistorialMediciones({ isOpen, onClose }: HistorialMedici
                       )}
                     </div>
                   )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {m.hex && (
-                    <span className="text-[9px] font-mono font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded-md hidden sm:block">
-                      {m.hex}
-                    </span>
+                  {(m.blanco_referencia || m.modo_medicion || m.densidad) && (
+                    <div className="flex items-center gap-1.5 mt-0.5 text-[9px] text-slate-400 dark:text-slate-600 font-medium flex-wrap">
+                      {m.blanco_referencia && <span>{m.blanco_referencia.replace('/', ', ')}</span>}
+                      {m.modo_medicion && <span className="text-slate-300 dark:text-slate-700">·</span>}
+                      {m.modo_medicion && <span>{m.modo_medicion}</span>}
+                      {m.densidad && <span className="text-slate-300 dark:text-slate-700">·</span>}
+                      {m.densidad && <span>{m.densidad}</span>}
+                    </div>
                   )}
-                  <button className="p-1.5 rounded-lg text-slate-300 dark:text-slate-700 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all" title="Eliminar">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
                 </div>
+                {m.hex && (
+                  <span className="text-[9px] font-mono font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded-md hidden sm:block">
+                    {m.hex}
+                  </span>
+                )}
               </motion.div>
             ))
           )}

@@ -5,7 +5,7 @@ import {
   ArrowLeft, Settings, Bluetooth, Check, RefreshCcw,
   Scan as ScanIcon, Battery, Wifi, AlertTriangle, BluetoothOff,
   BluetoothSearching, BluetoothConnected, Save, Share2, List,
-  History
+  History, X
 } from 'lucide-react';
 import { Share as CapShare } from '@capacitor/share';
 import DeviceSettings from '../components/DeviceSettings';
@@ -26,6 +26,29 @@ export default function Scan({ userData, onLogout }: ScanProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeviceSettingsOpen, setIsDeviceSettingsOpen] = useState(false);
   const [isHistorialOpen, setIsHistorialOpen] = useState(false);
+  const [historyMeasurement, setHistoryMeasurement] = useState<any>(null);
+
+  const mapApiToNixFormat = (m: any) => ({
+    color: {
+      L: m.L, a: m.A, b: m.B,
+      R: m.R, G: m.G, B: m.RB,
+      C: m.C, H: m.H,
+      X: m.X, Y: m.Y, Z: m.Z,
+      hex: m.hex,
+      LRV: m.LRV,
+      Density: m.Density,
+      cmyk: { C: m.cmykC, M: m.cmykM, Y: m.cmykY, K: m.cmykK }
+    },
+    timestamp: m.fecha,
+    nombre: m.nombre,
+    blancoReferencia: m.blanco_referencia,
+    modoMedicion: m.modo_medicion,
+    densidadStatus: m.densidad
+  });
+
+  const handleSelectMeasurement = (medicion: any) => {
+    setHistoryMeasurement(mapApiToNixFormat(medicion));
+  };
 
   const fmt = (val: any) => {
     const n = Number(val);
@@ -52,6 +75,8 @@ export default function Scan({ userData, onLogout }: ScanProps) {
     reloadSettings,
   } = useNixDevice();
 
+  const displayMeasurement = historyMeasurement || lastMeasurement;
+
   // Calculate Delta E if we have at least 2 measurements
   const dE = (measurements.length >= 2)
     ? deltaE2000(
@@ -61,9 +86,10 @@ export default function Scan({ userData, onLogout }: ScanProps) {
     : null;
 
   const handleShare = async () => {
-    if (!lastMeasurement) return;
+    const target = displayMeasurement;
+    if (!target) return;
 
-    const c = lastMeasurement.color;
+    const c = target.color;
     const lines: string[] = [];
     lines.push(`Color Escaneado Nix · ${settings.referenceWhite} · ${settings.measurementMode}`);
     if (settings.displayColorFields.includes('HTX')) lines.push(`HEX: ${c.hex}`);
@@ -94,7 +120,7 @@ export default function Scan({ userData, onLogout }: ScanProps) {
   const [isGuardarEscaneoOpen, setIsGuardarEscaneoOpen] = useState(false);
 
   const handleSaveMeasurement = () => {
-    if (!lastMeasurement) return;
+    if (!displayMeasurement) return;
     setIsGuardarEscaneoOpen(true);
   };
 
@@ -166,7 +192,7 @@ export default function Scan({ userData, onLogout }: ScanProps) {
           )}
         </AnimatePresence>
 
-        {!isConnected && !isConnecting && !isScanning ? (
+        {!isConnected && !isConnecting && !isScanning && !historyMeasurement ? (
           <div className="flex w-full flex-col items-center gap-8 text-center mt-12">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -233,28 +259,43 @@ export default function Scan({ userData, onLogout }: ScanProps) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="h-48 sm:h-64 md:h-80 w-full rounded-3xl overflow-hidden shadow-2xl relative transition-all duration-500 ease-out"
-              style={{ backgroundColor: lastMeasurement?.color.hex || '#ffffff' }}
+              style={{ backgroundColor: displayMeasurement?.color.hex || '#ffffff' }}
             >
 
-              {isMeasuring && (
+              {isMeasuring && !historyMeasurement && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-md">
                   <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#d4af37] border-t-transparent mb-4"></div>
                   <p className="text-xs font-bold uppercase tracking-widest text-[#d4af37] animate-pulse">Capturando Datos</p>
                 </div>
               )}
 
-              {lastMeasurement && !isMeasuring && (
+              {historyMeasurement && (
+                <div className="absolute top-4 left-4">
+                  <div className="flex items-center gap-2 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-[#d4af37]/40">
+                    <History className="h-3.5 w-3.5 text-[#d4af37]" />
+                    <span className="text-[9px] font-bold text-white uppercase tracking-widest">Historial</span>
+                    <button
+                      onClick={() => setHistoryMeasurement(null)}
+                      className="ml-1 p-0.5 rounded-full hover:bg-white/10 transition-colors"
+                    >
+                      <X className="h-3 w-3 text-white/70" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {displayMeasurement && !isMeasuring && (
                 <div className="absolute bottom-6 left-6 right-6 flex justify-between items-end">
                   <div className="bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
                     <span className="text-white font-mono font-bold tracking-tighter text-lg uppercase">
-                      {lastMeasurement.color.hex}
+                      {displayMeasurement.color.hex}
                     </span>
                   </div>
 
                   <div className="flex gap-2">
                     <button
                       onClick={handleShare}
-                      disabled={settings.measurementTrigger === 'manual' && measurements.length < settings.multiPointAveraging}
+                      disabled={!historyMeasurement && settings.measurementTrigger === 'manual' && measurements.length < settings.multiPointAveraging}
                       className="p-3 bg-black/30 hover:bg-[#a38105]/40 backdrop-blur-md rounded-full border border-white/10 hover:border-[#a38105]/60 text-white transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
                       title="Compartir"
                     >
@@ -262,7 +303,7 @@ export default function Scan({ userData, onLogout }: ScanProps) {
                     </button>
                     <button
                       onClick={handleSaveMeasurement}
-                      disabled={isSaving || (settings.measurementTrigger === 'manual' && measurements.length < settings.multiPointAveraging)}
+                      disabled={isSaving || (!historyMeasurement && settings.measurementTrigger === 'manual' && measurements.length < settings.multiPointAveraging)}
                       className="p-3 bg-black/30 hover:bg-[#a38105]/40 backdrop-blur-md rounded-full border border-white/10 hover:border-[#a38105]/60 text-white transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       {isSaving ? <RefreshCcw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
@@ -276,8 +317,20 @@ export default function Scan({ userData, onLogout }: ScanProps) {
               <div className="flex items-center justify-between mb-4 px-2">
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#d4af37]"></div>
-                  <p className="text-slate-700 dark:text-slate-400 text-[10px] uppercase font-bold tracking-widest">{settings.referenceWhite.replace('/', ', ')} · {settings.measurementMode}</p>
-                  {dE !== null && (
+                  {historyMeasurement ? (
+                    <p className="text-slate-700 dark:text-slate-400 text-[10px] uppercase font-bold tracking-widest truncate max-w-[220px]">
+                      {historyMeasurement.nombre || 'Medición'}
+                      {historyMeasurement.blancoReferencia && <span className="ml-1.5 opacity-60">· {historyMeasurement.blancoReferencia.replace('/', ', ')}</span>}
+                      {historyMeasurement.modoMedicion && <span className="ml-1 opacity-60">· {historyMeasurement.modoMedicion}</span>}
+                      {historyMeasurement.densidadStatus && <span className="ml-1 opacity-60">· {historyMeasurement.densidadStatus}</span>}
+                    </p>
+                  ) : (
+                    <p className="text-slate-700 dark:text-slate-400 text-[10px] uppercase font-bold tracking-widest">
+                      {settings.referenceWhite.replace('/', ', ')} · {settings.measurementMode}
+                      {settings.densityStatus !== 'ISO Status T' && ` · ${settings.densityStatus}`}
+                    </p>
+                  )}
+                  {dE !== null && !historyMeasurement && (
                     <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-200 dark:border-slate-800">
                       <span className="text-[10px] uppercase font-bold tracking-widest text-slate-700 dark:text-slate-400">ΔE₀₀:</span>
                       <span className={`text-[10px] font-bold ${dE < 1.0 ? 'text-green-600 dark:text-green-400' : dE < 2.5 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}>
@@ -286,9 +339,12 @@ export default function Scan({ userData, onLogout }: ScanProps) {
                     </div>
                   )}
                 </div>
-                {lastMeasurement && (
+                {displayMeasurement && (
                   <p className="text-slate-700 dark:text-slate-400 text-[10px] uppercase font-bold tracking-widest">
-                    {new Date(lastMeasurement.timestamp).toLocaleTimeString()}
+                    {historyMeasurement
+                      ? new Date(displayMeasurement.timestamp).toLocaleString()
+                      : new Date(displayMeasurement.timestamp).toLocaleTimeString()
+                    }
                   </p>
                 )}
               </div>
@@ -299,7 +355,7 @@ export default function Scan({ userData, onLogout }: ScanProps) {
                   <div className="px-5 py-4 flex justify-between items-center transition-all hover:bg-slate-100 dark:hover:bg-slate-800/30 hover:translate-x-1">
                     <span className="text-slate-700 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest">CIELAB</span>
                     <span className="font-mono text-base text-slate-900 dark:text-white">
-                      {lastMeasurement ? `${fmt(lastMeasurement.color.L)}, ${fmt(lastMeasurement.color.a)}, ${fmt(lastMeasurement.color.b)}` : '--'}
+                      {displayMeasurement ? `${fmt(displayMeasurement.color.L)}, ${fmt(displayMeasurement.color.a)}, ${fmt(displayMeasurement.color.b)}` : '--'}
                     </span>
                   </div>
                 )}
@@ -307,7 +363,7 @@ export default function Scan({ userData, onLogout }: ScanProps) {
                   <div className="px-5 py-4 flex justify-between items-center transition-all hover:bg-slate-100 dark:hover:bg-slate-800/30 hover:translate-x-1">
                     <span className="text-slate-700 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest">sRGB</span>
                     <span className="font-mono text-base text-slate-900 dark:text-white uppercase">
-                      {lastMeasurement ? `${lastMeasurement.color.R}, ${lastMeasurement.color.G}, ${lastMeasurement.color.B}` : '--'}
+                      {displayMeasurement ? `${displayMeasurement.color.R}, ${displayMeasurement.color.G}, ${displayMeasurement.color.B}` : '--'}
                     </span>
                   </div>
                 )}
@@ -315,7 +371,7 @@ export default function Scan({ userData, onLogout }: ScanProps) {
                   <div className="px-5 py-4 flex justify-between items-center transition-all hover:bg-slate-100 dark:hover:bg-slate-800/30 hover:translate-x-1">
                     <span className="text-slate-700 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest">LCH(ab)</span>
                     <span className="font-mono text-base text-slate-900 dark:text-white">
-                      {lastMeasurement ? `${fmt(lastMeasurement.color.L)}, ${fmt(lastMeasurement.color.C)}, ${fmt(lastMeasurement.color.H)}°` : '--'}
+                      {displayMeasurement ? `${fmt(displayMeasurement.color.L)}, ${fmt(displayMeasurement.color.C)}, ${fmt(displayMeasurement.color.H)}°` : '--'}
                     </span>
                   </div>
                 )}
@@ -323,7 +379,7 @@ export default function Scan({ userData, onLogout }: ScanProps) {
                   <div className="px-5 py-4 flex justify-between items-center transition-all hover:bg-slate-100 dark:hover:bg-slate-800/30 hover:translate-x-1">
                     <span className="text-slate-700 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest">HEX</span>
                     <span className="font-mono text-base text-slate-900 dark:text-white uppercase">
-                      {lastMeasurement ? lastMeasurement.color.hex : '--'}
+                      {displayMeasurement ? displayMeasurement.color.hex : '--'}
                     </span>
                   </div>
                 )}
@@ -331,7 +387,7 @@ export default function Scan({ userData, onLogout }: ScanProps) {
                   <div className="px-5 py-4 flex justify-between items-center transition-all hover:bg-slate-100 dark:hover:bg-slate-800/30 hover:translate-x-1">
                     <span className="text-slate-700 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest">CIEXYZ</span>
                     <span className="font-mono text-base text-slate-900 dark:text-white">
-                      {lastMeasurement ? `${fmt(lastMeasurement.color.X)}, ${fmt(lastMeasurement.color.Y)}, ${fmt(lastMeasurement.color.Z)}` : '--'}
+                      {displayMeasurement ? `${fmt(displayMeasurement.color.X)}, ${fmt(displayMeasurement.color.Y)}, ${fmt(displayMeasurement.color.Z)}` : '--'}
                     </span>
                   </div>
                 )}
@@ -339,7 +395,7 @@ export default function Scan({ userData, onLogout }: ScanProps) {
                   <div className="px-5 py-4 flex justify-between items-center transition-all hover:bg-slate-100 dark:hover:bg-slate-800/30 hover:translate-x-1">
                     <span className="text-slate-700 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest">CMYK</span>
                     <span className="font-mono text-base text-slate-900 dark:text-white">
-                      {lastMeasurement ? `${fmt(lastMeasurement.color.cmyk.C)}%, ${fmt(lastMeasurement.color.cmyk.M)}%, ${fmt(lastMeasurement.color.cmyk.Y)}%, ${fmt(lastMeasurement.color.cmyk.K)}%` : '--'}
+                      {displayMeasurement ? `${fmt(displayMeasurement.color.cmyk.C)}%, ${fmt(displayMeasurement.color.cmyk.M)}%, ${fmt(displayMeasurement.color.cmyk.Y)}%, ${fmt(displayMeasurement.color.cmyk.K)}%` : '--'}
                     </span>
                   </div>
                 )}
@@ -347,10 +403,10 @@ export default function Scan({ userData, onLogout }: ScanProps) {
                   <div className="px-5 py-4 flex justify-between items-center transition-all hover:bg-slate-100 dark:hover:bg-slate-800/30 hover:translate-x-1">
                     <span className="text-slate-700 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest">EXT</span>
                     <span className="font-mono text-base text-slate-900 dark:text-white">
-                      {lastMeasurement
+                      {displayMeasurement
                         ? [
-                          ...(settings.displayColorFields.includes('LRV') ? [`LRV: ${lastMeasurement.color.LRV}`] : []),
-                          ...(settings.displayColorFields.includes('Density') ? [`Dens: ${lastMeasurement.color.Density}`] : []),
+                          ...(settings.displayColorFields.includes('LRV') ? [`LRV: ${displayMeasurement.color.LRV}`] : []),
+                          ...(settings.displayColorFields.includes('Density') ? [`Dens: ${displayMeasurement.color.Density}`] : []),
                         ].join(' · ')
                         : '--'}
                     </span>
@@ -406,34 +462,36 @@ export default function Scan({ userData, onLogout }: ScanProps) {
               </div>
             )}
 
-            <div className="flex gap-3 mt-4">
-              <button
-                disabled={isMeasuring || (settings.measurementTrigger === 'manual' && measurements.length >= settings.multiPointAveraging)}
-                onClick={measure}
-                className="flex-[2] flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-br from-[#d4af37] to-[#e6c84d] hover:from-[#e6c84d] hover:to-[#f0d860] py-5 font-bold text-slate-900 transition-all active:scale-95 disabled:bg-slate-700 disabled:text-slate-400 group overflow-hidden relative shadow-xl shadow-[#a38105]/20"
-              >
-                {isMeasuring ? (
-                  <RefreshCcw className="h-5 w-5 animate-spin" />
-                ) : (
-                  <ScanIcon className="h-5 w-5 group-hover:scale-110 transition-transform" />
-                )}
-                <span className="uppercase tracking-widest text-xs font-extrabold">
-                  {isMeasuring
-                    ? 'Procesando...'
-                    : settings.measurementTrigger === 'manual'
-                      ? `Medida ${Math.min(measurements.length + 1, settings.multiPointAveraging)}/${settings.multiPointAveraging}`
-                      : 'Escanear con Nix'
-                  }
-                </span>
-              </button>
+            {(!historyMeasurement || isConnected) && (
+              <div className="flex gap-3 mt-4">
+                <button
+                  disabled={isMeasuring || (settings.measurementTrigger === 'manual' && measurements.length >= settings.multiPointAveraging)}
+                  onClick={measure}
+                  className="flex-[2] flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-br from-[#d4af37] to-[#e6c84d] hover:from-[#e6c84d] hover:to-[#f0d860] py-5 font-bold text-slate-900 transition-all active:scale-95 disabled:bg-slate-700 disabled:text-slate-400 group overflow-hidden relative shadow-xl shadow-[#a38105]/20"
+                >
+                  {isMeasuring ? (
+                    <RefreshCcw className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <ScanIcon className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                  )}
+                  <span className="uppercase tracking-widest text-xs font-extrabold">
+                    {isMeasuring
+                      ? 'Procesando...'
+                      : settings.measurementTrigger === 'manual'
+                        ? `Medida ${Math.min(measurements.length + 1, settings.multiPointAveraging)}/${settings.multiPointAveraging}`
+                        : 'Escanear con Nix'
+                    }
+                  </span>
+                </button>
 
-              <button
-                onClick={disconnect}
-                className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-red-600/10 hover:bg-red-600/20 border border-red-600/20 py-5 text-red-500 transition-all active:scale-95"
-              >
-                <BluetoothOff className="w-5 h-5" />
-              </button>
-            </div>
+                <button
+                  onClick={disconnect}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-red-600/10 hover:bg-red-600/20 border border-red-600/20 py-5 text-red-500 transition-all active:scale-95"
+                >
+                  <BluetoothOff className="w-5 h-5" />
+                </button>
+              </div>
+            )}
           </div>
         )}
       </main>
@@ -446,13 +504,17 @@ export default function Scan({ userData, onLogout }: ScanProps) {
       <GuardarEscaneo
         isOpen={isGuardarEscaneoOpen}
         onClose={() => setIsGuardarEscaneoOpen(false)}
-        measurement={lastMeasurement}
+        measurement={displayMeasurement}
         onSaveSuccess={handleSaveSuccess}
         onLogout={onLogout}
+        blancoReferencia={settings.referenceWhite}
+        modoMedicion={settings.measurementMode}
+        densidad={settings.densityStatus}
       />
       <HistorialMediciones
         isOpen={isHistorialOpen}
         onClose={() => setIsHistorialOpen(false)}
+        onSelectMeasurement={handleSelectMeasurement}
       />
     </div>
   );

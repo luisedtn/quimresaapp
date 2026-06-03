@@ -254,7 +254,7 @@ app.put('/api/cliente', authenticateToken, async (req: Request, res: Response): 
 app.post('/api/mediciones', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
         const { idcliente } = (req as any).user;
-        const { L, A, B, R, G, RB, C, H, X, Y, Z, cmykC, cmykM, cmykY, cmykK, hex, LRV, Density, fecha, nombre, notas, id_libreria, id_coleccion } = req.body;
+        const { L, A, B, R, G, RB, C, H, X, Y, Z, cmykC, cmykM, cmykY, cmykK, hex, LRV, Density, fecha, nombre, notas, id_libreria, id_coleccion, blanco_referencia, modo_medicion, densidad } = req.body;
 
         const libId = id_libreria != null ? Number(id_libreria) : null;
         const colId = id_coleccion != null ? Number(id_coleccion) : null;
@@ -285,6 +285,9 @@ app.post('/api/mediciones', authenticateToken, async (req: Request, res: Respons
                 hex:     hex     || null,
                 LRV:     LRV     != null ? Number(LRV)            : null,
                 Density: Density != null ? Number(Density)        : null,
+                blanco_referencia: blanco_referencia || null,
+                modo_medicion:     modo_medicion     || null,
+                densidad:          densidad          || null,
             }
         });
         res.status(201).json(medicion);

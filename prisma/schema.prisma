@@ -459,6 +459,10 @@ model Medicion {
   LRV        Float?
   Density    Float?
 
+  blanco_referencia String?
+  modo_medicion     String?
+  densidad          String?
+
   cliente    Cliente @relation(fields: [id_cliente], references: [CODIGO])
   libreriaObj  Libreria?  @relation(fields: [id_libreria], references: [id])
   coleccionObj Coleccion? @relation(fields: [id_coleccion], references: [id])
