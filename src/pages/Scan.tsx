@@ -43,7 +43,8 @@ export default function Scan({ userData, onLogout }: ScanProps) {
     nombre: m.nombre,
     blancoReferencia: m.blanco_referencia,
     modoMedicion: m.modo_medicion,
-    densidadStatus: m.densidad
+    densidadStatus: m.densidad,
+    promedio: m.promedio
   });
 
   const handleSelectMeasurement = (medicion: any) => {
@@ -318,16 +319,18 @@ export default function Scan({ userData, onLogout }: ScanProps) {
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#d4af37]"></div>
                   {historyMeasurement ? (
-                    <p className="text-slate-700 dark:text-slate-400 text-[10px] uppercase font-bold tracking-widest truncate max-w-[220px]">
+                    <p className="text-slate-700 dark:text-slate-400 text-[10px] uppercase font-bold tracking-widest truncate max-w-[260px]">
                       {historyMeasurement.nombre || 'Medición'}
                       {historyMeasurement.blancoReferencia && <span className="ml-1.5 opacity-60">· {historyMeasurement.blancoReferencia.replace('/', ', ')}</span>}
                       {historyMeasurement.modoMedicion && <span className="ml-1 opacity-60">· {historyMeasurement.modoMedicion}</span>}
                       {historyMeasurement.densidadStatus && <span className="ml-1 opacity-60">· {historyMeasurement.densidadStatus}</span>}
+                      {historyMeasurement.promedio && <span className="ml-1 opacity-60">· ø{historyMeasurement.promedio}</span>}
                     </p>
                   ) : (
                     <p className="text-slate-700 dark:text-slate-400 text-[10px] uppercase font-bold tracking-widest">
                       {settings.referenceWhite.replace('/', ', ')} · {settings.measurementMode}
                       {settings.densityStatus !== 'ISO Status T' && ` · ${settings.densityStatus}`}
+                      {settings.multiPointAveraging > 1 && ` · ø${settings.multiPointAveraging}`}
                     </p>
                   )}
                   {dE !== null && !historyMeasurement && (
@@ -510,6 +513,7 @@ export default function Scan({ userData, onLogout }: ScanProps) {
         blancoReferencia={settings.referenceWhite}
         modoMedicion={settings.measurementMode}
         densidad={settings.densityStatus}
+        promedio={settings.multiPointAveraging}
       />
       <HistorialMediciones
         isOpen={isHistorialOpen}

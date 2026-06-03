@@ -11,6 +11,7 @@ interface GuardarEscaneoProps {
   blancoReferencia?: string;
   modoMedicion?: string;
   densidad?: string;
+  promedio?: number;
 }
 
 interface Libreria {
@@ -31,7 +32,8 @@ export default function GuardarEscaneo({
   onLogout,
   blancoReferencia,
   modoMedicion,
-  densidad
+  densidad,
+  promedio
 }: GuardarEscaneoProps) {
   const [colorName, setColorName] = useState('');
   const [notes, setNotes] = useState('');
@@ -160,6 +162,7 @@ export default function GuardarEscaneo({
         blanco_referencia: blancoReferencia || currentSettings.referenceWhite || null,
         modo_medicion: modoMedicion || currentSettings.measurementMode || null,
         densidad: densidad || currentSettings.densityStatus || null,
+        promedio: promedio || currentSettings.multiPointAveraging || null,
       };
       if (c.cmyk) {
         bodyPayload.cmykC = c.cmyk.C;

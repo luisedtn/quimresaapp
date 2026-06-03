@@ -24,6 +24,7 @@ interface Medicion {
   blanco_referencia?: string | null;
   modo_medicion?: string | null;
   densidad?: string | null;
+  promedio?: number | null;
 }
 
 interface Libreria {
@@ -335,13 +336,15 @@ export default function HistorialMediciones({ isOpen, onClose, onSelectMeasureme
                       )}
                     </div>
                   )}
-                  {(m.blanco_referencia || m.modo_medicion || m.densidad) && (
+                  {(m.blanco_referencia || m.modo_medicion || m.densidad || m.promedio) && (
                     <div className="flex items-center gap-1.5 mt-0.5 text-[9px] text-slate-400 dark:text-slate-600 font-medium flex-wrap">
                       {m.blanco_referencia && <span>{m.blanco_referencia.replace('/', ', ')}</span>}
                       {m.modo_medicion && <span className="text-slate-300 dark:text-slate-700">·</span>}
                       {m.modo_medicion && <span>{m.modo_medicion}</span>}
                       {m.densidad && <span className="text-slate-300 dark:text-slate-700">·</span>}
                       {m.densidad && <span>{m.densidad}</span>}
+                      {m.promedio && <span className="text-slate-300 dark:text-slate-700">·</span>}
+                      {m.promedio && <span>ø{m.promedio}</span>}
                     </div>
                   )}
                 </div>

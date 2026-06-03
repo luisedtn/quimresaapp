@@ -462,6 +462,7 @@ model Medicion {
   blanco_referencia String?
   modo_medicion     String?
   densidad          String?
+  promedio          Int?
 
   cliente    Cliente @relation(fields: [id_cliente], references: [CODIGO])
   libreriaObj  Libreria?  @relation(fields: [id_libreria], references: [id])
