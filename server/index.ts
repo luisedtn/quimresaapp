@@ -300,8 +300,23 @@ app.get('/api/mediciones', authenticateToken, async (req: Request, res: Response
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 50;
         const skip = (page - 1) * limit;
+        const search = req.query.search as string || '';
+        const id_libreria = req.query.id_libreria as string || '';
+        const id_coleccion = req.query.id_coleccion as string || '';
 
         const where: any = { id_cliente: idcliente };
+
+        if (search) {
+            where.nombre = { contains: search, mode: 'insensitive' };
+        }
+
+        if (id_libreria) {
+            where.id_libreria = parseInt(id_libreria);
+        }
+
+        if (id_coleccion) {
+            where.id_coleccion = parseInt(id_coleccion);
+        }
 
         const [mediciones, total] = await Promise.all([
             prisma.medicion.findMany({
@@ -309,6 +324,10 @@ app.get('/api/mediciones', authenticateToken, async (req: Request, res: Response
                 orderBy: { fecha: 'desc' },
                 skip,
                 take: limit,
+                include: {
+                    libreriaObj: { select: { id: true, nombre: true } },
+                    coleccionObj: { select: { id: true, nombre: true } },
+                },
             }),
             prisma.medicion.count({ where })
         ]);

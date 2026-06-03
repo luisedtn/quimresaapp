@@ -4,11 +4,13 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowLeft, Settings, Bluetooth, Check, RefreshCcw,
   Scan as ScanIcon, Battery, Wifi, AlertTriangle, BluetoothOff,
-  BluetoothSearching, BluetoothConnected, Save, Share2, List
+  BluetoothSearching, BluetoothConnected, Save, Share2, List,
+  History
 } from 'lucide-react';
 import { Share as CapShare } from '@capacitor/share';
 import DeviceSettings from '../components/DeviceSettings';
 import GuardarEscaneo from '../components/GuardarEscaneo';
+import HistorialMediciones from '../components/HistorialMediciones';
 import { useNixDevice } from '../hooks/useNixDevice';
 import { API_BASE_URL } from '../config';
 import { deltaE2000 } from '../services/NixBluetoothService';
@@ -23,6 +25,7 @@ export default function Scan({ userData, onLogout }: ScanProps) {
   const [saveMessage, setSaveMessage] = useState({ type: '', text: '' });
   const [isSaving, setIsSaving] = useState(false);
   const [isDeviceSettingsOpen, setIsDeviceSettingsOpen] = useState(false);
+  const [isHistorialOpen, setIsHistorialOpen] = useState(false);
 
   const fmt = (val: any) => {
     const n = Number(val);
@@ -112,9 +115,14 @@ export default function Scan({ userData, onLogout }: ScanProps) {
           <h1 className="text-lg font-semibold uppercase tracking-tight text-white">Escaneo único</h1>
         </div>
 
-        <button onClick={() => setIsDeviceSettingsOpen(true)} className="p-2 text-white/70 hover:text-white transition-colors">
-          <Settings className="h-6 w-6 text-white" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button onClick={() => setIsHistorialOpen(true)} className="p-2 text-white/70 hover:text-white transition-colors">
+            <History className="h-6 w-6 text-white" />
+          </button>
+          <button onClick={() => setIsDeviceSettingsOpen(true)} className="p-2 text-white/70 hover:text-white transition-colors">
+            <Settings className="h-6 w-6 text-white" />
+          </button>
+        </div>
       </header>
 
       <DeviceSettings
@@ -441,6 +449,10 @@ export default function Scan({ userData, onLogout }: ScanProps) {
         measurement={lastMeasurement}
         onSaveSuccess={handleSaveSuccess}
         onLogout={onLogout}
+      />
+      <HistorialMediciones
+        isOpen={isHistorialOpen}
+        onClose={() => setIsHistorialOpen(false)}
       />
     </div>
   );
