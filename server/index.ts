@@ -255,32 +255,36 @@ app.post('/api/mediciones', authenticateToken, async (req: Request, res: Respons
     try {
         const { idcliente } = (req as any).user;
         const { L, A, B, R, G, RB, C, H, X, Y, Z, cmykC, cmykM, cmykY, cmykK, hex, LRV, Density, fecha, nombre, notas, id_libreria, id_coleccion } = req.body;
+
+        const libId = id_libreria != null ? Number(id_libreria) : null;
+        const colId = id_coleccion != null ? Number(id_coleccion) : null;
+
         const medicion = await prisma.medicion.create({
             data: {
-                id_cliente: idcliente,
-                nombre: nombre || 'Escaneo',
-                fecha: fecha ? new Date(fecha) : new Date(),
-                notas: notas || null,
-                id_libreria: id_libreria != null ? Number(id_libreria) : null,
-                id_coleccion: id_coleccion != null ? Number(id_coleccion) : null,
-                L: L != null ? Number(L) : null,
-                A: A != null ? Number(A) : null,
-                B: B != null ? Number(B) : null,
-                R: R != null ? Math.round(Number(R)) : null,
-                G: G != null ? Math.round(Number(G)) : null,
-                RB: RB != null ? Math.round(Number(RB)) : null,
-                C: C != null ? Number(C) : null,
-                H: H != null ? Number(H) : null,
-                X: X != null ? Number(X) : null,
-                Y: Y != null ? Number(Y) : null,
-                Z: Z != null ? Number(Z) : null,
-                cmykC: cmykC != null ? Number(cmykC) : null,
-                cmykM: cmykM != null ? Number(cmykM) : null,
-                cmykY: cmykY != null ? Number(cmykY) : null,
-                cmykK: cmykK != null ? Number(cmykK) : null,
-                hex: hex || null,
-                LRV: LRV != null ? Number(LRV) : null,
-                Density: Density != null ? Number(Density) : null,
+                cliente:     { connect: { CODIGO: idcliente } },
+                nombre:      nombre || 'Escaneo',
+                fecha:       fecha ? new Date(fecha) : new Date(),
+                notas:       notas || null,
+                ...(libId != null ? { libreriaObj:  { connect: { id: libId } } } : {}),
+                ...(colId != null ? { coleccionObj: { connect: { id: colId } } } : {}),
+                L:       L       != null ? Number(L)              : null,
+                A:       A       != null ? Number(A)              : null,
+                B:       B       != null ? Number(B)              : null,
+                R:       R       != null ? Math.round(Number(R))  : null,
+                G:       G       != null ? Math.round(Number(G))  : null,
+                RB:      RB      != null ? Math.round(Number(RB)) : null,
+                C:       C       != null ? Number(C)              : null,
+                H:       H       != null ? Number(H)              : null,
+                X:       X       != null ? Number(X)              : null,
+                Y:       Y       != null ? Number(Y)              : null,
+                Z:       Z       != null ? Number(Z)              : null,
+                cmykC:   cmykC   != null ? Number(cmykC)          : null,
+                cmykM:   cmykM   != null ? Number(cmykM)          : null,
+                cmykY:   cmykY   != null ? Number(cmykY)          : null,
+                cmykK:   cmykK   != null ? Number(cmykK)          : null,
+                hex:     hex     || null,
+                LRV:     LRV     != null ? Number(LRV)            : null,
+                Density: Density != null ? Number(Density)        : null,
             }
         });
         res.status(201).json(medicion);
@@ -320,10 +324,22 @@ app.get('/api/mediciones', authenticateToken, async (req: Request, res: Response
 app.get('/api/librerias', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
         const { idcliente } = (req as any).user;
-        const librerias = await prisma.libreria.findMany({
+        let librerias = await prisma.libreria.findMany({
             where: { id_cliente: idcliente },
             orderBy: { nombre: 'asc' }
         });
+
+        // Si el cliente no tiene ninguna librería, crear una por defecto con el nombre del cliente
+        if (librerias.length === 0) {
+            const cliente = await prisma.cliente.findUnique({ where: { CODIGO: idcliente } });
+            const nombreDefault = cliente?.NOMBRE?.trim() || `Cliente ${idcliente}`;
+            const libreriaDefault = await prisma.libreria.create({
+                data: { nombre: nombreDefault, id_cliente: idcliente }
+            });
+            librerias = [libreriaDefault];
+            console.log(`[LIBRERIAS] Librería por defecto creada para cliente ${idcliente}: "${nombreDefault}"`);
+        }
+
         res.json(librerias);
     } catch (error: any) {
         res.status(500).json({ error: 'Error al obtener librerías', details: error.message });
