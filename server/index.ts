@@ -1211,25 +1211,6 @@ app.post('/api/qualitycontrol', authenticateToken, async (req: Request, res: Res
     }
 });
 
-app.get('/api/qualitycontrol', authenticateToken, async (req: Request, res: Response): Promise<any> => {
-    try {
-        const { idcliente } = (req as any).user;
-        const where: any = {};
-        if (idcliente) {
-            where.id_cliente = idcliente;
-        }
-
-        const list = await prisma.qualityControl.findMany({
-            where,
-            orderBy: { creado_en: 'desc' }
-        });
-        res.json(list);
-    } catch (error: any) {
-        console.error('[ERROR] /api/qualitycontrol GET:', error.message);
-        res.status(500).json({ error: 'Error al obtener controles de calidad', details: error.message });
-    }
-});
-
 // =================================================================
 // POST /api/upload-pdf  – Save PDF to VPS directory
 // =================================================================

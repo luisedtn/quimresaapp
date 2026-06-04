@@ -74,7 +74,13 @@ function deltaEBadge(de: number | null) {
 
 function formatDate(iso: string) {
   const d = new Date(iso);
-  return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString('es-ES', { 
+    day: '2-digit', 
+    month: 'short', 
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 }
 
 function getPatronHex(rec: QCRecord): string {
@@ -116,69 +122,72 @@ export default function ListaQC() {
     searchTimerRef.current = setTimeout(() => setDebouncedSearch(search), 400);
   }, [search]);
 
-  // ── Reset + fetch on filter/search change ────────────────────────────────
-  useEffect(() => {
-    setRecords([]);
-    setPage(1);
-    setHasMore(true);
-    setError(null);
-  }, [debouncedSearch, activeFilters]);
-
   // ── Fetch ────────────────────────────────────────────────────────────────
-  const fetchPage = useCallback(async (pageNum: number) => {
+  const fetchPage = useCallback(async (pageNum: number, currentSearch: string, currentFilters: { desde: string; hasta: string }) => {
     if (isLoadingRef.current) return;
     isLoadingRef.current = true;
     setIsLoading(true);
-    console.log(`\n[ListaQC] ---> Iniciando fetch para página ${pageNum}`);
     try {
       const token = localStorage.getItem('token');
       const userDataStr = localStorage.getItem('userData');
       const userData = userDataStr ? JSON.parse(userDataStr) : null;
-      console.log(`[ListaQC] userData de localStorage:`, userData);
 
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
       if (userData?.idcliente) headers['x-client-id'] = userData.idcliente.toString();
-      
-      console.log(`[ListaQC] Headers a enviar:`, headers);
 
       const params = new URLSearchParams({
         page: pageNum.toString(),
         limit: LIMIT.toString(),
       });
-      if (debouncedSearch) params.set('search', debouncedSearch);
-      if (activeFilters.desde) params.set('desde', activeFilters.desde);
-      if (activeFilters.hasta) params.set('hasta', activeFilters.hasta);
+      if (currentSearch) params.set('search', currentSearch);
+      if (currentFilters.desde) params.set('desde', currentFilters.desde);
+      if (currentFilters.hasta) params.set('hasta', currentFilters.hasta);
 
       const url = `${API_BASE_URL}/api/qualitycontrol?${params.toString()}`;
-      console.log(`[ListaQC] GET request URL:`, url);
 
       const res = await fetch(url, { headers });
-      console.log(`[ListaQC] Respuesta del servidor - status: ${res.status} ${res.statusText}`);
-      
       if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
-      
-      const data = await res.json();
-      console.log(`[ListaQC] JSON parseado:`, data);
 
-      const rows: QCRecord[] = Array.isArray(data.records) ? data.records : [];
-      setTotal(data.total ?? 0);
-      setRecords(prev => pageNum === 1 ? rows : [...prev, ...rows]);
+      const data = await res.json();
+
+      let rows: QCRecord[] = [];
+      let totalRecords = 0;
+
+      if (Array.isArray(data)) {
+        rows = data;
+        totalRecords = data.length;
+      } else if (data && Array.isArray(data.records)) {
+        rows = data.records;
+        totalRecords = data.total ?? data.records.length;
+      }
+
+      setTotal(totalRecords);
+      setRecords(pageNum === 1 ? rows : (prev) => [...prev, ...rows]);
       setHasMore(rows.length === LIMIT);
     } catch (e: any) {
-      console.error(`[ListaQC] Error capturado en fetch:`, e);
       setError(e.message || 'Error de conexión');
     } finally {
       isLoadingRef.current = false;
       setIsLoading(false);
     }
+  }, []);
+
+  // ── Reset + fetch page 1 when search or date filters change ─────────────
+  useEffect(() => {
+    setRecords([]);
+    setPage(1);
+    setHasMore(true);
+    setError(null);
+    fetchPage(1, debouncedSearch, activeFilters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch, activeFilters]);
 
-  // ── Trigger fetch when page changes ──────────────────────────────────────
+  // ── Fetch next page when page changes (infinite scroll) ─────────────────
   useEffect(() => {
-    fetchPage(page);
+    if (page > 1) fetchPage(page, debouncedSearch, activeFilters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, debouncedSearch, activeFilters]);
+  }, [page]);
 
   // ── Infinite scroll observer ──────────────────────────────────────────────
   useEffect(() => {
@@ -226,7 +235,7 @@ export default function ListaQC() {
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0A0F14] text-slate-900 dark:text-slate-200 font-sans flex flex-col">
 
       {/* ── Header ── */}
       <header className="fixed top-0 z-20 flex w-full items-center gap-4 border-b border-black/20 bg-[#CC5200] shadow-xl px-4 py-3.5">
@@ -260,15 +269,15 @@ export default function ListaQC() {
       </header>
 
       {/* ── Search bar ── */}
-      <div className="fixed top-[60px] z-10 w-full bg-[#0A0F14]/95 backdrop-blur-md border-b border-slate-800/80 px-4 py-2.5">
+      <div className="fixed top-[60px] z-10 w-full bg-slate-50/95 dark:bg-[#0A0F14]/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/80 px-4 py-2.5">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar por nombre o descripción…"
-            className="w-full bg-slate-900 border border-slate-700/60 rounded-xl pl-9 pr-9 py-2.5 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-[#CC5200]/60 focus:ring-1 focus:ring-[#CC5200]/30 transition-all"
+            className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700/60 rounded-xl pl-9 pr-9 py-2.5 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:border-[#CC5200] focus:ring-2 focus:ring-[#CC5200]/20 transition-all shadow-sm"
           />
           {search && (
             <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
@@ -292,11 +301,11 @@ export default function ListaQC() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -12, scale: 0.97 }}
               transition={{ type: 'spring', damping: 30, stiffness: 350 }}
-              className="fixed top-[120px] left-4 right-4 z-40 bg-slate-900 border border-slate-700/80 rounded-2xl p-5 shadow-2xl"
+              className="fixed top-[120px] left-4 right-4 z-40 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-5 shadow-2xl"
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-slate-200 uppercase tracking-widest flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-[#a38105]" /> Filtrar por fecha
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-[#CC5200]" /> Filtrar por fecha
                 </h3>
                 <button onClick={() => setShowFilters(false)}>
                   <X className="w-4 h-4 text-slate-500" />
@@ -389,12 +398,12 @@ export default function ListaQC() {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center justify-center py-24 text-center gap-4"
           >
-            <div className="w-20 h-20 rounded-3xl bg-slate-900 border border-slate-800 flex items-center justify-center shadow-xl">
-              <Inbox className="w-9 h-9 text-slate-600" />
+            <div className="w-20 h-20 rounded-3xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center shadow-xl">
+              <Inbox className="w-9 h-9 text-slate-400 dark:text-slate-600" />
             </div>
             <div>
-              <p className="text-slate-300 font-semibold text-base">Sin registros</p>
-              <p className="text-slate-600 text-sm mt-1">
+              <p className="text-slate-700 dark:text-slate-300 font-semibold text-base">Sin registros</p>
+              <p className="text-slate-500 dark:text-slate-500 text-sm mt-1 px-4">
                 {debouncedSearch || hasActiveFilters
                   ? 'Ningún resultado coincide con los filtros aplicados.'
                   : 'Aún no hay controles de calidad guardados.'}
@@ -404,7 +413,7 @@ export default function ListaQC() {
         )}
 
         {/* Records */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           <AnimatePresence initial={false}>
             {records.map((rec, idx) => {
               const hex = getPatronHex(rec);
@@ -415,55 +424,55 @@ export default function ListaQC() {
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: Math.min(idx % LIMIT, 10) * 0.04 }}
-                  className="group relative flex items-stretch bg-slate-900 border border-slate-800/80 rounded-2xl overflow-hidden shadow-md hover:shadow-lg hover:border-slate-700 transition-all duration-200"
+                  className="group relative flex items-stretch bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-md dark:shadow-none hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200"
                 >
                   {/* Color swatch */}
                   <div
-                    className="w-14 flex-shrink-0 relative"
+                    className="w-16 flex-shrink-0 relative shadow-[inset_0_0_10px_rgba(0,0,0,0.1)]"
                     style={{ backgroundColor: hex }}
                     title={`Patrón: ${hex}`}
                   >
                     {/* Overlay gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/20" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-black/30 mix-blend-overlay" />
                   </div>
 
                   {/* Content */}
-                  <div className="flex-1 p-4 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                  <div className="flex-1 p-4.5 min-w-0 py-4 px-4">
+                    <div className="flex items-start justify-between gap-3 mb-2">
                       <div className="min-w-0 flex-1">
-                        <h3 className="text-sm font-bold text-slate-100 truncate leading-tight">
+                        <h3 className="text-[15px] font-bold text-slate-900 dark:text-slate-100 truncate leading-snug">
                           {rec.nombre || 'Sin nombre'}
                         </h3>
                         {rec.descripcion && (
-                          <p className="text-xs text-slate-500 truncate mt-0.5 leading-tight">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-1 leading-tight font-medium">
                             {rec.descripcion}
                           </p>
                         )}
                       </div>
-                      <span className={`flex-shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full ${badge.color}`}>
+                      <span className={`flex-shrink-0 text-[11px] font-bold px-3 py-1.5 rounded-xl ${badge.color} shadow-sm`}>
                         {badge.label}
                       </span>
                     </div>
 
                     {/* Color chips row */}
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-3 mt-1">
                       {/* Patron */}
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-lg border border-slate-100 dark:border-slate-700/50">
                         <div
-                          className="w-4 h-4 rounded-full border border-white/20 flex-shrink-0 shadow-inner"
+                          className="w-3.5 h-3.5 rounded-full border border-black/10 dark:border-white/20 flex-shrink-0 shadow-inner"
                           style={{ backgroundColor: hex }}
                         />
-                        <span className="text-[10px] text-slate-500 font-mono">{hex.toUpperCase()}</span>
+                        <span className="text-[10px] text-slate-600 dark:text-slate-400 font-bold">{hex.toUpperCase()}</span>
                       </div>
                       {rec.muestra_hex && (
                         <>
-                          <ChevronRight className="w-3 h-3 text-slate-700" />
-                          <div className="flex items-center gap-1.5">
+                          <ChevronRight className="w-3 h-3 text-slate-400 dark:text-slate-600" />
+                          <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-lg border border-slate-100 dark:border-slate-700/50">
                             <div
-                              className="w-4 h-4 rounded-full border border-white/20 flex-shrink-0 shadow-inner"
+                              className="w-3.5 h-3.5 rounded-full border border-black/10 dark:border-white/20 flex-shrink-0 shadow-inner"
                               style={{ backgroundColor: rec.muestra_hex }}
                             />
-                            <span className="text-[10px] text-slate-500 font-mono">{rec.muestra_hex.toUpperCase()}</span>
+                            <span className="text-[10px] text-slate-600 dark:text-slate-400 font-bold">{rec.muestra_hex.toUpperCase()}</span>
                           </div>
                         </>
                       )}
@@ -485,10 +494,10 @@ export default function ListaQC() {
                     )}
 
                     {/* Footer row */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mt-2 pt-3 border-t border-slate-100 dark:border-slate-800/60">
                       <div className="flex items-center gap-3">
-                        <span className="text-[10px] text-slate-600 flex items-center gap-1">
-                          <Calendar className="w-3 h-3" /> {formatDate(rec.creado_en)}
+                        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-500 flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5" /> {formatDate(rec.creado_en)}
                         </span>
                         {rec.pdf_url && (
                           <a
