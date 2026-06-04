@@ -137,7 +137,6 @@ export default function CustomerSearch({ isOpen, onClose, onSelect }: CustomerSe
                                         }}
                                         onMouseEnter={e => {
                                             e.currentTarget.style.borderColor = 'var(--accent-orange)';
-                                            e.currentTarget.style.borderOpacity = '0.4';
                                         }}
                                         onMouseLeave={e => {
                                             e.currentTarget.style.borderColor = 'var(--border-card)';

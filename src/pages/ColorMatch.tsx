@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Search, Scan, Keyboard, Layers, ChevronRight, Target, Sliders, Beaker, Check, Sparkles } from 'lucide-react';
 import { useNixDevice } from '../hooks/useNixDevice';
@@ -51,6 +51,7 @@ interface ComponentColor {
 // ----------------------------------------------------------------
 export default function ColorMatch() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { isConnected, measure, isMeasuring } = useNixDevice();
 
     // Helper function to normalize decimal separator (comma to dot)
@@ -587,7 +588,9 @@ export default function ColorMatch() {
 
         localStorage.setItem('qc_context', JSON.stringify(qcContext));
 
-        navigate('/quality-control', {
+        const returnTo = location.state?.returnTo || '/quality-control';
+
+        navigate(returnTo, {
             state: {
                 standardFromFormula: {
                     l, a, b,

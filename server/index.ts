@@ -1113,6 +1113,124 @@ app.post('/api/ajustes/guardar', authenticateToken, async (req: Request, res: Re
 });
 
 // =================================================================
+// QUALITY CONTROL RECORDS
+// =================================================================
+app.post('/api/qualitycontrol', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { idcliente } = (req as any).user;
+        const {
+            nombre,
+            descripcion,
+            patron_nombre,
+            patron_l,
+            patron_a,
+            patron_b,
+            patron_hex,
+            muestra_nombre,
+            muestra_l,
+            muestra_a,
+            muestra_b,
+            muestra_hex,
+            delta_e,
+            delta_l,
+            delta_a,
+            delta_b,
+            blanco_referencia,
+            modo_medicion,
+            densidad,
+            pdf_url
+        } = req.body;
+
+        let qcRecord;
+        const existing = await prisma.qualityControl.findFirst({
+            where: {
+                id_cliente: idcliente,
+                nombre: nombre
+            }
+        });
+
+        if (existing) {
+            qcRecord = await prisma.qualityControl.update({
+                where: { id: existing.id },
+                data: {
+                    descripcion: descripcion !== undefined ? descripcion : existing.descripcion,
+                    patron_nombre: patron_nombre !== undefined ? patron_nombre : existing.patron_nombre,
+                    patron_l: patron_l !== undefined ? parseFloat(patron_l) : existing.patron_l,
+                    patron_a: patron_a !== undefined ? parseFloat(patron_a) : existing.patron_a,
+                    patron_b: patron_b !== undefined ? parseFloat(patron_b) : existing.patron_b,
+                    patron_hex: patron_hex !== undefined ? patron_hex : existing.patron_hex,
+                    muestra_nombre: muestra_nombre !== undefined ? muestra_nombre : existing.muestra_nombre,
+                    muestra_l: muestra_l !== undefined ? parseFloat(muestra_l) : existing.muestra_l,
+                    muestra_a: muestra_a !== undefined ? parseFloat(muestra_a) : existing.muestra_a,
+                    muestra_b: muestra_b !== undefined ? parseFloat(muestra_b) : existing.muestra_b,
+                    muestra_hex: muestra_hex !== undefined ? muestra_hex : existing.muestra_hex,
+                    delta_e: delta_e !== undefined ? parseFloat(delta_e) : existing.delta_e,
+                    delta_l: delta_l !== undefined ? parseFloat(delta_l) : existing.delta_l,
+                    delta_a: delta_a !== undefined ? parseFloat(delta_a) : existing.delta_a,
+                    delta_b: delta_b !== undefined ? parseFloat(delta_b) : existing.delta_b,
+                    blanco_referencia: blanco_referencia !== undefined ? blanco_referencia : existing.blanco_referencia,
+                    modo_medicion: modo_medicion !== undefined ? modo_medicion : existing.modo_medicion,
+                    densidad: densidad !== undefined ? densidad : existing.densidad,
+                    pdf_url: pdf_url !== undefined ? pdf_url : existing.pdf_url
+                }
+            });
+            console.log(`[QUALITY-CONTROL] Registro actualizado ID: ${qcRecord.id}`);
+        } else {
+            qcRecord = await prisma.qualityControl.create({
+                data: {
+                    id_cliente: idcliente,
+                    nombre,
+                    descripcion,
+                    patron_nombre,
+                    patron_l: patron_l != null ? parseFloat(patron_l) : null,
+                    patron_a: patron_a != null ? parseFloat(patron_a) : null,
+                    patron_b: patron_b != null ? parseFloat(patron_b) : null,
+                    patron_hex,
+                    muestra_nombre,
+                    muestra_l: muestra_l != null ? parseFloat(muestra_l) : null,
+                    muestra_a: muestra_a != null ? parseFloat(muestra_a) : null,
+                    muestra_b: muestra_b != null ? parseFloat(muestra_b) : null,
+                    muestra_hex,
+                    delta_e: delta_e != null ? parseFloat(delta_e) : null,
+                    delta_l: delta_l != null ? parseFloat(delta_l) : null,
+                    delta_a: delta_a != null ? parseFloat(delta_a) : null,
+                    delta_b: delta_b != null ? parseFloat(delta_b) : null,
+                    blanco_referencia,
+                    modo_medicion,
+                    densidad,
+                    pdf_url
+                }
+            });
+            console.log(`[QUALITY-CONTROL] Registro creado ID: ${qcRecord.id}`);
+        }
+
+        res.json({ message: 'Control de calidad guardado con éxito', record: qcRecord });
+    } catch (error: any) {
+        console.error('[ERROR] /api/qualitycontrol POST:', error.message);
+        res.status(500).json({ error: 'Error al guardar el control de calidad', details: error.message });
+    }
+});
+
+app.get('/api/qualitycontrol', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { idcliente } = (req as any).user;
+        const where: any = {};
+        if (idcliente) {
+            where.id_cliente = idcliente;
+        }
+
+        const list = await prisma.qualityControl.findMany({
+            where,
+            orderBy: { creado_en: 'desc' }
+        });
+        res.json(list);
+    } catch (error: any) {
+        console.error('[ERROR] /api/qualitycontrol GET:', error.message);
+        res.status(500).json({ error: 'Error al obtener controles de calidad', details: error.message });
+    }
+});
+
+// =================================================================
 // POST /api/upload-pdf  – Save PDF to VPS directory
 // =================================================================
 app.post('/api/upload-pdf', authenticateToken, async (req: Request, res: Response): Promise<any> => {

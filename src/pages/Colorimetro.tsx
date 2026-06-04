@@ -20,6 +20,8 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
     const [savingId, setSavingId] = useState<string | null>(null);
     const [saveMessage, setSaveMessage] = useState({ type: '', text: '' });
     const [isReturning, setIsReturning] = useState(false);
+    const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+    const [showClearConfirm, setShowClearConfirm] = useState(false);
 
     const returnTo = location.state?.returnTo;
     const autoScan = location.state?.autoScan;
@@ -630,7 +632,7 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                             <h3 className="text-xs font-bold text-[#a38105] uppercase tracking-widest">
                                 Historial de Mediciones ({measurements.length})
                             </h3>
-                            <button onClick={clearMeasurements}
+                            <button onClick={() => setShowClearConfirm(true)}
                                 className="flex items-center gap-1 text-[10px] text-red-400 hover:text-red-300 uppercase tracking-widest font-bold">
                                 <Trash2 className="w-3 h-3" /> Limpiar
                             </button>
@@ -664,7 +666,7 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
 
                                         {/* Eliminar */}
                                         <button
-                                            onClick={() => removeMeasurement(m.timestamp)}
+                                            onClick={() => setPendingDelete(m.timestamp)}
                                             className="flex items-center gap-1 px-2 py-2 bg-red-500/10 hover:bg-red-500/30 text-red-400 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all flex-shrink-0"
                                         >
                                             <Trash2 className="w-3.5 h-3.5" />
@@ -677,6 +679,98 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                 )}
 
             </main>
+
+            {/* Confirmación de borrado */}
+            <AnimatePresence>
+                {pendingDelete && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setPendingDelete(null)}
+                            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="relative w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-2xl overflow-hidden"
+                        >
+                            <div className="relative">
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 tracking-tight">Eliminar medición</h3>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm mb-8 leading-relaxed">
+                                    Esta acción no se puede deshacer. ¿Deseas eliminar esta medición?
+                                </p>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setPendingDelete(null)}
+                                        className="flex-1 px-6 py-3 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold uppercase tracking-widest transition-all active:scale-95"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            removeMeasurement(pendingDelete);
+                                            setPendingDelete(null);
+                                        }}
+                                        className="flex-1 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-red-900/20"
+                                    >
+                                        Eliminar
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Confirmación de reinicio */}
+            <AnimatePresence>
+                {showClearConfirm && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowClearConfirm(false)}
+                            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="relative w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-2xl overflow-hidden"
+                        >
+                            <div className="relative">
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 tracking-tight">Limpiar mediciones</h3>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm mb-8 leading-relaxed">
+                                    {measurements.length > 0
+                                        ? `Tienes ${measurements.length} medición${measurements.length !== 1 ? 'es' : ''} sin guardar. Se perderán todos los datos. ¿Deseas continuar?`
+                                        : 'No hay mediciones activas. ¿Deseas limpiar de todas formas?'}
+                                </p>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowClearConfirm(false)}
+                                        className="flex-1 px-6 py-3 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold uppercase tracking-widest transition-all active:scale-95"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            clearMeasurements();
+                                            setShowClearConfirm(false);
+                                        }}
+                                        className="flex-1 px-6 py-3 rounded-xl bg-[#D4672A] hover:bg-[#D4672A]/80 text-white text-xs font-bold uppercase tracking-widest transition-all active:scale-95"
+                                    >
+                                        Limpiar
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

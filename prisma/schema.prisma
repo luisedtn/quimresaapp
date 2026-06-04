@@ -47,6 +47,7 @@ model Cliente {
   usuarios   Usuario[]
   librerias  Libreria[]
   mediciones Medicion[]
+  qualitycontrols QualityControl[]
 
   @@map("CLIENTES")
 }
@@ -470,6 +471,37 @@ model Medicion {
 
   @@map("mediciones")
 }
+
+model QualityControl {
+  id                Int      @id @default(autoincrement())
+  nombre            String?
+  descripcion       String?
+  patron_nombre     String?
+  patron_l          Float?
+  patron_a          Float?
+  patron_b          Float?
+  patron_hex        String?
+  muestra_nombre    String?
+  muestra_l         Float?
+  muestra_a         Float?
+  muestra_b         Float?
+  muestra_hex       String?
+  delta_e           Float?
+  delta_l           Float?
+  delta_a           Float?
+  delta_b           Float?
+  blanco_referencia String?
+  modo_medicion     String?
+  densidad          String?
+  pdf_url           String?
+  creado_en         DateTime @default(now())
+  id_cliente        Int?
+
+  cliente           Cliente? @relation(fields: [id_cliente], references: [CODIGO])
+
+  @@map("qualitycontrol")
+}
+
 
 
 

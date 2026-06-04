@@ -32,11 +32,11 @@ export interface DeviceSettingsData {
 }
 
 export const DEFAULT_SETTINGS: DeviceSettingsData = {
-    referenceWhite: 'D50/2°',
-    measurementMode: 'M2',
-    displayColorFields: ['CIELAB', 'HTX', 'sRGB'],
+    referenceWhite: 'D65/10°',
+    measurementMode: 'M1',
+    displayColorFields: ['CIELAB', 'sRGB'],
     densityStatus: 'ISO Status T',
-    multiPointAveraging: 1,
+    multiPointAveraging: 2,
     measurementTrigger: 'manual',
 };
 

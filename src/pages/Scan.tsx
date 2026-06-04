@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -27,6 +27,8 @@ export default function Scan({ userData, onLogout }: ScanProps) {
   const [isDeviceSettingsOpen, setIsDeviceSettingsOpen] = useState(false);
   const [isHistorialOpen, setIsHistorialOpen] = useState(false);
   const [historyMeasurement, setHistoryMeasurement] = useState<any>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ timestamp: string; num: number } | null>(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const mapApiToNixFormat = (m: any) => ({
     color: {
@@ -49,6 +51,7 @@ export default function Scan({ userData, onLogout }: ScanProps) {
 
   const handleSelectMeasurement = (medicion: any) => {
     setHistoryMeasurement(mapApiToNixFormat(medicion));
+    clearMeasurements();
   };
 
   const fmt = (val: any) => {
@@ -77,9 +80,80 @@ export default function Scan({ userData, onLogout }: ScanProps) {
     reloadSettings,
   } = useNixDevice();
 
-  const displayMeasurement = historyMeasurement || lastMeasurement;
+  const averages = useMemo(() => {
+    if (measurements.length === 0) return null;
+    const sum = { L: 0, a: 0, b: 0, R: 0, G: 0, B: 0, C: 0, H: 0, X: 0, Y: 0, Z: 0, cmykC: 0, cmykM: 0, cmykY: 0, cmykK: 0, LRV: 0 };
+    measurements.forEach(m => {
+      sum.L += m.color.L;
+      sum.a += m.color.a;
+      sum.b += m.color.b;
+      sum.R += m.color.R || 0;
+      sum.G += m.color.G || 0;
+      sum.B += m.color.B || 0;
+      sum.C += m.color.C;
+      sum.H += m.color.H;
+      sum.X += m.color.X || 0;
+      sum.Y += m.color.Y || 0;
+      sum.Z += m.color.Z || 0;
+      sum.cmykC += m.color.cmyk?.C || 0;
+      sum.cmykM += m.color.cmyk?.M || 0;
+      sum.cmykY += m.color.cmyk?.Y || 0;
+      sum.cmykK += m.color.cmyk?.K || 0;
+      sum.LRV += m.color.LRV || 0;
+    });
+    const n = measurements.length;
+    const avgL = sum.L / n;
+    const avgA = sum.a / n;
+    const avgB = sum.b / n;
+    const avgR = Math.round(sum.R / n);
+    const avgG = Math.round(sum.G / n);
+    const avgBval = Math.round(sum.B / n);
+    const avgC = sum.C / n;
+    const avgH = sum.H / n;
+    const avgX = sum.X / n;
+    const avgY = sum.Y / n;
+    const avgZ = sum.Z / n;
+    const cmyk = {
+      C: Math.round(sum.cmykC / n),
+      M: Math.round(sum.cmykM / n),
+      Y: Math.round(sum.cmykY / n),
+      K: Math.round(sum.cmykK / n)
+    };
+    const LRV = sum.LRV / n;
+    const Density = avgY > 0 ? (-Math.log10(avgY / 100)).toFixed(2) : "0.00";
+    const toHex = (v: number) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0');
+    const avgHex = `#${toHex(avgR)}${toHex(avgG)}${toHex(avgBval)}`.toUpperCase();
+    return { avgL, avgA, avgB_lab: avgB, avgR, avgG, avgB_rgb: avgBval, avgC, avgH, avgX, avgY, avgZ, cmyk, LRV, Density, avgHex };
+  }, [measurements]);
 
-  // Calculate Delta E if we have at least 2 measurements
+  const isAverageMode = settings.measurementTrigger === 'manual' && measurements.length > 1 && averages !== null;
+
+  const displayMeasurement = historyMeasurement
+    ? historyMeasurement
+    : isAverageMode
+      ? {
+        color: {
+          L: averages!.avgL,
+          a: averages!.avgA,
+          b: averages!.avgB_lab,
+          R: averages!.avgR,
+          G: averages!.avgG,
+          B: averages!.avgB_rgb,
+          C: averages!.avgC,
+          H: averages!.avgH,
+          X: averages!.avgX,
+          Y: averages!.avgY,
+          Z: averages!.avgZ,
+          hex: averages!.avgHex,
+          LRV: averages!.LRV,
+          Density: averages!.Density,
+          cmyk: averages!.cmyk,
+        },
+        timestamp: lastMeasurement?.timestamp || new Date().toISOString(),
+      }
+      : lastMeasurement;
+
+  // Calculate Delta E between the two most recent measurements
   const dE = (measurements.length >= 2)
     ? deltaE2000(
       measurements[0].color.L, measurements[0].color.a, measurements[0].color.b,
@@ -305,7 +379,7 @@ export default function Scan({ userData, onLogout }: ScanProps) {
                     </button>
                     <button
                       onClick={handleSaveMeasurement}
-                      disabled={isSaving || (!historyMeasurement && settings.measurementTrigger === 'manual' && measurements.length < settings.multiPointAveraging)}
+                      disabled={isSaving || !!historyMeasurement || (!historyMeasurement && settings.measurementTrigger === 'manual' && measurements.length < settings.multiPointAveraging)}
                       className="p-3 bg-black/30 hover:bg-[#a38105]/40 backdrop-blur-md rounded-full border border-white/10 hover:border-[#a38105]/60 text-white transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       {isSaving ? <RefreshCcw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
@@ -320,23 +394,30 @@ export default function Scan({ userData, onLogout }: ScanProps) {
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#d4af37]"></div>
                   {historyMeasurement ? (
-                    <p className="text-slate-700 dark:text-slate-400 text-[10px] uppercase font-bold tracking-widest truncate max-w-[260px]">
-                      {historyMeasurement.nombre || 'Medición'}
-                      {historyMeasurement.blancoReferencia && <span className="ml-1.5 opacity-60">· {historyMeasurement.blancoReferencia.replace('/', ', ')}</span>}
-                      {historyMeasurement.modoMedicion && <span className="ml-1 opacity-60">· {historyMeasurement.modoMedicion}</span>}
-                      {historyMeasurement.densidadStatus && <span className="ml-1 opacity-60">· {historyMeasurement.densidadStatus}</span>}
-                      {historyMeasurement.promedio && <span className="ml-1 opacity-60">· ø{historyMeasurement.promedio}</span>}
+                    <div className="min-w-0 max-w-[260px]">
+                      <p className="text-slate-700 dark:text-slate-400 text-[10px] uppercase font-bold tracking-widest truncate">
+                        {historyMeasurement.nombre || 'Medición'}
+                      </p>
+                      <p className="text-slate-500 dark:text-slate-500 text-[9px] uppercase font-bold tracking-widest truncate mt-0.5">
+                        {historyMeasurement.blancoReferencia && <span>{historyMeasurement.blancoReferencia.replace('/', ', ')}</span>}
+                        {historyMeasurement.modoMedicion && <span className="ml-1.5 opacity-60">· {historyMeasurement.modoMedicion}</span>}
+                        {historyMeasurement.promedio && <span className="ml-1.5 opacity-60">· ø{historyMeasurement.promedio}</span>}
+                      </p>
+                    </div>
+                  ) : isAverageMode ? (
+                    <p className="text-slate-700 dark:text-slate-400 text-[10px] uppercase font-bold tracking-widest">
+                      <span className="text-[#d4af37] font-extrabold">Promedio</span> · {settings.referenceWhite.replace('/', ', ')} · {settings.measurementMode}
                     </p>
                   ) : (
                     <p className="text-slate-700 dark:text-slate-400 text-[10px] uppercase font-bold tracking-widest">
                       {settings.referenceWhite.replace('/', ', ')} · {settings.measurementMode}
                       {settings.densityStatus !== 'ISO Status T' && ` · ${settings.densityStatus}`}
-                      {settings.multiPointAveraging > 1 && ` · ø${settings.multiPointAveraging}`}
+
                     </p>
                   )}
                   {dE !== null && !historyMeasurement && (
                     <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-200 dark:border-slate-800">
-                      <span className="text-[10px] uppercase font-bold tracking-widest text-slate-700 dark:text-slate-400">ΔE₀₀:</span>
+                      <span className="text-[10px] uppercase font-bold tracking-widest text-slate-700 dark:text-slate-400">ΔE:</span>
                       <span className={`text-[10px] font-bold ${dE < 1.0 ? 'text-green-600 dark:text-green-400' : dE < 2.5 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}>
                         {dE.toFixed(2)}
                       </span>
@@ -428,39 +509,45 @@ export default function Scan({ userData, onLogout }: ScanProps) {
                     <span className="text-[10px] font-bold text-[#d4af37]">{measurements.length} medida{measurements.length !== 1 ? 's' : ''}</span>
                   </div>
                 </div>
-                <div className="divide-y divide-slate-200 dark:divide-slate-800 max-h-64 overflow-y-auto">
+                <div className="max-h-64 overflow-y-auto">
                   {[...measurements].reverse().map((m, idx) => {
                     const num = measurements.length - idx;
                     return (
-                      <div key={m.timestamp} className="px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800/30 transition-colors">
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[9px] font-bold text-[#d4af37] uppercase tracking-widest">Medida #{num}</span>
-                            <button
-                              onClick={() => removeMeasurement(m.timestamp)}
-                              className="p-0.5 rounded hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
-                              title="Eliminar medida"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
+                      <div key={m.timestamp} className="flex items-stretch gap-3 px-4 py-3 border-b border-slate-200 dark:border-slate-800 last:border-b-0 hover:bg-slate-100 dark:hover:bg-slate-800/30 transition-colors">
+                        <div
+                          className="w-14 h-14 rounded-xl flex-shrink-0 border border-slate-200 dark:border-slate-700 shadow-inner"
+                          style={{ backgroundColor: m.color.hex }}
+                        />
+                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9px] font-bold text-[#d4af37] uppercase tracking-widest">Medida #{num}</span>
+                              <button
+                                onClick={() => setPendingDelete({ timestamp: m.timestamp, num })}
+                                className="p-0.5 rounded hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
+                                title="Eliminar medida"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                            <span className="text-[9px] text-slate-500 dark:text-slate-500 font-mono">
+                              {new Date(m.timestamp).toLocaleTimeString()}
+                            </span>
                           </div>
-                          <span className="text-[9px] text-slate-500 dark:text-slate-500 font-mono">
-                            {new Date(m.timestamp).toLocaleTimeString()}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 font-mono flex-wrap">
-                          {settings.displayColorFields.includes('HTX') && (
-                            <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-bold uppercase tracking-wider" style={{ color: m.color.hex }}>{m.color.hex}</span>
-                          )}
-                          {settings.displayColorFields.includes('CIELAB') && (
-                            <span>L*{fmt(m.color.L)} a*{fmt(m.color.a)} b*{fmt(m.color.b)}</span>
-                          )}
-                          {settings.displayColorFields.includes('sRGB') && (
-                            <span>RGB {m.color.R},{m.color.G},{m.color.B}</span>
-                          )}
-                          {settings.displayColorFields.includes('LCH(ab)') && (
-                            <span>LCH {fmt(m.color.L)},{fmt(m.color.C)},{fmt(m.color.H)}°</span>
-                          )}
+                          <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 font-mono flex-wrap mt-1">
+                            {settings.displayColorFields.includes('HTX') && (
+                              <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-bold uppercase tracking-wider" style={{ color: m.color.hex }}>{m.color.hex}</span>
+                            )}
+                            {settings.displayColorFields.includes('CIELAB') && (
+                              <span>L*{fmt(m.color.L)} a*{fmt(m.color.a)} b*{fmt(m.color.b)}</span>
+                            )}
+                            {settings.displayColorFields.includes('sRGB') && (
+                              <span>RGB {m.color.R},{m.color.G},{m.color.B}</span>
+                            )}
+                            {settings.displayColorFields.includes('LCH(ab)') && (
+                              <span>LCH {fmt(m.color.L)},{fmt(m.color.C)},{fmt(m.color.H)}°</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
@@ -469,36 +556,36 @@ export default function Scan({ userData, onLogout }: ScanProps) {
               </div>
             )}
 
-            {(!historyMeasurement || isConnected) && (
-              <div className="flex gap-3 mt-4">
-                <button
-                  disabled={isMeasuring || (settings.measurementTrigger === 'manual' && measurements.length >= settings.multiPointAveraging)}
-                  onClick={measure}
-                  className="flex-[2] flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-br from-[#d4af37] to-[#e6c84d] hover:from-[#e6c84d] hover:to-[#f0d860] py-5 font-bold text-slate-900 transition-all active:scale-95 disabled:bg-slate-700 disabled:text-slate-400 group overflow-hidden relative shadow-xl shadow-[#a38105]/20"
-                >
-                  {isMeasuring ? (
-                    <RefreshCcw className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <ScanIcon className="h-5 w-5 group-hover:scale-110 transition-transform" />
-                  )}
-                  <span className="uppercase tracking-widest text-xs font-extrabold">
-                    {isMeasuring
-                      ? 'Procesando...'
+            <div className="flex gap-3 mt-4">
+              <button
+                disabled={isMeasuring || !!historyMeasurement || (settings.measurementTrigger === 'manual' && measurements.length >= settings.multiPointAveraging)}
+                onClick={measure}
+                className="flex-[2] flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-br from-[#d4af37] to-[#e6c84d] hover:from-[#e6c84d] hover:to-[#f0d860] py-5 font-bold text-slate-900 transition-all active:scale-95 disabled:bg-slate-700 disabled:text-slate-400 group overflow-hidden relative shadow-xl shadow-[#a38105]/20"
+              >
+                {isMeasuring ? (
+                  <RefreshCcw className="h-5 w-5 animate-spin" />
+                ) : (
+                  <ScanIcon className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                )}
+                <span className="uppercase tracking-widest text-xs font-extrabold">
+                  {isMeasuring
+                    ? 'Procesando...'
+                    : historyMeasurement
+                      ? 'Medida guardada'
                       : settings.measurementTrigger === 'manual'
                         ? `Medida ${Math.min(measurements.length + 1, settings.multiPointAveraging)}/${settings.multiPointAveraging}`
                         : 'Escanear con Nix'
-                    }
-                  </span>
-                </button>
+                  }
+                </span>
+              </button>
 
-                <button
-                  onClick={() => { clearMeasurements(); setHistoryMeasurement(null); }}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-slate-600/10 hover:bg-slate-600/20 border border-slate-600/20 py-5 text-slate-400 hover:text-slate-300 transition-all active:scale-95"
-                >
-                  <RotateCcw className="w-5 h-5" />
-                </button>
-              </div>
-            )}
+              <button
+                onClick={() => setShowClearConfirm(true)}
+                className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-slate-600/10 hover:bg-slate-600/20 border border-slate-600/20 py-5 text-slate-400 hover:text-slate-300 transition-all active:scale-95"
+              >
+                <RotateCcw className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         )}
       </main>
@@ -508,6 +595,99 @@ export default function Scan({ userData, onLogout }: ScanProps) {
           {status} {deviceInfo?.serialNumber ? `· S/N: ${deviceInfo.serialNumber}` : ''}
         </p>
       </footer>
+      {/* Confirmación de borrado */}
+      <AnimatePresence>
+        {pendingDelete && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setPendingDelete(null)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-2xl overflow-hidden"
+            >
+              <div className="relative">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 tracking-tight">Eliminar Medida #{pendingDelete.num}</h3>
+                <p className="text-slate-600 dark:text-slate-400 text-sm mb-8 leading-relaxed">
+                  Esta acción no se puede deshacer. ¿Deseas eliminar esta medición?
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setPendingDelete(null)}
+                    className="flex-1 px-6 py-3 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold uppercase tracking-widest transition-all active:scale-95"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => {
+                      removeMeasurement(pendingDelete.timestamp);
+                      setPendingDelete(null);
+                    }}
+                    className="flex-1 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-red-900/20"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Confirmación de reinicio */}
+      <AnimatePresence>
+        {showClearConfirm && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowClearConfirm(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-2xl overflow-hidden"
+            >
+              <div className="relative">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 tracking-tight">Reiniciar mediciones</h3>
+                <p className="text-slate-600 dark:text-slate-400 text-sm mb-8 leading-relaxed">
+                  {measurements.length > 0
+                    ? `Tienes ${measurements.length} medición${measurements.length !== 1 ? 'es' : ''} sin guardar. Se perderán todos los datos. ¿Deseas continuar?`
+                    : '¿Cerrar la actual visualización de medición?'}
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowClearConfirm(false)}
+                    className="flex-1 px-6 py-3 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-900 dark:text-white text-xs font-bold uppercase tracking-widest transition-all active:scale-95"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => {
+                      clearMeasurements();
+                      setHistoryMeasurement(null);
+                      setShowClearConfirm(false);
+                    }}
+                    className="flex-1 px-6 py-3 rounded-xl bg-[#D4672A] hover:bg-[#D4672A]/80 text-white text-xs font-bold uppercase tracking-widest transition-all active:scale-95"
+                  >
+                    Reiniciar
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <GuardarEscaneo
         isOpen={isGuardarEscaneoOpen}
         onClose={() => setIsGuardarEscaneoOpen(false)}
@@ -517,7 +697,7 @@ export default function Scan({ userData, onLogout }: ScanProps) {
         blancoReferencia={settings.referenceWhite}
         modoMedicion={settings.measurementMode}
         densidad={settings.densityStatus}
-        promedio={settings.multiPointAveraging}
+        promedio={isAverageMode ? measurements.length : settings.multiPointAveraging}
       />
       <HistorialMediciones
         isOpen={isHistorialOpen}
