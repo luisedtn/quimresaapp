@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, X, ZoomIn, ZoomOut, FileText, Plus, Scan, RotateCcw, Save, List } from 'lucide-react';
+import { ArrowLeft, X, ZoomIn, ZoomOut, FileText, Plus, Scan, RotateCcw, Save, List, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useNixDevice } from '../hooks/useNixDevice';
 import { deltaE2000 } from '../services/NixBluetoothService';
 import GenerarPDF from '../components/GenerarPDF';
@@ -299,6 +299,16 @@ export default function QualityControl() {
   const [manualB, setManualB] = useState('');
   const nameInputRef = useRef<HTMLInputElement>(null);
   const manualLInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Snackbar ─────────────────────────────────────────────
+  const [snack, setSnack] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const snackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showSnack = (message: string, type: 'success' | 'error' = 'success') => {
+    if (snackTimerRef.current) clearTimeout(snackTimerRef.current);
+    setSnack({ message, type });
+    snackTimerRef.current = setTimeout(() => setSnack(null), 3500);
+  };
+  // ─────────────────────────────────────────────────────────
 
   const saveQCRecordToServer = async (name: string, desc: string, std: any, smp: any, pdfUrl?: string) => {
     if (!std || !smp) return null;
@@ -619,9 +629,9 @@ export default function QualityControl() {
                 localStorage.setItem('qc_context', JSON.stringify(newCtx));
                 setIsSessionActive(true);
                 if (record) {
-                  alert('Control de calidad guardado con éxito en el servidor.');
+                  showSnack('Control de calidad guardado con éxito en el servidor.');
                 } else {
-                  alert('Guardado localmente. Error al sincronizar con el servidor.');
+                  showSnack('Guardado localmente. Error al sincronizar con el servidor.', 'error');
                 }
               }}
               className="p-2 text-black hover:text-white transition-colors bg-black/10 hover:bg-black/20 rounded-lg shadow-sm"
@@ -1075,6 +1085,31 @@ export default function QualityControl() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Snackbar ── */}
+      <AnimatePresence>
+        {snack && (
+          <motion.div
+            key="snack"
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 40, scale: 0.95 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+            className="fixed bottom-32 left-1/2 -translate-x-1/2 z-[500] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border max-w-[90vw] pointer-events-none"
+            style={{
+              background: snack.type === 'success'
+                ? 'linear-gradient(135deg,#0f4c25 0%,#166534 100%)'
+                : 'linear-gradient(135deg,#4c0f0f 0%,#991b1b 100%)',
+              borderColor: snack.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'
+            }}
+          >
+            {snack.type === 'success'
+              ? <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+              : <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0" />}
+            <span className="text-white text-sm font-semibold tracking-tight">{snack.message}</span>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
