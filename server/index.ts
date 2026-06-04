@@ -1138,8 +1138,12 @@ app.post('/api/qualitycontrol', authenticateToken, async (req: Request, res: Res
             blanco_referencia,
             modo_medicion,
             densidad,
-            pdf_url
+            pdf_url,
+            fecha_registro
         } = req.body;
+
+        // Usar la fecha/hora local enviada por el cliente; si no viene, usar la hora actual del servidor
+        const creadoEn: Date = fecha_registro ? new Date(fecha_registro) : new Date();
 
         let qcRecord;
         const existing = await prisma.qualityControl.findFirst({
@@ -1171,7 +1175,8 @@ app.post('/api/qualitycontrol', authenticateToken, async (req: Request, res: Res
                     blanco_referencia: blanco_referencia !== undefined ? blanco_referencia : existing.blanco_referencia,
                     modo_medicion: modo_medicion !== undefined ? modo_medicion : existing.modo_medicion,
                     densidad: densidad !== undefined ? densidad : existing.densidad,
-                    pdf_url: pdf_url !== undefined ? pdf_url : existing.pdf_url
+                    pdf_url: pdf_url !== undefined ? pdf_url : existing.pdf_url,
+                    creado_en: creadoEn
                 }
             });
             console.log(`[QUALITY-CONTROL] Registro actualizado ID: ${qcRecord.id}`);
@@ -1198,7 +1203,8 @@ app.post('/api/qualitycontrol', authenticateToken, async (req: Request, res: Res
                     blanco_referencia,
                     modo_medicion,
                     densidad,
-                    pdf_url
+                    pdf_url,
+                    creado_en: creadoEn
                 }
             });
             console.log(`[QUALITY-CONTROL] Registro creado ID: ${qcRecord.id}`);
@@ -1417,8 +1423,12 @@ app.post('/api/qualitycontrol', async (req: Request, res: Response) => {
             muestra_nombre, muestra_l, muestra_a, muestra_b, muestra_hex,
             delta_e, delta_l, delta_a, delta_b,
             blanco_referencia, modo_medicion, densidad,
-            pdf_url
+            pdf_url,
+            fecha_registro
         } = req.body;
+
+        // Usar la fecha/hora local enviada por el cliente; si no viene, usar la hora actual del servidor
+        const creadoEn: Date = fecha_registro ? new Date(fecha_registro) : new Date();
 
         const record = await prisma.qualityControl.create({
             data: {
@@ -1428,7 +1438,8 @@ app.post('/api/qualitycontrol', async (req: Request, res: Response) => {
                 delta_e, delta_l, delta_a, delta_b,
                 blanco_referencia, modo_medicion, densidad,
                 pdf_url,
-                id_cliente: idcliente
+                id_cliente: idcliente,
+                creado_en: creadoEn
             }
         });
 
