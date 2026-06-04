@@ -12,7 +12,7 @@ import {
   Loader2,
   AlertTriangle,
   SlidersHorizontal,
-  InboxIcon,
+  Inbox,
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
@@ -107,6 +107,7 @@ export default function ListaQC() {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLoadingRef = useRef(false);
   const LIMIT = 20;
 
   // ── Debounce search ──────────────────────────────────────────────────────
@@ -125,7 +126,8 @@ export default function ListaQC() {
 
   // ── Fetch ────────────────────────────────────────────────────────────────
   const fetchPage = useCallback(async (pageNum: number) => {
-    if (isLoading) return;
+    if (isLoadingRef.current) return;
+    isLoadingRef.current = true;
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -144,18 +146,20 @@ export default function ListaQC() {
       if (activeFilters.hasta) params.set('hasta', activeFilters.hasta);
 
       const res = await fetch(`${API_BASE_URL}/api/qualitycontrol?${params.toString()}`, { headers });
-      if (!res.ok) throw new Error(`Error ${res.status}`);
+      if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
       const data = await res.json();
 
+      const rows: QCRecord[] = Array.isArray(data.records) ? data.records : [];
       setTotal(data.total ?? 0);
-      setRecords(prev => pageNum === 1 ? data.records : [...prev, ...data.records]);
-      setHasMore(data.records.length === LIMIT);
+      setRecords(prev => pageNum === 1 ? rows : [...prev, ...rows]);
+      setHasMore(rows.length === LIMIT);
     } catch (e: any) {
       setError(e.message || 'Error de conexión');
     } finally {
+      isLoadingRef.current = false;
       setIsLoading(false);
     }
-  }, [debouncedSearch, activeFilters, isLoading]);
+  }, [debouncedSearch, activeFilters]);
 
   // ── Trigger fetch when page changes ──────────────────────────────────────
   useEffect(() => {
@@ -373,7 +377,7 @@ export default function ListaQC() {
             className="flex flex-col items-center justify-center py-24 text-center gap-4"
           >
             <div className="w-20 h-20 rounded-3xl bg-slate-900 border border-slate-800 flex items-center justify-center shadow-xl">
-              <InboxIcon className="w-9 h-9 text-slate-600" />
+              <Inbox className="w-9 h-9 text-slate-600" />
             </div>
             <div>
               <p className="text-slate-300 font-semibold text-base">Sin registros</p>
