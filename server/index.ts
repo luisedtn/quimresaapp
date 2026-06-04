@@ -1339,7 +1339,15 @@ app.get('/api/qualitycontrol', async (req: Request, res: Response) => {
         const token = req.headers.authorization?.replace('Bearer ', '');
         if (!token) return res.status(401).json({ error: 'No autorizado' });
         const decoded: any = jwt.verify(token, JWT_SECRET);
-        const idcliente = Number(req.headers['x-client-id']) || decoded.idcliente;
+        
+        const clientIdHeader = req.headers['x-client-id'];
+        let idcliente: number | undefined;
+        if (clientIdHeader !== undefined && clientIdHeader !== null && clientIdHeader !== '') {
+            idcliente = Number(clientIdHeader);
+        }
+        if (isNaN(idcliente as any)) {
+            idcliente = decoded.idcliente ? Number(decoded.idcliente) : undefined;
+        }
 
         const page   = Math.max(1, Number(req.query.page)  || 1);
         const limit  = Math.max(1, Math.min(100, Number(req.query.limit) || 20));
@@ -1347,7 +1355,16 @@ app.get('/api/qualitycontrol', async (req: Request, res: Response) => {
         const desde  = req.query.desde  as string | undefined;
         const hasta  = req.query.hasta  as string | undefined;
 
-        const where: any = { id_cliente: idcliente };
+        const where: any = {};
+        
+        // Si hay un idcliente válido y mayor a 0, filtramos por ese cliente.
+        // Si no hay idcliente (ej. es 0 o admin) y es admin (typeuser == 0), omitimos el filtro para que vea todos.
+        // Si no es admin y no tiene idcliente, forzamos su propio idcliente del token.
+        if (idcliente !== undefined && idcliente !== null && idcliente !== 0 && !isNaN(idcliente)) {
+            where.id_cliente = idcliente;
+        } else if (decoded.typeuser != 0 && decoded.typeuser != '0') {
+            where.id_cliente = decoded.idcliente || -1; // Fallback para usuarios normales sin id
+        }
 
         if (search) {
             where.OR = [
@@ -1388,7 +1405,16 @@ app.post('/api/qualitycontrol', async (req: Request, res: Response) => {
         const token = req.headers.authorization?.replace('Bearer ', '');
         if (!token) return res.status(401).json({ error: 'No autorizado' });
         const decoded: any = jwt.verify(token, JWT_SECRET);
-        const idcliente = Number(req.headers['x-client-id']) || decoded.idcliente;
+        
+        const clientIdHeader = req.headers['x-client-id'];
+        let idcliente: number | null = null;
+        if (clientIdHeader !== undefined && clientIdHeader !== null && clientIdHeader !== '') {
+            idcliente = Number(clientIdHeader);
+        }
+        if (idcliente === null || isNaN(idcliente) || idcliente === 0) {
+            idcliente = decoded.idcliente ? Number(decoded.idcliente) : null;
+            if (idcliente === 0) idcliente = null;
+        }
 
         const {
             nombre, descripcion,
