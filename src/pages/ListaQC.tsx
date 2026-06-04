@@ -129,13 +129,18 @@ export default function ListaQC() {
     if (isLoadingRef.current) return;
     isLoadingRef.current = true;
     setIsLoading(true);
+    console.log(`\n[ListaQC] ---> Iniciando fetch para página ${pageNum}`);
     try {
       const token = localStorage.getItem('token');
       const userDataStr = localStorage.getItem('userData');
       const userData = userDataStr ? JSON.parse(userDataStr) : null;
+      console.log(`[ListaQC] userData de localStorage:`, userData);
+
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
       if (userData?.idcliente) headers['x-client-id'] = userData.idcliente.toString();
+      
+      console.log(`[ListaQC] Headers a enviar:`, headers);
 
       const params = new URLSearchParams({
         page: pageNum.toString(),
@@ -145,15 +150,23 @@ export default function ListaQC() {
       if (activeFilters.desde) params.set('desde', activeFilters.desde);
       if (activeFilters.hasta) params.set('hasta', activeFilters.hasta);
 
-      const res = await fetch(`${API_BASE_URL}/api/qualitycontrol?${params.toString()}`, { headers });
+      const url = `${API_BASE_URL}/api/qualitycontrol?${params.toString()}`;
+      console.log(`[ListaQC] GET request URL:`, url);
+
+      const res = await fetch(url, { headers });
+      console.log(`[ListaQC] Respuesta del servidor - status: ${res.status} ${res.statusText}`);
+      
       if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+      
       const data = await res.json();
+      console.log(`[ListaQC] JSON parseado:`, data);
 
       const rows: QCRecord[] = Array.isArray(data.records) ? data.records : [];
       setTotal(data.total ?? 0);
       setRecords(prev => pageNum === 1 ? rows : [...prev, ...rows]);
       setHasMore(rows.length === LIMIT);
     } catch (e: any) {
+      console.error(`[ListaQC] Error capturado en fetch:`, e);
       setError(e.message || 'Error de conexión');
     } finally {
       isLoadingRef.current = false;

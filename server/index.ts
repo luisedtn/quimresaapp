@@ -1335,12 +1335,18 @@ app.get('/api/pdfs/:clientCode', authenticateToken, async (req: Request, res: Re
 
 // GET /api/qualitycontrol  — lista paginada con búsqueda y filtro de fecha
 app.get('/api/qualitycontrol', async (req: Request, res: Response) => {
+    console.log('\n[GET /api/qualitycontrol] ---> INICIO PETICIÓN');
     try {
         const token = req.headers.authorization?.replace('Bearer ', '');
+        console.log('[GET /api/qualitycontrol] Token presente:', !!token);
         if (!token) return res.status(401).json({ error: 'No autorizado' });
+        
         const decoded: any = jwt.verify(token, JWT_SECRET);
+        console.log('[GET /api/qualitycontrol] Usuario decodificado:', { id: decoded.id, typeuser: decoded.typeuser, idcliente: decoded.idcliente });
         
         const clientIdHeader = req.headers['x-client-id'];
+        console.log('[GET /api/qualitycontrol] Header x-client-id recibido:', clientIdHeader);
+        
         let idcliente: number | undefined;
         if (clientIdHeader !== undefined && clientIdHeader !== null && clientIdHeader !== '') {
             idcliente = Number(clientIdHeader);
@@ -1348,6 +1354,7 @@ app.get('/api/qualitycontrol', async (req: Request, res: Response) => {
         if (isNaN(idcliente as any)) {
             idcliente = decoded.idcliente ? Number(decoded.idcliente) : undefined;
         }
+        console.log('[GET /api/qualitycontrol] ID Cliente resuelto a usar:', idcliente);
 
         const page   = Math.max(1, Number(req.query.page)  || 1);
         const limit  = Math.max(1, Math.min(100, Number(req.query.limit) || 20));
@@ -1357,13 +1364,14 @@ app.get('/api/qualitycontrol', async (req: Request, res: Response) => {
 
         const where: any = {};
         
-        // Si hay un idcliente válido y mayor a 0, filtramos por ese cliente.
-        // Si no hay idcliente (ej. es 0 o admin) y es admin (typeuser == 0), omitimos el filtro para que vea todos.
-        // Si no es admin y no tiene idcliente, forzamos su propio idcliente del token.
         if (idcliente !== undefined && idcliente !== null && idcliente !== 0 && !isNaN(idcliente)) {
             where.id_cliente = idcliente;
+            console.log('[GET /api/qualitycontrol] Filtro id_cliente aplicado:', idcliente);
         } else if (decoded.typeuser != 0 && decoded.typeuser != '0') {
-            where.id_cliente = decoded.idcliente || -1; // Fallback para usuarios normales sin id
+            where.id_cliente = decoded.idcliente || -1; 
+            console.log('[GET /api/qualitycontrol] Usuario normal sin id_cliente, usando fallback:', where.id_cliente);
+        } else {
+            console.log('[GET /api/qualitycontrol] Usuario es ADMIN, omitiendo filtro de cliente (viendo todos)');
         }
 
         if (search) {
@@ -1371,6 +1379,7 @@ app.get('/api/qualitycontrol', async (req: Request, res: Response) => {
                 { nombre:      { contains: search, mode: 'insensitive' } },
                 { descripcion: { contains: search, mode: 'insensitive' } }
             ];
+            console.log('[GET /api/qualitycontrol] Búsqueda aplicada:', search);
         }
         if (desde || hasta) {
             where.creado_en = {};
@@ -1380,7 +1389,10 @@ app.get('/api/qualitycontrol', async (req: Request, res: Response) => {
                 h.setHours(23, 59, 59, 999);
                 where.creado_en.lte = h;
             }
+            console.log('[GET /api/qualitycontrol] Filtro de fecha aplicado:', { desde, hasta });
         }
+        
+        console.log('[GET /api/qualitycontrol] WHERE clause Prisma:', JSON.stringify(where, null, 2));
 
         const [total, records] = await Promise.all([
             prisma.qualityControl.count({ where }),
@@ -1391,10 +1403,12 @@ app.get('/api/qualitycontrol', async (req: Request, res: Response) => {
                 take: limit
             })
         ]);
+        
+        console.log(`[GET /api/qualitycontrol] Resultados: total=${total}, registros_devueltos=${records.length}`);
 
         return res.json({ total, page, limit, records });
     } catch (error: any) {
-        console.error('[GET qualitycontrol]', error.message);
+        console.error('[GET /api/qualitycontrol] ERROR CRÍTICO:', error.message);
         return res.status(500).json({ error: 'Error al listar registros' });
     }
 });
