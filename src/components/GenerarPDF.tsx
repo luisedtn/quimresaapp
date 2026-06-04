@@ -130,6 +130,10 @@ export default function GenerarPDF({ onClose, qcContextData }: GenerarPDFProps) 
                     headers['x-client-id'] = userDataObj.idcliente.toString();
                 }
 
+                const ahora = new Date();
+                const offsetMs = ahora.getTimezoneOffset() * 60 * 1000;
+                const fechaLocal = new Date(ahora.getTime() - offsetMs).toISOString().replace('Z', '+00:00');
+
                 const dbPayload = {
                     nombre: qcContextData?.sessionName || formulaName,
                     descripcion: qcContextData?.sessionDesc || '',
@@ -150,7 +154,8 @@ export default function GenerarPDF({ onClose, qcContextData }: GenerarPDFProps) 
                     blanco_referencia: deviceSettings.referenceWhite || null,
                     modo_medicion: deviceSettings.measurementMode || null,
                     densidad: deviceSettings.densityStatus || null,
-                    pdf_url: relativePdfUrl
+                    pdf_url: relativePdfUrl,
+                    fecha_registro: fechaLocal
                 };
 
                 await fetch(`${API_BASE_URL}/api/qualitycontrol`, {
