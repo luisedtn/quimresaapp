@@ -332,6 +332,11 @@ export default function QualityControl() {
       let de = deltaE2000(std.l, std.a, std.b, smp.l, smp.a, smp.b).toFixed(2);
       if (dA === "8.87" && dB === "4.94" && dL === "-3.11") de = "4.72"; // Mocked DeltaE
 
+      // Capturar la fecha/hora local del dispositivo (no la del servidor)
+      const ahora = new Date();
+      const offsetMs = ahora.getTimezoneOffset() * 60 * 1000;
+      const fechaLocal = new Date(ahora.getTime() - offsetMs).toISOString().replace('Z', '+00:00');
+
       const payload = {
         nombre: name || 'Sesión Sin Nombre',
         descripcion: desc || '',
@@ -352,7 +357,8 @@ export default function QualityControl() {
         blanco_referencia: deviceSettings.referenceWhite || null,
         modo_medicion: deviceSettings.measurementMode || null,
         densidad: deviceSettings.densityStatus || null,
-        pdf_url: pdfUrl || qcContextData?.pdf_url || null
+        pdf_url: pdfUrl || qcContextData?.pdf_url || null,
+        fecha_registro: fechaLocal
       };
 
       const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';

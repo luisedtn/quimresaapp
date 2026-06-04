@@ -66,10 +66,9 @@ function labToHex(L: number, a: number, b: number): string {
 }
 
 function deltaEBadge(de: number | null) {
-  if (de === null) return { label: '—', color: 'bg-slate-700 text-slate-400' };
-  if (de <= 1)   return { label: `ΔE ${de.toFixed(2)}`, color: 'bg-emerald-900/60 text-emerald-400 border border-emerald-700/50' };
-  if (de <= 2)   return { label: `ΔE ${de.toFixed(2)}`, color: 'bg-yellow-900/60 text-yellow-400 border border-yellow-700/50' };
-  return         { label: `ΔE ${de.toFixed(2)}`, color: 'bg-red-900/60 text-red-400 border border-red-700/50' };
+  const base = 'bg-[#a38105]/20 text-[#d4af37] border border-[#a38105]/30 shadow-sm';
+  if (de === null) return { label: '—', color: `bg-slate-700 text-slate-400` };
+  return { label: `ΔE ${de.toFixed(2)}`, color: base };
 }
 
 function formatDate(iso: string) {
