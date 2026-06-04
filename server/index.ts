@@ -1331,6 +1331,95 @@ app.get('/api/pdfs/:clientCode', authenticateToken, async (req: Request, res: Re
     }
 });
 
+// ─── QualityControl CRUD ──────────────────────────────────────────────────────
+
+// GET /api/qualitycontrol  — lista paginada con búsqueda y filtro de fecha
+app.get('/api/qualitycontrol', async (req: Request, res: Response) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        if (!token) return res.status(401).json({ error: 'No autorizado' });
+        const decoded: any = jwt.verify(token, JWT_SECRET);
+        const idcliente = Number(req.headers['x-client-id']) || decoded.idcliente;
+
+        const page   = Math.max(1, Number(req.query.page)  || 1);
+        const limit  = Math.max(1, Math.min(100, Number(req.query.limit) || 20));
+        const search = (req.query.search as string || '').trim();
+        const desde  = req.query.desde  as string | undefined;
+        const hasta  = req.query.hasta  as string | undefined;
+
+        const where: any = { id_cliente: idcliente };
+
+        if (search) {
+            where.OR = [
+                { nombre:      { contains: search, mode: 'insensitive' } },
+                { descripcion: { contains: search, mode: 'insensitive' } }
+            ];
+        }
+        if (desde || hasta) {
+            where.creado_en = {};
+            if (desde) where.creado_en.gte = new Date(desde);
+            if (hasta) {
+                const h = new Date(hasta);
+                h.setHours(23, 59, 59, 999);
+                where.creado_en.lte = h;
+            }
+        }
+
+        const [total, records] = await Promise.all([
+            prisma.qualityControl.count({ where }),
+            prisma.qualityControl.findMany({
+                where,
+                orderBy: { creado_en: 'desc' },
+                skip: (page - 1) * limit,
+                take: limit
+            })
+        ]);
+
+        return res.json({ total, page, limit, records });
+    } catch (error: any) {
+        console.error('[GET qualitycontrol]', error.message);
+        return res.status(500).json({ error: 'Error al listar registros' });
+    }
+});
+
+// POST /api/qualitycontrol — crear registro
+app.post('/api/qualitycontrol', async (req: Request, res: Response) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        if (!token) return res.status(401).json({ error: 'No autorizado' });
+        const decoded: any = jwt.verify(token, JWT_SECRET);
+        const idcliente = Number(req.headers['x-client-id']) || decoded.idcliente;
+
+        const {
+            nombre, descripcion,
+            patron_nombre, patron_l, patron_a, patron_b, patron_hex,
+            muestra_nombre, muestra_l, muestra_a, muestra_b, muestra_hex,
+            delta_e, delta_l, delta_a, delta_b,
+            blanco_referencia, modo_medicion, densidad,
+            pdf_url
+        } = req.body;
+
+        const record = await prisma.qualityControl.create({
+            data: {
+                nombre, descripcion,
+                patron_nombre, patron_l, patron_a, patron_b, patron_hex,
+                muestra_nombre, muestra_l, muestra_a, muestra_b, muestra_hex,
+                delta_e, delta_l, delta_a, delta_b,
+                blanco_referencia, modo_medicion, densidad,
+                pdf_url,
+                id_cliente: idcliente
+            }
+        });
+
+        return res.status(201).json(record);
+    } catch (error: any) {
+        console.error('[POST qualitycontrol]', error.message);
+        return res.status(500).json({ error: 'Error al guardar registro' });
+    }
+});
+
+// ─── END QualityControl ────────────────────────────────────────────────────────
+
 app.use('/controlcalidad', express.static(path.join(__dirname, '../controlcalidad')));
 
 const distPath = path.join(__dirname, '../dist');

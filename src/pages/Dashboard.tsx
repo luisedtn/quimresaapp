@@ -95,7 +95,7 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
   const menuItems = [
     { id: 'scan', icon: Scan, title: 'Escaneo único', desc: 'Obtén datos espectrales, RGB, HEX, CIELAB y más.', path: '/scan' },
     { id: 'qc', icon: Layers, title: 'Control de calidad', desc: 'Compara muestras contra un estándar e identifica si pasan o fallan.', path: '/quality-control' },
-    { id: 'qc-history', icon: History, title: 'Historial de control', desc: 'Tu registro de sesiones de control de calidad.' },
+    { id: 'qc-history', icon: History, title: 'Historial de control', desc: 'Tu registro de sesiones de control de calidad.', path: '/lista-qc' },
     { id: 'formulas', icon: PaintBucket, title: 'Fórmulas de Color', desc: 'Ver tus formulaciones de color específicas.', path: '/formulas' },
     // { id: 'colorimetro', icon: Scan, title: 'Colorímetro Bluetooth', desc: 'Conecta tu Nix para escanear y capturar colores.', path: '/colorimetro' },
     { id: 'match', icon: Search, title: 'Búsqueda de color', desc: 'Encuentra la coincidencia más cercana en bibliotecas de pintura.', path: '/color-match' },
@@ -223,9 +223,7 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
               whileHover={{ y: -2, scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               onClick={() => {
-                if (item.id === 'qc-history') {
-                  setShowHistorialControl(true);
-                } else if (item.path) {
+                if (item.path) {
                   navigate(item.path);
                 }
               }}

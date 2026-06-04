@@ -10,6 +10,7 @@ import Cuenta from './pages/Cuenta';
 import Colorimetro from './pages/Colorimetro';
 import StandardFormulas from './pages/StandardFormulas';
 import ColorMatch from './pages/ColorMatch';
+import ListaQC from './pages/ListaQC';
 import ColorAiChat from './components/ColorAiChat';
 import ScreenBrightness from './services/ScreenBrightness';
 
@@ -96,6 +97,10 @@ export default function App() {
         <Route
           path="/color-match"
           element={isAuthenticated ? <ColorMatch /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/lista-qc"
+          element={isAuthenticated ? <ListaQC /> : <Navigate to="/login" />}
         />
       </Routes>
       {isAuthenticated && <ColorAiChat />}
