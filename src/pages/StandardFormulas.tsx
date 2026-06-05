@@ -50,6 +50,19 @@ export default function StandardFormulas({ onLogout }: { onLogout: () => void })
 
     const [selectedFormula, setSelectedFormula] = useState<any>(null);
     const [showDetail, setShowDetail] = useState(false);
+    const [showScrollTop, setShowScrollTop] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setShowScrollTop(window.scrollY > 280);
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const scrollToTop = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     // Debounce search
     useEffect(() => {
@@ -169,15 +182,15 @@ export default function StandardFormulas({ onLogout }: { onLogout: () => void })
     return (
         <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col overflow-x-hidden">
             <header className="fixed top-0 z-10 flex w-full items-center justify-between border-b border-black/10 bg-[#CC5200] shadow-lg px-4 py-4">
-                <button onClick={() => navigate(-1)} className="p-2 text-black hover:text-white transition-colors">
-                    <ArrowLeft className="h-6 w-6 text-black" />
+                <button onClick={() => navigate(-1)} className="p-2 text-white hover:text-white/80 transition-colors">
+                    <ArrowLeft className="h-6 w-6 text-white" />
                 </button>
                 <h1 className="text-lg font-semibold uppercase tracking-tight text-white">Fórmulas Standard</h1>
                 <button
                     onClick={() => setShowFilters(!showFilters)}
-                    className={`p-2 rounded-lg transition-all ${showFilters ? 'bg-black/20 text-white' : 'text-black hover:bg-black/10'}`}
+                    className={`p-2 rounded-lg transition-all ${showFilters ? 'bg-black/20 text-white' : 'text-white hover:bg-white/10'}`}
                 >
-                    <Filter className="h-5 w-5 text-black" />
+                    <Filter className="h-5 w-5 text-white" />
                 </button>
             </header>
 
@@ -188,7 +201,7 @@ export default function StandardFormulas({ onLogout }: { onLogout: () => void })
                     <input
                         type="text"
                         placeholder="Buscar por nombre de color..."
-                        className="w-full rounded-xl bg-slate-900 border border-slate-800 py-3 pr-4 pl-11 text-sm text-white focus:ring-2 focus:ring-[#B85D00]/40 focus:border-[#B85D00] outline-none transition-all placeholder:text-slate-600"
+                        className="w-full rounded-xl bg-slate-900 border border-slate-800 py-3 pr-4 pl-11 text-sm text-white focus:ring-2 focus:ring-[var(--accent-orange)]/30 focus:border-[var(--accent-orange)] outline-none transition-all"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -270,7 +283,7 @@ export default function StandardFormulas({ onLogout }: { onLogout: () => void })
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 onClick={() => handleFormulaClick(f)}
-                                className="elegant-card flex overflow-hidden cursor-pointer active:scale-[0.98] transition-all hover:border-slate-700"
+                                className="elegant-card flex overflow-hidden cursor-pointer active:scale-[0.98] transition-all"
                             >
                                 <div
                                     className="w-20 min-w-[5rem] border-r border-slate-800"
@@ -279,11 +292,29 @@ export default function StandardFormulas({ onLogout }: { onLogout: () => void })
                                     }}
                                 />
                                 <div className="flex-grow p-4">
-                                    <h3 className="text-sm font-bold text-white mb-1">{f.NOMBRE}</h3>
+                                    <h3 className="text-sm font-bold mb-1" style={{ color: 'var(--text-primary)' }}>{f.NOMBRE}</h3>
                                     <div className="flex flex-wrap gap-2 mb-3">
                                         {f.marca && <span className="formula-card__base-badge">{f.marca.NOMBRE}</span>}
                                         {f.producto && <span className="formula-card__code text-[8px]">{f.producto.PRODUCTO}</span>}
                                     </div>
+                                    {(f.L !== undefined && f.L !== null || f.l !== undefined) && (
+                                        <div className="formula-card__lab-row mb-3">
+                                            <div className="formula-card__lab-item">
+                                                <span className="formula-card__lab-label">L</span>
+                                                <span className="formula-card__lab-value">{parseFloat(String(f.L ?? f.l)).toFixed(1)}</span>
+                                            </div>
+                                            <div className="formula-card__lab-divider" />
+                                            <div className="formula-card__lab-item">
+                                                <span className="formula-card__lab-label">a</span>
+                                                <span className="formula-card__lab-value">{parseFloat(String(f.A ?? f.a ?? 0)).toFixed(1)}</span>
+                                            </div>
+                                            <div className="formula-card__lab-divider" />
+                                            <div className="formula-card__lab-item">
+                                                <span className="formula-card__lab-label">b</span>
+                                                <span className="formula-card__lab-value">{parseFloat(String(f.B ?? f.b ?? 0)).toFixed(1)}</span>
+                                            </div>
+                                        </div>
+                                    )}
                                     <button
                                         onClick={(e) => handleQualityControl(e, f)}
                                         className="formula-card__qc-btn w-full"
@@ -301,12 +332,27 @@ export default function StandardFormulas({ onLogout }: { onLogout: () => void })
                         )}
                     </div>
                 ) : (
-                    <div className="text-center py-20 text-slate-600 bg-slate-900/20 rounded-2xl border border-dashed border-slate-800">
-                        <Beaker className="h-10 w-10 mx-auto mb-4 text-slate-800" />
+                    <div className="text-center py-20 text-slate-400 bg-slate-900/20 rounded-2xl border border-dashed border-slate-800">
+                        <Beaker className="h-10 w-10 mx-auto mb-4 text-slate-500" />
                         <p className="text-sm italic">No se encontraron fórmulas con los filtros seleccionados.</p>
                     </div>
                 )}
             </main>
+
+            <AnimatePresence>
+                {showScrollTop && (
+                    <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        onClick={scrollToTop}
+                        className="formula-fab fixed bottom-6 right-6 z-50"
+                        aria-label="Volver arriba"
+                    >
+                        <ChevronUp className="h-6 w-6" />
+                    </motion.button>
+                )}
+            </AnimatePresence>
 
             <DetalleFormula
                 formula={selectedFormula}

@@ -502,6 +502,12 @@ model QualityControl {
   @@map("qualitycontrol")
 }
 
+model DeltaRango {
+  id         Int    @id @default(autoincrement())
+  VALOR      Float
+  NOMBRE     String @db.VarChar(100)
+  COLOR      Int
+  COLORTEXTO Int
 
-
-
+  @@map("deltarango")
+}

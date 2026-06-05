@@ -73,12 +73,18 @@ function deltaEBadge(de: number | null) {
 
 function formatDate(iso: string) {
   const d = new Date(iso);
-  return d.toLocaleDateString('es-ES', { 
-    day: '2-digit', 
-    month: 'short', 
+  // La fecha fue almacenada como hora local codificada como UTC (sin offset real).
+  // Al parsear con new Date(), el browser la trata como UTC y resta el offset local.
+  // Compensamos sumando el offset para recuperar la hora local original.
+  const offsetMs = d.getTimezoneOffset() * 60 * 1000;
+  const localDate = new Date(d.getTime() + offsetMs);
+  return localDate.toLocaleString('es-ES', {
+    day: '2-digit',
+    month: 'short',
     year: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
+    hour12: true
   });
 }
 

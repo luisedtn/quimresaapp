@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, ChevronRight, User, Settings, ShoppingBag, Wrench, Mail, Bug, FileText, Shield, Lock, LogOut, Users, BluetoothConnected, BluetoothOff, Power } from 'lucide-react';
+import { X, ChevronRight, User, Settings, ShoppingBag, Wrench, Mail, Bug, FileText, Shield, Lock, LogOut, Users, BluetoothConnected, BluetoothOff, Power, Palette } from 'lucide-react';
 import { useNixDevice } from '../hooks/useNixDevice';
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import Ajustes from './Ajustes';
+import DeltaRango from './DeltaRango';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export default function Sidebar({ isOpen, onClose, onLogout, userData }: Sidebar
   const navigate = useNavigate();
   const { isConnected, deviceInfo, disconnect } = useNixDevice();
   const [showAjustes, setShowAjustes] = useState(false);
+  const [showDeltaRango, setShowDeltaRango] = useState(false);
 
   return (
     <AnimatePresence>
@@ -54,6 +56,7 @@ export default function Sidebar({ isOpen, onClose, onLogout, userData }: Sidebar
                   <SidebarItem icon={User} label="Información de la cuenta" onClick={() => navigate('/cuenta')} />
                   <SidebarItem icon={Users} label="Usuarios de mi empresa" onClick={() => navigate('/usuarios')} />
                   <SidebarItem icon={Settings} label="Ajustes globales de la app" onClick={() => setShowAjustes(true)} />
+                  <SidebarItem icon={Palette} label="Rangos de Delta" onClick={() => setShowDeltaRango(true)} />
                 </div>
               </AccordionSection>
 
@@ -142,6 +145,7 @@ export default function Sidebar({ isOpen, onClose, onLogout, userData }: Sidebar
           </motion.div>
 
           <Ajustes isOpen={showAjustes} onClose={() => setShowAjustes(false)} />
+          <DeltaRango isOpen={showDeltaRango} onClose={() => setShowDeltaRango(false)} />
         </>
       )}
     </AnimatePresence>

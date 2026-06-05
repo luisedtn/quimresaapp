@@ -225,7 +225,7 @@ export default function ColorMatch() {
     }, [selectedMatch, patronL, patronA, patronB, componentColors, prepareAmount, currentLote]);
 
 
-    // Recompute hex preview when input changes
+    // Recompute hex preview and clear previous search when input changes
     useEffect(() => {
         const l = parseFloat(patronL);
         const a = parseFloat(patronA);
@@ -235,6 +235,15 @@ export default function ColorMatch() {
         } else {
             setPatronHex(null);
         }
+
+        // Si el usuario cambia los parámetros, limpiamos los resultados anteriores
+        if (hasSearched) {
+            setSearchResults([]);
+            setHasSearched(false);
+            setSelectedMatch(null);
+            setComponentColors([]);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [patronL, patronA, patronB]);
 
     // ----------------------------------------------------------------
@@ -242,7 +251,7 @@ export default function ColorMatch() {
     // ----------------------------------------------------------------
     const handleDeviceCapture = async () => {
         if (!isConnected) {
-            navigate('/colorimetro', { state: { returnTo: '/color-match' } });
+            navigate('/colorimetro', { state: { returnTo: '/color-match', autoRead: true } });
             return;
         }
         const result = await measure();
@@ -260,6 +269,18 @@ export default function ColorMatch() {
             }
         }
     };
+
+    useEffect(() => {
+        if (isConnected && location.state?.autoRead) {
+            // Limpiar autoRead del state para que no se vuelva a ejecutar en un re-render
+            navigate('.', { replace: true, state: { ...location.state, autoRead: undefined } });
+            // Seleccionar modo dispositivo automáticamente
+            setInputMode('device');
+            // Lanzar la medición
+            handleDeviceCapture();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isConnected, location.state, navigate]);
 
     const handlePerformNewReading = async () => {
         const result = await measure();
@@ -546,6 +567,50 @@ export default function ColorMatch() {
     // ----------------------------------------------------------------
     // Send to Quality Control
     // ----------------------------------------------------------------
+    const handleSendMatchToQC = (match: MatchResult, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const f = match.formula;
+        const l = parseFloat(patronL);
+        const a = parseFloat(patronA);
+        const b = parseFloat(patronB);
+
+        const qcContext = {
+            standard: {
+                l, a, b,
+                hex: labToHex(l, a, b),
+                name: 'Patrón (Búsqueda de Color)',
+            },
+            sample: {
+                l: parseFloat(f.L || '0'),
+                a: parseFloat(f.A || '0'),
+                b: parseFloat(f.B || '0'),
+                hex: match.hex,
+                name: f.NOMBREFORMULA || f.NOMBRE || 'Fórmula Encontrada',
+            },
+            dL: (parseFloat(f.L || '0') - l).toFixed(2),
+            dA: (parseFloat(f.A || '0') - a).toFixed(2),
+            dB: (parseFloat(f.B || '0') - b).toFixed(2),
+            de: match.deltaE.toFixed(2),
+            formulaSource: match.source,
+            formulaName: f.NOMBREFORMULA || f.NOMBRE || 'Fórmula Encontrada',
+            formulaProduct: f.LINEA_DEL_PRODUCTO || f.TIPO || 'Producto no especificado',
+            prepareAmount: 1.0,
+            componentColors: [],
+            timestamp: new Date().toISOString(),
+        };
+
+        localStorage.setItem('qc_context', JSON.stringify(qcContext));
+
+        const returnTo = location.state?.returnTo || '/quality-control';
+
+        navigate(returnTo, {
+            state: {
+                standardFromFormula: qcContext.standard,
+                sampleFromQC: qcContext.sample,
+            },
+        });
+    };
+
     const handleSendToQC = () => {
         if (!selectedMatch) return;
         const f = selectedMatch.formula;
@@ -688,14 +753,14 @@ export default function ColorMatch() {
     // Render
     // ----------------------------------------------------------------
     return (
-        <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col overflow-x-hidden">
+        <div className="min-h-screen bg-slate-50 dark:bg-[#0A0F14] text-slate-800 dark:text-slate-200 font-sans flex flex-col overflow-x-hidden">
             {/* Header */}
             <header className="fixed top-0 z-10 flex w-full items-center justify-between border-b border-black/10 bg-[#CC5200] shadow-lg px-4 py-4">
-                <button onClick={() => navigate('/')} className="p-2 text-black hover:text-white transition-colors">
-                    <ArrowLeft className="h-6 w-6 text-black" />
+                <button onClick={() => navigate('/')} className="p-2 text-white hover:text-slate-200 transition-colors">
+                    <ArrowLeft className="h-6 w-6 text-white" />
                 </button>
                 <h1 className="text-lg font-semibold uppercase tracking-tight flex items-center gap-2 text-white">
-                    <Target className="h-5 w-5 text-black" />
+                    <Search className="h-5 w-5 text-white" />
                     Búsqueda de Color
                 </h1>
                 <div className="w-10" />
@@ -718,7 +783,7 @@ export default function ColorMatch() {
                             {/* Preview Swatch */}
                             <div className="flex items-center gap-4">
                                 <div
-                                    className="h-20 w-20 rounded-2xl border-2 border-slate-700 shadow-2xl transition-colors flex items-center justify-center flex-shrink-0 overflow-hidden"
+                                    className="h-20 w-20 rounded-2xl border-2 border-slate-300 dark:border-slate-700 shadow-2xl transition-colors flex items-center justify-center flex-shrink-0 overflow-hidden"
                                     style={{ backgroundColor: patronHex || '#111' }}
                                 >
                                     {!patronHex && (
@@ -726,7 +791,7 @@ export default function ColorMatch() {
                                     )}
                                 </div>
                                 <div className="flex-1 space-y-1">
-                                    <p className="text-sm font-bold text-white">
+                                    <p className="text-sm font-bold text-slate-900 dark:text-white">
                                         {patronHex ? 'Vista previa del color' : 'Ingresa valores L*a*b*'}
                                     </p>
                                     {patronHex && (
@@ -744,7 +809,7 @@ export default function ColorMatch() {
                                     onClick={() => setInputMode('manual')}
                                     className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all border ${inputMode === 'manual'
                                         ? 'bg-[#CC5200]/20 border-[#CC5200]/50 text-[#CC5200]'
-                                        : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'
+                                        : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-800 text-slate-500 hover:border-slate-400 dark:hover:border-slate-600'
                                         }`}
                                 >
                                     <Keyboard className="h-3.5 w-3.5" />
@@ -757,7 +822,7 @@ export default function ColorMatch() {
                                     }}
                                     className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all border ${inputMode === 'device'
                                         ? 'bg-[#CC5200]/20 border-[#CC5200]/50 text-[#CC5200]'
-                                        : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'
+                                        : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-800 text-slate-500 hover:border-slate-400 dark:hover:border-slate-600'
                                         }`}
                                 >
                                     <Scan className="h-3.5 w-3.5" />
@@ -781,7 +846,7 @@ export default function ColorMatch() {
                                                 { label: 'b*', value: patronB, setter: setPatronB },
                                             ].map((field) => (
                                                 <div key={field.label} className="flex flex-col gap-1">
-                                                    <label className="text-[10px] font-bold uppercase tracking-widest ml-1 text-slate-400">
+                                                    <label className="text-[10px] font-bold uppercase tracking-widest ml-1 text-slate-600 dark:text-slate-400">
                                                         {field.label}
                                                     </label>
                                                     <input
@@ -790,7 +855,7 @@ export default function ColorMatch() {
                                                         value={field.value}
                                                         onChange={(e) => field.setter(e.target.value)}
                                                         placeholder="0.00"
-                                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-3 text-center text-sm font-mono text-white outline-none transition-all focus:border-[#CC5200]/50"
+                                                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl py-3 px-3 text-center text-sm font-mono text-slate-900 dark:text-white outline-none transition-all focus:border-[#CC5200]/50"
                                                     />
                                                 </div>
                                             ))}
@@ -813,7 +878,7 @@ export default function ColorMatch() {
                                         onClick={() => setMaxResults(n)}
                                         className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${maxResults === n
                                             ? 'bg-[#a38105]/20 border-[#a38105]/50 text-[#d4af37]'
-                                            : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-600'
+                                            : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-800 text-slate-500 hover:border-slate-400 dark:hover:border-slate-600'
                                             }`}
                                     >
                                         {n}
@@ -828,8 +893,8 @@ export default function ColorMatch() {
                             onClick={handleSearch}
                             disabled={!patronHex || isSearching}
                             className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all shadow-xl ${patronHex && !isSearching
-                                ? 'bg-[#CC5200] text-white shadow-[#CC5200]/30 hover:bg-[#CC5200]/80 active:shadow-none'
-                                : 'bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed'
+                                ? 'bg-[#CC5200] text-slate-900 dark:text-white shadow-[#CC5200]/30 hover:bg-[#CC5200]/80 active:shadow-none'
+                                : 'bg-white dark:bg-slate-900 text-slate-600 border border-slate-300 dark:border-slate-800 cursor-not-allowed'
                                 }`}
                         >
                             {isSearching ? (
@@ -879,25 +944,25 @@ export default function ColorMatch() {
                                         onClick={() => handleSelectMatch(match)}
                                         className={`rounded-2xl border overflow-hidden cursor-pointer transition-all active:scale-[0.98] ${isSelected
                                             ? 'border-[#a38105]/50 bg-[#a38105]/5 shadow-lg shadow-[#a38105]/10'
-                                            : 'border-slate-800 bg-slate-900/40 hover:border-slate-600'
+                                            : 'border-slate-300 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/40 hover:border-slate-400 dark:hover:border-slate-600'
                                             }`}
                                     >
                                         <div className="flex">
                                             {/* Color swatch */}
                                             <div
-                                                className="w-12 sm:w-16 min-w-[3rem] sm:min-w-[4rem] border-r border-slate-800/50"
+                                                className="w-12 sm:w-16 min-w-[3rem] sm:min-w-[4rem] border-r border-slate-300 dark:border-slate-800/50"
                                                 style={{ backgroundColor: match.hex }}
                                             />
                                             <div className="flex-1 p-4">
                                                 <div className="flex items-start justify-between">
-                                                    <div className="min-w-0">
-                                                        <h3 className="text-sm font-bold text-white truncate">
+                                                    <div className="flex-1 min-w-0 pr-2">
+                                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2 leading-tight">
                                                             {match.formula.NOMBREFORMULA || match.formula.NOMBRE || 'Sin nombre'}
                                                         </h3>
                                                         <div className="flex items-center gap-2 mt-1">
                                                             <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase border ${match.source === 'standard'
                                                                 ? 'bg-[#a38105]/20 text-[#d4af37] border-[#a38105]/30'
-                                                                : 'bg-slate-800 text-slate-400 border-slate-700'
+                                                                : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700'
                                                                 }`}>
                                                                 {match.source === 'standard' ? 'Standard' : 'Personal'}
                                                             </span>
@@ -915,11 +980,19 @@ export default function ColorMatch() {
                                                         <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest">ΔE 2000</p>
                                                     </div>
                                                 </div>
-                                                {/* LAB values */}
-                                                <div className="flex gap-3 mt-2">
-                                                    <span className="text-[9px] text-slate-500 font-mono">L:{parseFloat(match.formula.L || '0').toFixed(1)}</span>
-                                                    <span className="text-[9px] text-slate-500 font-mono">a:{parseFloat(match.formula.A || '0').toFixed(1)}</span>
-                                                    <span className="text-[9px] text-slate-500 font-mono">b:{parseFloat(match.formula.B || '0').toFixed(1)}</span>
+                                                {/* LAB values & Actions */}
+                                                <div className="flex items-end justify-between mt-2">
+                                                    <div className="flex gap-4">
+                                                        <span className="text-xs text-slate-500 font-mono font-medium">L:{parseFloat(match.formula.L || '0').toFixed(1)}</span>
+                                                        <span className="text-xs text-slate-500 font-mono font-medium">a:{parseFloat(match.formula.A || '0').toFixed(1)}</span>
+                                                        <span className="text-xs text-slate-500 font-mono font-medium">b:{parseFloat(match.formula.B || '0').toFixed(1)}</span>
+                                                    </div>
+                                                    <button
+                                                        onClick={(e) => handleSendMatchToQC(match, e)}
+                                                        className="px-4 py-2 bg-[#CC5200] text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-[#CC5200]/80 transition-colors shadow-md shadow-[#CC5200]/20 active:scale-95"
+                                                    >
+                                                        QC
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -947,18 +1020,18 @@ export default function ColorMatch() {
                             className="space-y-4"
                         >
                             {/* Comparison Bar */}
-                            <div className="w-full h-16 rounded-2xl overflow-hidden relative flex border border-slate-700/50 shadow-lg">
+                            <div className="w-full h-16 rounded-2xl overflow-hidden relative flex border border-slate-300 dark:border-slate-700/50 shadow-lg">
                                 <div
                                     className="w-1/2 relative flex items-start justify-center pt-1"
                                     style={{ backgroundColor: patronHex || '#111' }}
                                 >
-                                    <span className="text-[8px] font-black text-white px-2 py-0.5 rounded-full bg-black/40 uppercase tracking-widest">Patrón</span>
+                                    <span className="text-[8px] font-black text-slate-900 dark:text-white px-2 py-0.5 rounded-full bg-black/40 uppercase tracking-widest">Patrón</span>
                                 </div>
                                 <div
                                     className="w-1/2 relative flex items-start justify-center pt-1 border-l border-white/20"
                                     style={{ backgroundColor: selectedMatch.hex }}
                                 >
-                                    <span className="text-[8px] font-black text-white px-2 py-0.5 rounded-full bg-black/40 uppercase tracking-widest">Fórmula</span>
+                                    <span className="text-[8px] font-black text-slate-900 dark:text-white px-2 py-0.5 rounded-full bg-black/40 uppercase tracking-widest">Fórmula</span>
                                 </div>
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <div className="bg-[#0A0F14] rounded-full px-4 py-1 text-[11px] font-black border border-[#a38105]/40 shadow-lg text-[#d4af37]">
@@ -968,14 +1041,14 @@ export default function ColorMatch() {
                             </div>
 
                             {/* Technical Log Info */}
-                            <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between shadow-lg">
+                            <div className="bg-white dark:bg-slate-900/80 border border-slate-300 dark:border-slate-800/80 rounded-2xl p-4 flex items-center justify-between shadow-lg">
                                 <div className="flex items-center gap-3">
                                     <div className="h-10 w-10 bg-[#a38105]/15 rounded-xl flex items-center justify-center border border-[#a38105]/30">
                                         <Layers className="h-5 w-5 text-[#d4af37]" />
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Lote de Trabajo</p>
-                                        <p className="text-sm font-mono font-bold text-white uppercase">{currentLote}</p>
+                                        <p className="text-sm font-mono font-bold text-slate-900 dark:text-white uppercase">{currentLote}</p>
                                     </div>
                                 </div>
                                 <div className="text-right flex flex-col items-end gap-1">
@@ -991,7 +1064,7 @@ export default function ColorMatch() {
                             </div>
 
                             {/* Quantity Input */}
-                            <div className="bg-slate-900/40 rounded-2xl border border-slate-800/80 p-4 space-y-3">
+                            <div className="bg-slate-100 dark:bg-slate-900/40 rounded-2xl border border-slate-300 dark:border-slate-800/80 p-4 space-y-3">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
                                         <Layers className="h-3.5 w-3.5 text-[#a38105]" />
@@ -1010,7 +1083,7 @@ export default function ColorMatch() {
                                             const val = normalizeDecimal(prepareAmount);
                                             if (val <= 0) setPrepareAmount(1.0);
                                         }}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl py-4 px-4 text-center text-xl font-mono font-black text-white outline-none focus:border-[#CC5200]/50 transition-all"
+                                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl py-4 px-4 text-center text-xl font-mono font-black text-slate-900 dark:text-white outline-none focus:border-[#CC5200]/50 transition-all"
                                     />
                                     <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                                         <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">LT</span>
@@ -1019,7 +1092,7 @@ export default function ColorMatch() {
                             </div>
 
                             {/* Component Colors */}
-                            <div className="bg-slate-900/60 rounded-2xl border border-slate-800/80 p-4 space-y-3">
+                            <div className="bg-slate-100 dark:bg-slate-900/60 rounded-2xl border border-slate-300 dark:border-slate-800/80 p-4 space-y-3">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
                                         <Beaker className="h-3.5 w-3.5 text-[#a38105]" />
@@ -1029,7 +1102,7 @@ export default function ColorMatch() {
                                         setSelectedMatch(null);
                                         setComponentColors([]);
                                         setPrepareAmount(1.0);
-                                    }} className="text-[10px] text-slate-500 hover:text-white transition-colors">
+                                    }} className="text-[10px] text-slate-500 hover:text-slate-900 dark:text-white transition-colors">
                                         <span className="mr-1">←</span> Volver a resultados
                                     </button>
                                 </div>
@@ -1041,7 +1114,7 @@ export default function ColorMatch() {
                                 ) : componentColors.length > 0 ? (
                                     <div className="space-y-2">
                                         {componentColors.map((cc, idx) => (
-                                            <div key={idx} className="flex items-center gap-3 bg-slate-950/60 p-3 rounded-xl border border-slate-800/40">
+                                            <div key={idx} className="flex items-center gap-3 bg-slate-100 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-300 dark:border-slate-800/40">
                                                 <div
                                                     className="h-8 w-8 rounded-lg flex-shrink-0 shadow-inner border border-white/10"
                                                     style={{
@@ -1054,7 +1127,7 @@ export default function ColorMatch() {
                                                     }}
                                                 />
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="text-[10px] font-bold text-white truncate">{cc.code}</p>
+                                                    <p className="text-[10px] font-bold text-slate-900 dark:text-white truncate">{cc.code}</p>
                                                     <p className="text-[8px] font-bold uppercase text-slate-500">
                                                         {cc.isBase
                                                             ? cc.baseType === 'white' ? 'Base Blanca'
@@ -1082,7 +1155,7 @@ export default function ColorMatch() {
                                 <motion.button
                                     whileTap={{ scale: 0.97 }}
                                     onClick={handleSaveTechnicalSession}
-                                    className="flex items-center justify-center gap-3 py-4 rounded-2xl bg-slate-800 border border-slate-700 text-slate-300 font-bold text-xs uppercase tracking-widest shadow-xl active:shadow-none transition-all hover:bg-slate-700 hover:text-white"
+                                    className="flex items-center justify-center gap-3 py-4 rounded-2xl bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs uppercase tracking-widest shadow-xl active:shadow-none transition-all hover:bg-slate-300 dark:hover:bg-slate-700 hover:text-slate-900 dark:text-white"
                                 >
                                     <Check className="h-4 w-4 text-[#a38105]" />
                                     Guardar Registro
@@ -1091,7 +1164,7 @@ export default function ColorMatch() {
                                 <motion.button
                                     whileTap={{ scale: 0.97 }}
                                     onClick={handleSendToQC}
-                                    className="flex items-center justify-center gap-3 py-4 rounded-2xl bg-[#CC5200] text-white font-bold text-xs uppercase tracking-widest shadow-xl shadow-[#CC5200]/30 active:shadow-none transition-all hover:bg-[#CC5200]/80"
+                                    className="flex items-center justify-center gap-3 py-4 rounded-2xl bg-[#CC5200] text-slate-900 dark:text-white font-bold text-xs uppercase tracking-widest shadow-xl shadow-[#CC5200]/30 active:shadow-none transition-all hover:bg-[#CC5200]/80"
                                 >
                                     <Sparkles className="h-4 w-4" />
                                     Enviar a QC
@@ -1116,7 +1189,7 @@ export default function ColorMatch() {
                             <div className="absolute top-0 left-0 h-20 w-20 animate-spin rounded-full border-4 border-[#CC5200] border-t-transparent" />
                         </div>
                         <h3 className="text-xl font-bold text-white tracking-tight">Capturando Color...</h3>
-                        <p className="text-slate-400 text-sm mt-2 font-medium uppercase tracking-widest animate-pulse">Leyendo valores del sensor</p>
+                        <p className="text-slate-600 dark:text-slate-400 text-sm mt-2 font-medium uppercase tracking-widest animate-pulse">Leyendo valores del sensor</p>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -1133,27 +1206,27 @@ export default function ColorMatch() {
                         <motion.div
                             initial={{ scale: 0.9, y: 20 }}
                             animate={{ scale: 1, y: 0 }}
-                            className="w-full max-w-sm bg-slate-900 border border-slate-800/80 rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center"
+                            className="w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800/80 rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center"
                         >
                             <div className="h-16 w-16 bg-[#a38105]/15 rounded-2xl flex items-center justify-center mb-6 border border-[#a38105]/30">
                                 <Scan className="h-8 w-8 text-[#d4af37]" />
                             </div>
-                            <h3 className="text-xl font-bold text-white mb-2">Ajuste técnico aplicado</h3>
-                            <p className="text-sm text-slate-400 mb-8 leading-relaxed">
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Ajuste técnico aplicado</h3>
+                            <p className="text-sm text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
                                 He agregado los pigmentos sugeridos por la IA a la mezcla. ¿Deseas realizar una nueva lectura con el dispositivo para verificar el nuevo Delta E?
                             </p>
 
                             <div className="flex flex-col w-full gap-3">
                                 <button
                                     onClick={() => handlePerformNewReading()}
-                                    className="w-full py-4 rounded-2xl bg-[#CC5200] text-white font-bold text-xs uppercase tracking-widest shadow-xl shadow-[#CC5200]/30 active:scale-95 transition-all flex items-center justify-center gap-3 hover:bg-[#CC5200]/80"
+                                    className="w-full py-4 rounded-2xl bg-[#CC5200] text-slate-900 dark:text-white font-bold text-xs uppercase tracking-widest shadow-xl shadow-[#CC5200]/30 active:scale-95 transition-all flex items-center justify-center gap-3 hover:bg-[#CC5200]/80"
                                 >
                                     <Sparkles className="h-4 w-4" />
                                     Aceptar hacer la lectura
                                 </button>
                                 <button
                                     onClick={() => setShowReadingModal(false)}
-                                    className="w-full py-4 rounded-2xl bg-slate-800 text-slate-400 font-bold text-xs uppercase tracking-widest hover:bg-slate-700 hover:text-white transition-all"
+                                    className="w-full py-4 rounded-2xl bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold text-xs uppercase tracking-widest hover:bg-slate-300 dark:hover:bg-slate-700 hover:text-slate-900 dark:text-white transition-all"
                                 >
                                     Cancelar
                                 </button>
@@ -1175,17 +1248,17 @@ export default function ColorMatch() {
                         <motion.div
                             initial={{ scale: 0.95, y: 20 }}
                             animate={{ scale: 1, y: 0 }}
-                            className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-[2.5rem] shadow-2xl flex flex-col max-h-full overflow-hidden"
+                            className="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-[2.5rem] shadow-2xl flex flex-col max-h-full overflow-hidden"
                         >
                             {/* Header Modal */}
-                            <div className="p-6 border-b border-slate-800 flex items-center justify-between flex-shrink-0">
+                            <div className="p-6 border-b border-slate-300 dark:border-slate-800 flex items-center justify-between flex-shrink-0">
                                 <div>
-                                    <h3 className="text-xl font-bold text-white tracking-tight uppercase">Historial de Ajustes</h3>
+                                    <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight uppercase">Historial de Ajustes</h3>
                                     <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase mt-1">Lote: {currentLote}</p>
                                 </div>
                                 <button
                                     onClick={() => setShowHistoryModal(false)}
-                                    className="p-3 bg-slate-800 hover:bg-slate-700 rounded-2xl text-slate-400 hover:text-white transition-all border border-slate-700"
+                                    className="p-3 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 rounded-2xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:text-white transition-all border border-slate-300 dark:border-slate-700"
                                 >
                                     <ArrowLeft className="h-5 w-5 rotate-90 sm:rotate-0" />
                                 </button>
@@ -1195,7 +1268,7 @@ export default function ColorMatch() {
                             <div className="flex-1 overflow-y-auto p-6 space-y-4">
                                 {historyItems.length === 0 ? (
                                     <div className="py-20 text-center flex flex-col items-center gap-4">
-                                        <div className="h-16 w-16 bg-slate-800 rounded-full flex items-center justify-center border border-slate-700 opacity-20">
+                                        <div className="h-16 w-16 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center border border-slate-300 dark:border-slate-700 opacity-20">
                                             <Search className="h-8 w-8" />
                                         </div>
                                         <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">No hay registros para este lote</p>
@@ -1212,13 +1285,13 @@ export default function ColorMatch() {
                                                 animate={{ opacity: 1, x: 0 }}
                                                 transition={{ delay: idx * 0.05 }}
                                                 key={item.id || idx}
-                                                className="bg-slate-950 border border-slate-800/50 rounded-3xl p-5 relative overflow-hidden"
+                                                className="bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800/50 rounded-3xl p-5 relative overflow-hidden"
                                             >
                                                 <div className="flex items-start justify-between mb-3">
                                                     <div className="flex items-center gap-3">
                                                         <div className={`h-10 w-10 rounded-2xl flex items-center justify-center border ${type === 'INICIO' ? 'bg-[#a38105]/15 border-[#a38105]/30 text-[#d4af37]' :
                                                             type === 'ADICION' ? 'bg-[#CC5200]/15 border-[#CC5200]/30 text-[#CC5200]' :
-                                                                type === 'LECTURA_PATRON' ? 'bg-slate-800 border-slate-700 text-slate-400' :
+                                                                type === 'LECTURA_PATRON' ? 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400' :
                                                                     'bg-[#a38105]/15 border-[#a38105]/30 text-[#d4af37]'
                                                             }`}>
                                                             {type === 'INICIO' ? <Target className="h-5 w-5" /> :
@@ -1240,7 +1313,7 @@ export default function ColorMatch() {
 
                                                 <div className="space-y-2">
                                                     {item.descripcion && (
-                                                        <p className="text-[11px] font-bold text-slate-200 leading-relaxed mb-3">
+                                                        <p className="text-[11px] font-bold text-slate-800 dark:text-slate-200 leading-relaxed mb-3">
                                                             {item.descripcion}
                                                         </p>
                                                     )}
@@ -1248,7 +1321,7 @@ export default function ColorMatch() {
                                                         <div className="space-y-1.5">
                                                             {data.suggestions.map((s: any, i: number) => (
                                                                 <div key={i} className="flex items-center justify-between text-[11px] font-bold">
-                                                                    <span className="text-slate-300 flex items-center gap-2">
+                                                                    <span className="text-slate-700 dark:text-slate-300 flex items-center gap-2">
                                                                         <div className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color || '#fff' }} />
                                                                         {s.code}
                                                                     </span>
@@ -1260,15 +1333,15 @@ export default function ColorMatch() {
 
                                                     {(type === 'MEDICION' || type === 'LECTURA_PATRON') && (
                                                         <div className="grid grid-cols-3 gap-2 pt-1">
-                                                            <div className="bg-slate-900 border border-slate-800 p-2 rounded-xl text-center">
+                                                            <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-2 rounded-xl text-center">
                                                                 <p className="text-[8px] text-slate-500 uppercase font-bold">L*</p>
                                                                 <p className="text-xs font-mono font-bold text-[#d4af37]">{parseFloat(data.l).toFixed(2)}</p>
                                                             </div>
-                                                            <div className="bg-slate-900 border border-slate-800 p-2 rounded-xl text-center">
+                                                            <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-2 rounded-xl text-center">
                                                                 <p className="text-[8px] text-slate-500 uppercase font-bold">a*</p>
                                                                 <p className="text-xs font-mono font-bold text-[#d4af37]">{parseFloat(data.a).toFixed(2)}</p>
                                                             </div>
-                                                            <div className="bg-slate-900 border border-slate-800 p-2 rounded-xl text-center">
+                                                            <div className="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 p-2 rounded-xl text-center">
                                                                 <p className="text-[8px] text-slate-500 uppercase font-bold">b*</p>
                                                                 <p className="text-xs font-mono font-bold text-[#d4af37]">{parseFloat(data.b).toFixed(2)}</p>
                                                             </div>
@@ -1276,7 +1349,7 @@ export default function ColorMatch() {
                                                     )}
 
                                                     {type === 'INICIO' && (
-                                                        <p className="text-[11px] text-slate-400 font-medium">Búsqueda inicial: ΔE {parseFloat(data.initialDeltaE).toFixed(2)}</p>
+                                                        <p className="text-[11px] text-slate-600 dark:text-slate-400 font-medium">Búsqueda inicial: ΔE {parseFloat(data.initialDeltaE).toFixed(2)}</p>
                                                     )}
                                                 </div>
                                             </motion.div>
@@ -1289,7 +1362,7 @@ export default function ColorMatch() {
                             <div className="p-6 flex-shrink-0">
                                 <button
                                     onClick={() => setShowHistoryModal(false)}
-                                    className="w-full py-4 rounded-3xl bg-slate-800 text-white font-bold text-xs uppercase tracking-widest border border-slate-700 active:scale-95 transition-all"
+                                    className="w-full py-4 rounded-3xl bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-xs uppercase tracking-widest border border-slate-300 dark:border-slate-700 active:scale-95 transition-all"
                                 >
                                     Cerrar Ventana
                                 </button>

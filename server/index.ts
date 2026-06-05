@@ -1452,6 +1452,85 @@ app.post('/api/qualitycontrol', async (req: Request, res: Response) => {
 
 // ─── END QualityControl ────────────────────────────────────────────────────────
 
+// =================================================================
+// ─── DeltaRango CRUD ──────────────────────────────────────────────
+// =================================================================
+
+// GET /api/deltarango — all rows ordered by VALOR
+app.get('/api/deltarango', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const rows = await prisma.deltaRango.findMany({ orderBy: { VALOR: 'asc' } });
+        res.json(rows);
+    } catch (error: any) {
+        console.error('[ERROR] GET /api/deltarango:', error.message);
+        res.status(500).json({ error: 'Error al obtener rangos de delta', details: error.message });
+    }
+});
+
+// PUT /api/deltarango/:id — update NOMBRE, COLOR, COLORTEXTO
+app.put('/api/deltarango/:id', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { id } = req.params;
+        const { NOMBRE, COLOR, COLORTEXTO } = req.body;
+
+        const existing = await prisma.deltaRango.findUnique({ where: { id: Number(id) } });
+        if (!existing) return res.status(404).json({ error: 'Rango no encontrado' });
+
+        const updated = await prisma.deltaRango.update({
+            where: { id: Number(id) },
+            data: {
+                ...(NOMBRE !== undefined ? { NOMBRE } : {}),
+                ...(COLOR !== undefined ? { COLOR: Number(COLOR) } : {}),
+                ...(COLORTEXTO !== undefined ? { COLORTEXTO: Number(COLORTEXTO) } : {}),
+            }
+        });
+        res.json(updated);
+    } catch (error: any) {
+        console.error('[ERROR] PUT /api/deltarango:', error.message);
+        res.status(500).json({ error: 'Error al actualizar rango', details: error.message });
+    }
+});
+
+// POST /api/deltarango/reset — restore default values
+app.post('/api/deltarango/reset', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        // Auto-compute text color from background luminance
+        function autoTextColor(bgrColor: number): number {
+            const r = bgrColor & 0xFF;
+            const g = (bgrColor >> 8) & 0xFF;
+            const b = (bgrColor >> 16) & 0xFF;
+            const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+            return luminance > 128 ? 0 : 16777215;
+        }
+
+        const defaults = [
+            { VALOR: 0.3,         NOMBRE: 'EXCELENTE',  COLOR: 8454016 },
+            { VALOR: 0.6,         NOMBRE: 'APROBADO',   COLOR: 65535 },
+            { VALOR: 0.9,         NOMBRE: 'ACEPTABLE',  COLOR: 33023 },
+            { VALOR: 1.2,         NOMBRE: 'REGULAR',    COLOR: 8388736 },
+            { VALOR: 999999999.0, NOMBRE: 'NO PASA',    COLOR: 255 },
+        ];
+
+        await prisma.$queryRawUnsafe(`DELETE FROM "deltarango"`);
+
+        for (const d of defaults) {
+            await prisma.$queryRawUnsafe(
+                `INSERT INTO "deltarango" ("VALOR", "NOMBRE", "COLOR", "COLORTEXTO") VALUES ($1, $2, $3, $4)`,
+                d.VALOR, d.NOMBRE, d.COLOR, autoTextColor(d.COLOR)
+            );
+        }
+
+        const rows = await prisma.deltaRango.findMany({ orderBy: { VALOR: 'asc' } });
+        console.log('[DELTARANGO] Reset to defaults, rows:', rows.length);
+        res.json(rows);
+    } catch (error: any) {
+        console.error('[ERROR] POST /api/deltarango/reset:', error.message);
+        res.status(500).json({ error: 'Error al restaurar rangos', details: error.message });
+    }
+});
+
+// ─── END DeltaRango ────────────────────────────────────────────────────────────
+
 app.use('/controlcalidad', express.static(path.join(__dirname, '../controlcalidad')));
 
 const distPath = path.join(__dirname, '../dist');

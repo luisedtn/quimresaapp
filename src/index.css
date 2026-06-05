@@ -254,8 +254,6 @@ div.h-\[1px\].bg-slate-800 {
 .light button .text-white,
 .light button.text-blanco,
 .light button .text-blanco,
-.light [class*="bg-"] .text-white,
-.light [class*="bg-"] .text-blanco,
 .light [class*="bg-"].text-white,
 .light [class*="bg-"].text-blanco {
   color: #ffffff !important;
@@ -334,6 +332,14 @@ textarea:focus {
 
 .light .text-slate-800 {
   color: var(--text-secondary) !important;
+}
+
+/* Placeholder inputs con tema */
+input::placeholder,
+textarea::placeholder,
+select::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 0.8;
 }
 
 /* Personalización de barra de scroll premium */
@@ -600,11 +606,11 @@ textarea:focus {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(0, 44, 108, 0.25);
-  background: rgba(0, 44, 108, 0.06);
-  color: var(--accent-color);
+  border: none;
+  background: var(--accent-orange);
+  color: #ffffff;
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
@@ -613,12 +619,12 @@ textarea:focus {
   white-space: nowrap;
   transition: all 0.2s ease;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .formula-card__qc-btn:hover {
-  background: rgba(0, 44, 108, 0.14);
-  border-color: rgba(0, 44, 108, 0.4);
-  color: var(--accent-color-hover);
+  background: var(--accent-orange-hover);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
 }
 
 .formula-card__qc-btn:active {
@@ -667,12 +673,13 @@ textarea:focus {
 }
 
 .light .formula-card__qc-btn {
-  background: rgba(0, 44, 108, 0.06);
-  border-color: rgba(0, 44, 108, 0.25);
+  background: var(--accent-orange);
+  box-shadow: 0 2px 8px rgba(184, 93, 0, 0.2);
 }
 
 .light .formula-card__qc-btn:hover {
-  background: rgba(0, 44, 108, 0.14);
+  background: var(--accent-orange-hover);
+  box-shadow: 0 4px 14px rgba(184, 93, 0, 0.3);
 }
 
 .light .formula-sort-btn--active {
