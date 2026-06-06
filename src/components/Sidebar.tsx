@@ -56,7 +56,6 @@ export default function Sidebar({ isOpen, onClose, onLogout, userData }: Sidebar
                   <SidebarItem icon={User} label="Información de la cuenta" onClick={() => navigate('/cuenta')} />
                   <SidebarItem icon={Users} label="Usuarios de mi empresa" onClick={() => navigate('/usuarios')} />
                   <SidebarItem icon={Settings} label="Ajustes globales de la app" onClick={() => setShowAjustes(true)} />
-                  <SidebarItem icon={Palette} label="Rangos de Delta" onClick={() => setShowDeltaRango(true)} />
                 </div>
               </AccordionSection>
 
@@ -144,7 +143,7 @@ export default function Sidebar({ isOpen, onClose, onLogout, userData }: Sidebar
             </div>
           </motion.div>
 
-          <Ajustes isOpen={showAjustes} onClose={() => setShowAjustes(false)} />
+          <Ajustes isOpen={showAjustes} onClose={() => setShowAjustes(false)} onOpenDeltaRango={() => setShowDeltaRango(true)} />
           <DeltaRango isOpen={showDeltaRango} onClose={() => setShowDeltaRango(false)} />
         </>
       )}

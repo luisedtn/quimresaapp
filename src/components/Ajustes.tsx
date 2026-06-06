@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Sun, Moon, Monitor } from 'lucide-react';
+import { X, Sun, Moon, Monitor, Palette } from 'lucide-react';
 import ScreenBrightness from '../services/ScreenBrightness';
 
 interface AjustesProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenDeltaRango: () => void;
 }
 
-export default function Ajustes({ isOpen, onClose }: AjustesProps) {
+export default function Ajustes({ isOpen, onClose, onOpenDeltaRango }: AjustesProps) {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     return document.documentElement.classList.contains('light') ? 'light' : 'dark';
   });
@@ -138,6 +139,26 @@ export default function Ajustes({ isOpen, onClose }: AjustesProps) {
                     ? 'La pantalla permanecerá encendida al máximo brillo.'
                     : 'Se usará el brillo actual del dispositivo.'}
                 </p>
+              </section>
+
+              {/* Delta Ranges */}
+              <section>
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">
+                  Rangos de Delta
+                </span>
+                <button
+                  onClick={() => {
+                    onClose();
+                    onOpenDeltaRango();
+                  }}
+                  className="w-full flex items-center justify-between bg-slate-900/50 p-3 rounded-xl border border-slate-800/80 hover:bg-slate-800/30 transition-all cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <Palette className="h-4 w-4 text-slate-400" />
+                    <span className="text-sm font-medium text-slate-300">Configurar Rangos</span>
+                  </div>
+                  <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Abrir</span>
+                </button>
               </section>
             </div>
 
