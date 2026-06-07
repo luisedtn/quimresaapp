@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Search, Scan, Keyboard, Layers, ChevronRight, Target, Sliders, Beaker, Check, Sparkles } from 'lucide-react';
@@ -23,6 +23,36 @@ function labToHex(l: number, a: number, b: number): string {
     const gamma = (c: number) =>
         Math.round(Math.max(0, Math.min(255, (c > 0.0031308 ? 1.055 * Math.pow(c, 1 / 2.4) - 0.055 : 12.92 * c) * 255)));
     return `#${gamma(rl).toString(16).padStart(2, '0')}${gamma(gl).toString(16).padStart(2, '0')}${gamma(bl).toString(16).padStart(2, '0')}`;
+}
+
+function labToRgb(l: number, a: number, b: number): { r: number; g: number; b: number } {
+    const fy = (l + 16) / 116;
+    const fx = a / 500 + fy;
+    const fz = fy - b / 200;
+    const fx3 = fx * fx * fx, fy3 = fy * fy * fy, fz3 = fz * fz * fz;
+    const xr = fx3 > 0.008856 ? fx3 : (fx - 16 / 116) / 7.787;
+    const yr = fy3 > 0.008856 ? fy3 : (fy - 16 / 116) / 7.787;
+    const zr = fz3 > 0.008856 ? fz3 : (fz - 16 / 116) / 7.787;
+    const rl = xr * 3.2406 + yr * -1.5372 + zr * -0.4986;
+    const gl = xr * -0.9689 + yr * 1.8758 + zr * 0.0415;
+    const bl = xr * 0.0557 + yr * -0.2040 + zr * 1.0570;
+    const gamma = (c: number) =>
+        Math.max(0, Math.min(255, Math.round((c > 0.0031308 ? 1.055 * Math.pow(c, 1 / 2.4) - 0.055 : 12.92 * c) * 255)));
+    return { r: gamma(rl), g: gamma(gl), b: gamma(bl) };
+}
+
+function rgbToLab(r: number, g: number, b: number): { l: number; a: number; b: number } {
+    const invGamma = (v: number) => {
+        const s = v / 255;
+        return s > 0.04045 ? Math.pow((s + 0.055) / 1.055, 2.4) : s / 12.92;
+    };
+    const rl = invGamma(r), gl = invGamma(g), bl = invGamma(b);
+    const xr = rl * 0.4124564 + gl * 0.3575761 + bl * 0.1804375;
+    const yr = rl * 0.2126729 + gl * 0.7151522 + bl * 0.0721750;
+    const zr = rl * 0.0193339 + gl * 0.1191920 + bl * 0.9503041;
+    const toF = (v: number) => v > 0.008856 ? Math.cbrt(v) : 7.787 * v + 16 / 116;
+    const fx = toF(xr), fy = toF(yr), fz = toF(zr);
+    return { l: 116 * fy - 16, a: 500 * (fx - fy), b: 200 * (fy - fz) };
 }
 
 // ----------------------------------------------------------------
@@ -65,7 +95,12 @@ export default function ColorMatch() {
     const [patronL, setPatronL] = useState('');
     const [patronA, setPatronA] = useState('');
     const [patronB, setPatronB] = useState('');
+    const [patronRed, setPatronRed] = useState('');
+    const [patronGreen, setPatronGreen] = useState('');
+    const [patronBlue, setPatronBlue] = useState('');
     const [patronHex, setPatronHex] = useState<string | null>(null);
+    const labRef = useRef({ l: '', a: '', b: '' });
+    const rgbRef = useRef({ r: '', g: '', b: '' });
 
     // Toggle manual input
     const [inputMode, setInputMode] = useState<'device' | 'manual'>('manual');
@@ -243,8 +278,40 @@ export default function ColorMatch() {
             setSelectedMatch(null);
             setComponentColors([]);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [patronL, patronA, patronB]);
+
+    const handleLabChange = (field: string, value: string) => {
+        if (field === 'L*') { setPatronL(value); labRef.current.l = value; }
+        else if (field === 'a*') { setPatronA(value); labRef.current.a = value; }
+        else { setPatronB(value); labRef.current.b = value; }
+        const l = parseFloat(labRef.current.l);
+        const a = parseFloat(labRef.current.a);
+        const b = parseFloat(labRef.current.b);
+        if (!isNaN(l) && !isNaN(a) && !isNaN(b)) {
+            const c = labToRgb(l, a, b);
+            setPatronRed(c.r.toString());
+            setPatronGreen(c.g.toString());
+            setPatronBlue(c.b.toString());
+            rgbRef.current = { r: c.r.toString(), g: c.g.toString(), b: c.b.toString() };
+        }
+    };
+
+    const handleRgbChange = (field: string, value: string) => {
+        if (field === 'R') { setPatronRed(value); rgbRef.current.r = value; }
+        else if (field === 'G') { setPatronGreen(value); rgbRef.current.g = value; }
+        else { setPatronBlue(value); rgbRef.current.b = value; }
+        const r = parseInt(rgbRef.current.r);
+        const g = parseInt(rgbRef.current.g);
+        const b = parseInt(rgbRef.current.b);
+        if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+            const lab = rgbToLab(r, g, b);
+            setPatronL(lab.l.toFixed(2));
+            setPatronA(lab.a.toFixed(2));
+            setPatronB(lab.b.toFixed(2));
+            labRef.current = { l: lab.l.toFixed(2), a: lab.a.toFixed(2), b: lab.b.toFixed(2) };
+        }
+    };
 
     // ----------------------------------------------------------------
     // Capture from device
@@ -279,7 +346,7 @@ export default function ColorMatch() {
             // Lanzar la medición
             handleDeviceCapture();
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isConnected, location.state, navigate]);
 
     const handlePerformNewReading = async () => {
@@ -841,9 +908,9 @@ export default function ColorMatch() {
                                     >
                                         <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-2">
                                             {[
-                                                { label: 'L*', value: patronL, setter: setPatronL },
-                                                { label: 'a*', value: patronA, setter: setPatronA },
-                                                { label: 'b*', value: patronB, setter: setPatronB },
+                                                { label: 'L*', value: patronL },
+                                                { label: 'a*', value: patronA },
+                                                { label: 'b*', value: patronB },
                                             ].map((field) => (
                                                 <div key={field.label} className="flex flex-col gap-1">
                                                     <label className="text-[10px] font-bold uppercase tracking-widest ml-1 text-slate-600 dark:text-slate-400">
@@ -853,8 +920,43 @@ export default function ColorMatch() {
                                                         type="number"
                                                         step="0.01"
                                                         value={field.value}
-                                                        onChange={(e) => field.setter(e.target.value)}
+                                                        onChange={(e) => handleLabChange(field.label, e.target.value)}
+                                                        onFocus={(e) => e.target.select()}
                                                         placeholder="0.00"
+                                                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl py-3 px-3 text-center text-sm font-mono text-slate-900 dark:text-white outline-none transition-all focus:border-[#CC5200]/50"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="relative my-4">
+                                            <div className="absolute inset-0 flex items-center">
+                                                <div className="w-full border-t border-slate-300 dark:border-slate-800" />
+                                            </div>
+                                            <div className="relative flex justify-center">
+                                                <span className="bg-slate-50 dark:bg-[#0A0F14] px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                                    O RGB
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                                            {[
+                                                { label: 'R', value: patronRed, max: 255, step: '1' },
+                                                { label: 'G', value: patronGreen, max: 255, step: '1' },
+                                                { label: 'B', value: patronBlue, max: 255, step: '1' },
+                                            ].map((field) => (
+                                                <div key={field.label} className="flex flex-col gap-1">
+                                                    <label className="text-[10px] font-bold uppercase tracking-widest ml-1 text-slate-600 dark:text-slate-400">
+                                                        {field.label}
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        max={field.max}
+                                                        step={field.step}
+                                                        value={field.value}
+                                                        onChange={(e) => handleRgbChange(field.label, e.target.value)}
+                                                        onFocus={(e) => e.target.select()}
+                                                        placeholder="0"
                                                         className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl py-3 px-3 text-center text-sm font-mono text-slate-900 dark:text-white outline-none transition-all focus:border-[#CC5200]/50"
                                                     />
                                                 </div>
@@ -893,8 +995,8 @@ export default function ColorMatch() {
                             onClick={handleSearch}
                             disabled={!patronHex || isSearching}
                             className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all shadow-xl ${patronHex && !isSearching
-                                ? 'bg-[#CC5200] text-slate-900 dark:text-white shadow-[#CC5200]/30 hover:bg-[#CC5200]/80 active:shadow-none'
-                                : 'bg-white dark:bg-slate-900 text-slate-600 border border-slate-300 dark:border-slate-800 cursor-not-allowed'
+                                ? 'bg-[#CC5200] text-white dark:text-white shadow-[#CC5200]/30 hover:bg-[#CC5200]/80 active:shadow-none'
+                                : 'bg-white dark:bg-white text-slate-600 border border-slate-300 dark:border-slate-800 cursor-not-allowed'
                                 }`}
                         >
                             {isSearching ? (
@@ -1079,6 +1181,7 @@ export default function ColorMatch() {
                                         step="0.01"
                                         value={prepareAmount}
                                         onChange={(e) => setPrepareAmount(e.target.value)}
+                                        onFocus={(e) => e.target.select()}
                                         onBlur={() => {
                                             const val = normalizeDecimal(prepareAmount);
                                             if (val <= 0) setPrepareAmount(1.0);

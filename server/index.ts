@@ -1467,11 +1467,11 @@ app.get('/api/deltarango', authenticateToken, async (req: Request, res: Response
     }
 });
 
-// PUT /api/deltarango/:id — update NOMBRE, COLOR, COLORTEXTO
+// PUT /api/deltarango/:id — update NOMBRE, VALOR, COLOR, COLORTEXTO
 app.put('/api/deltarango/:id', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
         const { id } = req.params;
-        const { NOMBRE, COLOR, COLORTEXTO } = req.body;
+        const { NOMBRE, VALOR, COLOR, COLORTEXTO } = req.body;
 
         const existing = await prisma.deltaRango.findUnique({ where: { id: Number(id) } });
         if (!existing) return res.status(404).json({ error: 'Rango no encontrado' });
@@ -1480,6 +1480,7 @@ app.put('/api/deltarango/:id', authenticateToken, async (req: Request, res: Resp
             where: { id: Number(id) },
             data: {
                 ...(NOMBRE !== undefined ? { NOMBRE } : {}),
+                ...(VALOR !== undefined ? { VALOR: Number(VALOR) } : {}),
                 ...(COLOR !== undefined ? { COLOR: Number(COLOR) } : {}),
                 ...(COLORTEXTO !== undefined ? { COLORTEXTO: Number(COLORTEXTO) } : {}),
             }

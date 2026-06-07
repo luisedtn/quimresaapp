@@ -94,12 +94,12 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
 
   const menuItems = [
     { id: 'scan', icon: Scan, title: 'Escaneo único', desc: 'Obtén datos espectrales, RGB, HEX, CIELAB y más.', path: '/scan' },
+    { id: 'match', icon: Search, title: 'Búsqueda de color', desc: 'Encuentra la coincidencia más cercana en bibliotecas de pintura.', path: '/color-match' },
+    { id: 'formulas', icon: PaintBucket, title: 'Fórmulas Personales', desc: 'Ver tus formulaciones de color específicas.', path: '/formulas' },
+    // { id: 'colorimetro', icon: Scan, title: 'Colorímetro Bluetooth', desc: 'Conecta tu Nix para escanear y capturar colores.', path: '/colorimetro' },
+    { id: 'libraries', icon: Library, title: 'Fórmulas stándard', desc: 'Explora tus fórmulas stándard.', path: '/libraries' },
     { id: 'qc', icon: Layers, title: 'Control de calidad', desc: 'Compara muestras contra un estándar e identifica si pasan o fallan.', path: '/quality-control' },
     { id: 'qc-history', icon: History, title: 'Historial de control', desc: 'Tu registro de sesiones de control de calidad.', path: '/lista-qc' },
-    { id: 'formulas', icon: PaintBucket, title: 'Fórmulas de Color', desc: 'Ver tus formulaciones de color específicas.', path: '/formulas' },
-    // { id: 'colorimetro', icon: Scan, title: 'Colorímetro Bluetooth', desc: 'Conecta tu Nix para escanear y capturar colores.', path: '/colorimetro' },
-    { id: 'match', icon: Search, title: 'Búsqueda de color', desc: 'Encuentra la coincidencia más cercana en bibliotecas de pintura.', path: '/color-match' },
-    { id: 'libraries', icon: Library, title: 'Fórmulas stándard', desc: 'Explora tus fórmulas stándard.', path: '/libraries' },
     { id: 'favorites', icon: Heart, title: 'Colecciones', desc: 'Accede, descarga y edita tus colores favoritos.' },
     // { id: 'cloud', icon: Cloud, title: 'Panel en la nube', desc: 'Comparte colores, ve analíticas y gestiona usuarios.' },
   ];

@@ -1087,3 +1087,54 @@ select::placeholder {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* ── HSV Color Picker Range Sliders ── */
+.hsv-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 9999px;
+  outline: none;
+  cursor: pointer;
+  background: transparent;
+}
+
+.hsv-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--accent-orange);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.hsv-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.hsv-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--accent-orange);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+/* Hue gradient */
+.hsv-slider--hue {
+  background: linear-gradient(to right,
+    hsl(0, 100%, 50%),
+    hsl(60, 100%, 50%),
+    hsl(120, 100%, 50%),
+    hsl(180, 100%, 50%),
+    hsl(240, 100%, 50%),
+    hsl(300, 100%, 50%),
+    hsl(360, 100%, 50%)
+  ) !important;
+}

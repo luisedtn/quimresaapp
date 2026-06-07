@@ -23,8 +23,40 @@ function labToHex(l: number, a: number, b: number): string {
   return `#${gamma(rl).toString(16).padStart(2, '0')}${gamma(gl).toString(16).padStart(2, '0')}${gamma(bl).toString(16).padStart(2, '0')}`;
 }
 
+interface DeltaRangoRow {
+  id: number;
+  VALOR: number;
+  NOMBRE: string;
+  COLOR: number;
+  COLORTEXTO: number;
+}
+
+function bgrToHex(bgr: number): string {
+  const r = bgr & 0xFF;
+  const g = (bgr >> 8) & 0xFF;
+  const b = (bgr >> 16) & 0xFF;
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+
 const ColorDeltaChart = ({ standard, sample }: { standard: any, sample: any }) => {
   const [userChartMax, setUserChartMax] = useState<number | null>(null);
+  const [deltaRangos, setDeltaRangos] = useState<DeltaRangoRow[]>([]);
+
+  useEffect(() => {
+    const fetchRangos = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/deltarango`, { headers });
+        if (res.ok) {
+          const data: DeltaRangoRow[] = await res.json();
+          setDeltaRangos(data);
+        }
+      } catch {}
+    };
+    fetchRangos();
+  }, []);
 
   const hasData = standard && sample;
 
@@ -39,10 +71,16 @@ const ColorDeltaChart = ({ standard, sample }: { standard: any, sample: any }) =
   let de = hasData ? deltaE2000(std.l, std.a, std.b, smp.l, smp.a, smp.b).toFixed(2) : "0.00";
   if (hasData && dA === "8.87" && dB === "4.94" && dL === "-3.11") de = "4.72"; // Mocked DeltaE(CIE2000) de la imagen
 
-  // Menor a 1.0 pasa (ajustado de tu código base)
-  const isPass = hasData ? parseFloat(de) < 1.0 : false;
-  const statusText = !hasData ? 'ESPERANDO DATOS' : (isPass ? 'PASA' : 'NO PASA');
-  const statusColors = !hasData ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400' : (isPass ? 'bg-green-600 text-white' : 'bg-red-600 text-white');
+  const deNum = hasData ? parseFloat(de) : -1;
+  const matchedRange = deltaRangos.find(r => deNum < r.VALOR);
+  const statusText = !hasData
+    ? 'ESPERANDO DATOS'
+    : matchedRange
+      ? matchedRange.NOMBRE
+      : 'SIN RANGO';
+  const statusColors = !hasData
+    ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+    : '';
 
   // Lógica del mapa CIELAB con escala dinámica
   const dA_val = parseFloat(dA);
@@ -92,9 +130,15 @@ const ColorDeltaChart = ({ standard, sample }: { standard: any, sample: any }) =
   return (
     <div className="w-full bg-white dark:bg-slate-900/40 text-slate-800 dark:text-slate-200 font-sans shadow-2xl rounded-xl overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800 mx-auto mt-4">
       {/* Top Bar */}
-      <div className={`w-full py-2 text-center text-lg font-bold border-b border-slate-200 dark:border-slate-800 ${statusColors} uppercase tracking-tighter shadow-sm dark:shadow-[0_0_15px_rgba(0,0,0,0.5)]`}>
-        {statusText}
-      </div>
+        <div
+          className={`w-full py-2 text-center text-lg font-bold border-b border-slate-200 dark:border-slate-800 ${statusColors} uppercase tracking-tighter shadow-sm dark:shadow-[0_0_15px_rgba(0,0,0,0.5)]`}
+          style={hasData && matchedRange ? {
+            backgroundColor: bgrToHex(matchedRange.COLOR),
+            color: bgrToHex(matchedRange.COLORTEXTO),
+          } : undefined}
+        >
+          {statusText}
+        </div>
 
       {/* Main Chart Area */}
       <div className="relative w-full aspect-square bg-slate-100 dark:bg-slate-900 overflow-hidden">
