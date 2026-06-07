@@ -38,6 +38,16 @@ function bgrToHex(bgr: number): string {
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
+function isLightColor(hex: string | null | undefined): boolean {
+  if (!hex) return false;
+  const c = hex.replace('#', '');
+  if (c.length < 6) return false;
+  const r = parseInt(c.substring(0, 2), 16);
+  const g = parseInt(c.substring(2, 4), 16);
+  const b = parseInt(c.substring(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 140;
+}
+
 const ColorDeltaChart = ({ standard, sample }: { standard: any, sample: any }) => {
   const [userChartMax, setUserChartMax] = useState<number | null>(null);
   const [deltaRangos, setDeltaRangos] = useState<DeltaRangoRow[]>([]);
@@ -264,14 +274,14 @@ const ColorDeltaChart = ({ standard, sample }: { standard: any, sample: any }) =
           className="absolute left-0 top-0 bottom-0 w-1/2 rounded-r-2xl border-r border-slate-300 dark:border-black/20 flex items-center pl-4 shadow-[2px_0_5px_rgba(0,0,0,0.1)]"
           style={{ backgroundColor: standard ? standard.hex : '#e2e8f0' }}
         >
-          <span className="text-white text-[10px] font-black uppercase tracking-widest drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">Patrón</span>
+          <span style={{ color: isLightColor(standard?.hex) ? '#000000' : '#ffffff' }} className="text-[10px] font-black uppercase tracking-widest">Patrón</span>
         </div>
         {/* Right Color (Fórmula/Muestra) */}
         <div
           className="absolute right-0 top-0 bottom-0 w-1/2 rounded-l-2xl border-l border-slate-300 dark:border-black/20 flex items-center justify-end pr-4 shadow-[-2px_0_5px_rgba(0,0,0,0.1)]"
           style={{ backgroundColor: sample ? sample.hex : '#e2e8f0' }}
         >
-          <span className="text-white text-[10px] font-black uppercase tracking-widest drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">Muestra</span>
+          <span style={{ color: isLightColor(sample?.hex) ? '#000000' : '#ffffff' }} className="text-[10px] font-black uppercase tracking-widest">Muestra</span>
         </div>
 
         {/* Badge */}
@@ -593,15 +603,15 @@ export default function QualityControl() {
                     setQcContextData(newCtx);
                     localStorage.setItem('qc_context', JSON.stringify(newCtx));
                     setConfirmDialog(null);
-                    navigate('/');
+                    navigate(-1);
                   },
                   onNo: () => {
                     setConfirmDialog(null);
-                    navigate('/');
+                    navigate(-1);
                   }
                 });
               } else {
-                navigate('/');
+                navigate(-1);
               }
             }}
             className="p-2 text-black hover:text-white transition-colors hover:bg-black/10 rounded-lg"

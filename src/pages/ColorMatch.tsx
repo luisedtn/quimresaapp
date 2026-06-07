@@ -25,6 +25,16 @@ function labToHex(l: number, a: number, b: number): string {
     return `#${gamma(rl).toString(16).padStart(2, '0')}${gamma(gl).toString(16).padStart(2, '0')}${gamma(bl).toString(16).padStart(2, '0')}`;
 }
 
+function isLightColor(hex: string | null): boolean {
+    if (!hex || hex === '#111' || hex === '#------') return false;
+    const c = hex.replace('#', '');
+    if (c.length < 6) return false;
+    const r = parseInt(c.substring(0, 2), 16);
+    const g = parseInt(c.substring(2, 4), 16);
+    const b = parseInt(c.substring(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 140;
+}
+
 function labToRgb(l: number, a: number, b: number): { r: number; g: number; b: number } {
     const fy = (l + 16) / 116;
     const fx = a / 500 + fy;
@@ -101,6 +111,7 @@ export default function ColorMatch() {
     const [patronHex, setPatronHex] = useState<string | null>(null);
     const labRef = useRef({ l: '', a: '', b: '' });
     const rgbRef = useRef({ r: '', g: '', b: '' });
+    const isRestoringRef = useRef(false);
 
     // Toggle manual input
     const [inputMode, setInputMode] = useState<'device' | 'manual'>('manual');
@@ -272,12 +283,13 @@ export default function ColorMatch() {
         }
 
         // Si el usuario cambia los parámetros, limpiamos los resultados anteriores
-        if (hasSearched) {
+        if (hasSearched && !isRestoringRef.current) {
             setSearchResults([]);
             setHasSearched(false);
             setSelectedMatch(null);
             setComponentColors([]);
         }
+        isRestoringRef.current = false;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [patronL, patronA, patronB]);
 
@@ -348,6 +360,41 @@ export default function ColorMatch() {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isConnected, location.state, navigate]);
+
+    // Restore full state when returning from QualityControl
+    useEffect(() => {
+            try {
+                const saved = localStorage.getItem('color_match_restore');
+                if (saved) {
+                    isRestoringRef.current = true;
+                    const s = JSON.parse(saved);
+                    if (s.patronL !== undefined) setPatronL(s.patronL);
+                    if (s.patronA !== undefined) setPatronA(s.patronA);
+                    if (s.patronB !== undefined) setPatronB(s.patronB);
+                    if (s.patronRed !== undefined) setPatronRed(s.patronRed);
+                    if (s.patronGreen !== undefined) setPatronGreen(s.patronGreen);
+                    if (s.patronBlue !== undefined) setPatronBlue(s.patronBlue);
+                    if (s.patronHex) setPatronHex(s.patronHex);
+                    if (s.inputMode) setInputMode(s.inputMode);
+                    if (s.maxResults) setMaxResults(s.maxResults);
+                    if (s.hasSearched) { setHasSearched(true); }
+                    if (s.searchResults?.length) setSearchResults(s.searchResults);
+                    if (s.selectedMatch) setSelectedMatch(s.selectedMatch);
+                    if (s.componentColors?.length) setComponentColors(s.componentColors);
+                    if (s.prepareAmount !== undefined) setPrepareAmount(s.prepareAmount);
+                    if (s.sampleL) setSampleL(s.sampleL);
+                    if (s.sampleA) setSampleA(s.sampleA);
+                    if (s.sampleB) setSampleB(s.sampleB);
+                    if (s.sampleDe !== undefined) setSampleDe(s.sampleDe);
+                    if (s.currentLote) setCurrentLote(s.currentLote);
+                    if (s.technicalLog?.length) setTechnicalLog(s.technicalLog);
+                    localStorage.removeItem('color_match_restore');
+                }
+        } catch (e) {
+            console.error('Error restoring ColorMatch state', e);
+            localStorage.removeItem('color_match_restore');
+        }
+    }, []);
 
     const handlePerformNewReading = async () => {
         const result = await measure();
@@ -627,6 +674,12 @@ export default function ColorMatch() {
             technicalLog: technicalLog
         };
 
+        localStorage.setItem('color_match_restore', JSON.stringify({
+            patronL, patronA, patronB, patronRed, patronGreen, patronBlue,
+            patronHex, inputMode, searchResults, maxResults, hasSearched,
+            selectedMatch, componentColors, prepareAmount,
+            sampleL, sampleA, sampleB, sampleDe, currentLote, technicalLog,
+        }));
         localStorage.setItem('qc_context', JSON.stringify(qcContext));
         window.dispatchEvent(new CustomEvent('qc-context-updated'));
     }, [selectedMatch, componentColors, patronL, patronA, patronB, prepareAmount, sampleL, sampleA, sampleB, sampleDe]);
@@ -640,6 +693,32 @@ export default function ColorMatch() {
         const l = parseFloat(patronL);
         const a = parseFloat(patronA);
         const b = parseFloat(patronB);
+
+        const formulaComponents: ComponentColor[] = [];
+        const baseCode = match.source === 'standard' ? f.RESERVA : f.CBASE;
+        if (baseCode) {
+            const qty = match.source === 'standard'
+                ? parseFloat(f.QV1 || '0') / 1000
+                : parseFloat(f.QBASE || '0') / 1000;
+            formulaComponents.push({
+                code: baseCode,
+                rgb: '#555',
+                isBase: true,
+                baseType: 'white',
+                quantity: qty || 1.0,
+            });
+        }
+        for (let i = 1; i <= 13; i++) {
+            if (f[`C${i}`]) {
+                formulaComponents.push({
+                    code: f[`C${i}`],
+                    rgb: '#555',
+                    isBase: false,
+                    baseType: 'colorant',
+                    quantity: parseFloat(f[`Q${i}`] || '0') / 1000,
+                });
+            }
+        }
 
         const qcContext = {
             standard: {
@@ -662,10 +741,16 @@ export default function ColorMatch() {
             formulaName: f.NOMBREFORMULA || f.NOMBRE || 'Fórmula Encontrada',
             formulaProduct: f.LINEA_DEL_PRODUCTO || f.TIPO || 'Producto no especificado',
             prepareAmount: 1.0,
-            componentColors: [],
+            componentColors: formulaComponents,
             timestamp: new Date().toISOString(),
         };
 
+        localStorage.setItem('color_match_restore', JSON.stringify({
+            patronL, patronA, patronB, patronRed, patronGreen, patronBlue,
+            patronHex, inputMode, searchResults, maxResults, hasSearched,
+            selectedMatch, componentColors, prepareAmount,
+            sampleL, sampleA, sampleB, sampleDe, currentLote, technicalLog,
+        }));
         localStorage.setItem('qc_context', JSON.stringify(qcContext));
 
         const returnTo = location.state?.returnTo || '/quality-control';
@@ -718,6 +803,12 @@ export default function ColorMatch() {
             timestamp: new Date().toISOString(),
         };
 
+        localStorage.setItem('color_match_restore', JSON.stringify({
+            patronL, patronA, patronB, patronRed, patronGreen, patronBlue,
+            patronHex, inputMode, searchResults, maxResults, hasSearched,
+            selectedMatch, componentColors, prepareAmount,
+            sampleL, sampleA, sampleB, sampleDe, currentLote, technicalLog,
+        }));
         localStorage.setItem('qc_context', JSON.stringify(qcContext));
 
         const returnTo = location.state?.returnTo || '/quality-control';
@@ -1068,6 +1159,11 @@ export default function ColorMatch() {
                                                                 }`}>
                                                                 {match.source === 'standard' ? 'Standard' : 'Personal'}
                                                             </span>
+                                                            {match.formula.marca?.NOMBRE && (
+                                                                <span className="text-[8px] font-bold px-1.5 py-0.5 rounded uppercase border bg-blue-900/20 text-blue-400 border-blue-900/30">
+                                                                    {match.formula.marca.NOMBRE}
+                                                                </span>
+                                                            )}
                                                             {match.formula.CODIGO && (
                                                                 <span className="text-[8px] text-slate-600 font-mono">
                                                                     {match.formula.CODIGO}
@@ -1127,13 +1223,13 @@ export default function ColorMatch() {
                                     className="w-1/2 relative flex items-start justify-center pt-1"
                                     style={{ backgroundColor: patronHex || '#111' }}
                                 >
-                                    <span className="text-[8px] font-black text-slate-900 dark:text-white px-2 py-0.5 rounded-full bg-black/40 uppercase tracking-widest">Patrón</span>
+                                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${isLightColor(patronHex) ? 'bg-black/40 text-white' : 'bg-white/80 text-black'}`}>Patrón</span>
                                 </div>
                                 <div
                                     className="w-1/2 relative flex items-start justify-center pt-1 border-l border-white/20"
                                     style={{ backgroundColor: selectedMatch.hex }}
                                 >
-                                    <span className="text-[8px] font-black text-slate-900 dark:text-white px-2 py-0.5 rounded-full bg-black/40 uppercase tracking-widest">Fórmula</span>
+                                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${isLightColor(selectedMatch.hex) ? 'bg-black/40 text-white' : 'bg-white/80 text-black'}`}>Fórmula</span>
                                 </div>
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <div className="bg-[#0A0F14] rounded-full px-4 py-1 text-[11px] font-black border border-[#a38105]/40 shadow-lg text-[#d4af37]">

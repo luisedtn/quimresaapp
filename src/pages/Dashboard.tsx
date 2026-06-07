@@ -141,7 +141,7 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowExitConfirm(false)}
-                    className="flex-1 px-6 py-3 rounded-xl bg-[#FF8409] hover:bg-[#FF8409]/80 text-white text-xs font-bold uppercase tracking-widest transition-all active:scale-95"
+                    className="flex-1 px-6 py-3 rounded-xl bg-[#a38105] hover:bg-[#FF8409]/80 text-white text-xs font-bold uppercase tracking-widest transition-all active:scale-95"
                   >
                     Cancelar
                   </button>

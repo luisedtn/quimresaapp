@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -12,6 +12,27 @@ import Sidebar from '../components/Sidebar';
 import { useNixDevice } from '../hooks/useNixDevice';
 import { NixBluetoothService, deltaE2000, NixMeasurement } from '../services/NixBluetoothService';
 
+const STORAGE_KEY = 'colorimetro_data';
+
+interface PersistedData {
+    lastMeasurement: NixMeasurement | null;
+    measurements: NixMeasurement[];
+}
+
+function loadPersistedData(): PersistedData {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+    } catch { }
+    return { lastMeasurement: null, measurements: [] };
+}
+
+function savePersistedData(data: PersistedData): void {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch { }
+}
+
 export default function Colorimetro({ userData, onLogout }: { userData: any; onLogout: () => void }) {
     const navigate = useNavigate();
     const location = useLocation();
@@ -22,6 +43,9 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
     const [isReturning, setIsReturning] = useState(false);
     const [pendingDelete, setPendingDelete] = useState<string | null>(null);
     const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+    const [persistedData, setPersistedData] = useState<PersistedData>(loadPersistedData);
+    const isFirstMount = useRef(true);
 
     const returnTo = location.state?.returnTo;
     const autoScan = location.state?.autoScan;
@@ -72,6 +96,21 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
         }
     }, [isConnected, returnTo, navigate]);
 
+    // Persist measurements to localStorage on every change (skip initial mount)
+    useEffect(() => {
+        if (isFirstMount.current) {
+            isFirstMount.current = false;
+            return;
+        }
+        savePersistedData({ lastMeasurement, measurements });
+        setPersistedData({ lastMeasurement, measurements });
+    }, [lastMeasurement, measurements]);
+
+    // Only show persisted data when coming from Dashboard (no returnTo) and device is connected
+    const canRestore = isConnected && !returnTo;
+    const displayLastMeasurement = lastMeasurement ?? (canRestore ? persistedData.lastMeasurement : null);
+    const displayMeasurements = measurements.length > 0 ? measurements : (canRestore ? persistedData.measurements : []);
+
     const handleSaveMeasurement = async (m: NixMeasurement) => {
         setSavingId(m.timestamp);
         try {
@@ -110,14 +149,14 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
     };
 
     const averages = useMemo(() => {
-        if (measurements.length === 0) return null;
+        if (displayMeasurements.length === 0) return null;
         const sum = { L: 0, a: 0, b: 0, R: 0, G: 0, B: 0, C: 0, H: 0, X: 0, Y: 0, Z: 0, cmykC: 0, cmykM: 0, cmykY: 0, cmykK: 0, LRV: 0 };
         const hexToRgb = (hex: string) => {
             const h = hex.replace('#', '');
             const m = h.match(/^([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$/);
             return m ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) } : null;
         };
-        measurements.forEach(m => {
+        displayMeasurements.forEach(m => {
             sum.L += m.color.L;
             sum.a += m.color.a;
             sum.b += m.color.b;
@@ -143,7 +182,7 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
             sum.cmykK += m.color.cmyk?.K || 0;
             sum.LRV += m.color.LRV || 0;
         });
-        const n = measurements.length;
+        const n = displayMeasurements.length;
         const avgL = sum.L / n;
         const avgA = sum.a / n;
         const avgB = sum.b / n;
@@ -167,7 +206,7 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
         const toHex = (v: number) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0');
         const avgHex = `#${toHex(avgR)}${toHex(avgG)}${toHex(avgBval)}`.toUpperCase();
         return { avgL, avgA, avgB_lab: avgB, avgR, avgG, avgB_rgb: avgBval, avgC, avgH, avgX, avgY, avgZ, cmyk, LRV, Density, avgHex };
-    }, [measurements]);
+    }, [displayMeasurements]);
 
     return (
         <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col overflow-x-hidden">
@@ -351,13 +390,13 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                     <div className="lg:col-span-2 elegant-card p-6">
                         <h3 className="text-xs font-bold text-[#a38105] uppercase tracking-widest mb-4">Última Medición</h3>
 
-                        {lastMeasurement ? (
+                        {displayLastMeasurement ? (
                             <div className="flex flex-col md:flex-row gap-5">
                                 {/* Swatch grande */}
                                 <div className="flex flex-col items-center gap-2 flex-shrink-0">
                                     <div
                                         className="w-32 h-32 rounded-2xl shadow-2xl transition-all duration-500 border border-slate-300/20 dark:border-slate-700/50"
-                                        style={{ backgroundColor: lastMeasurement.color.hex }}
+                                        style={{ backgroundColor: displayLastMeasurement.color.hex }}
                                     />
                                 </div>
 
@@ -370,9 +409,9 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                                             <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 w-10 flex-shrink-0">L*a*b*</span>
                                             <div className="flex flex-1 gap-1.5">
                                                 {[
-                                                    { label: 'L*', value: lastMeasurement.color.L },
-                                                    { label: 'a*', value: lastMeasurement.color.a },
-                                                    { label: 'b*', value: lastMeasurement.color.b },
+                                                    { label: 'L*', value: displayLastMeasurement.color.L },
+                                                    { label: 'a*', value: displayLastMeasurement.color.a },
+                                                    { label: 'b*', value: displayLastMeasurement.color.b },
                                                 ].map(item => (
                                                     <div key={item.label} className="flex-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg px-2 py-1.5 text-center border border-slate-200/50 dark:border-slate-700/30">
                                                         <p className="text-[8px] font-bold uppercase tracking-widest text-slate-500">{item.label}</p>
@@ -389,9 +428,9 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                                             <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 w-10 flex-shrink-0">RGB</span>
                                             <div className="flex flex-1 gap-1.5">
                                                 {[
-                                                    { label: 'R', value: lastMeasurement.color.R },
-                                                    { label: 'G', value: lastMeasurement.color.G },
-                                                    { label: 'B', value: lastMeasurement.color.B },
+                                                    { label: 'R', value: displayLastMeasurement.color.R },
+                                                    { label: 'G', value: displayLastMeasurement.color.G },
+                                                    { label: 'B', value: displayLastMeasurement.color.B },
                                                 ].map(item => (
                                                     <div key={item.label} className="flex-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg px-2 py-1.5 text-center border border-slate-200/50 dark:border-slate-700/30">
                                                         <p className="text-[8px] font-bold uppercase tracking-widest text-slate-500">{item.label}</p>
@@ -409,11 +448,11 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                                             <div className="flex flex-1 gap-1.5">
                                                 {[
                                                     ...(settings.displayColorFields.includes('LCH(ab)') ? [
-                                                        { label: 'C', value: lastMeasurement.color.C },
-                                                        { label: 'H°', value: lastMeasurement.color.H }
+                                                        { label: 'C', value: displayLastMeasurement.color.C },
+                                                        { label: 'H°', value: displayLastMeasurement.color.H }
                                                     ] : []),
                                                     ...(settings.displayColorFields.includes('HTX') ? [
-                                                        { label: 'Hex', value: lastMeasurement.color.hex.toUpperCase() }
+                                                        { label: 'Hex', value: displayLastMeasurement.color.hex.toUpperCase() }
                                                     ] : [])
                                                 ].map(item => (
                                                     <div key={item.label} className="flex-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg px-2 py-1.5 text-center border border-slate-200/50 dark:border-slate-700/30">
@@ -431,9 +470,9 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                                             <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 w-10 flex-shrink-0">XYZ</span>
                                             <div className="flex flex-1 gap-1.5">
                                                 {[
-                                                    { label: 'X', value: lastMeasurement.color.X },
-                                                    { label: 'Y', value: lastMeasurement.color.Y },
-                                                    { label: 'Z', value: lastMeasurement.color.Z },
+                                                    { label: 'X', value: displayLastMeasurement.color.X },
+                                                    { label: 'Y', value: displayLastMeasurement.color.Y },
+                                                    { label: 'Z', value: displayLastMeasurement.color.Z },
                                                 ].map(item => (
                                                     <div key={item.label} className="flex-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg px-2 py-1.5 text-center border border-slate-200/50 dark:border-slate-700/30">
                                                         <p className="text-[8px] font-bold uppercase tracking-widest text-slate-500">{item.label}</p>
@@ -450,10 +489,10 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                                             <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 w-10 flex-shrink-0">CMYK</span>
                                             <div className="flex flex-1 gap-1.5">
                                                 {[
-                                                    { label: 'C', value: lastMeasurement.color.cmyk.C },
-                                                    { label: 'M', value: lastMeasurement.color.cmyk.M },
-                                                    { label: 'Y', value: lastMeasurement.color.cmyk.Y },
-                                                    { label: 'K', value: lastMeasurement.color.cmyk.K },
+                                                    { label: 'C', value: displayLastMeasurement.color.cmyk.C },
+                                                    { label: 'M', value: displayLastMeasurement.color.cmyk.M },
+                                                    { label: 'Y', value: displayLastMeasurement.color.cmyk.Y },
+                                                    { label: 'K', value: displayLastMeasurement.color.cmyk.K },
                                                 ].map(item => (
                                                     <div key={item.label} className="flex-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg px-2 py-1.5 text-center border border-slate-200/50 dark:border-slate-700/30">
                                                         <p className="text-[8px] font-bold uppercase tracking-widest text-slate-500">{item.label}</p>
@@ -470,8 +509,8 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                                             <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 w-10 flex-shrink-0">EXT</span>
                                             <div className="flex flex-1 gap-1.5">
                                                 {[
-                                                    ...(settings.displayColorFields.includes('LRV') ? [{ label: 'LRV', value: lastMeasurement.color.LRV }] : []),
-                                                    ...(settings.displayColorFields.includes('Density') ? [{ label: 'Dens', value: lastMeasurement.color.Density }] : []),
+                                                    ...(settings.displayColorFields.includes('LRV') ? [{ label: 'LRV', value: displayLastMeasurement.color.LRV }] : []),
+                                                    ...(settings.displayColorFields.includes('Density') ? [{ label: 'Dens', value: displayLastMeasurement.color.Density }] : []),
                                                 ].map(item => (
                                                     <div key={item.label} className="flex-1 bg-slate-100 dark:bg-slate-800/60 rounded-lg px-2 py-1.5 text-center border border-slate-200/50 dark:border-slate-700/30">
                                                         <p className="text-[8px] font-bold uppercase tracking-widest text-slate-500">{item.label}</p>
@@ -500,7 +539,7 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                         className="elegant-card p-6">
                         <h3 className="text-xs font-bold text-[#a38105] uppercase tracking-widest mb-4">
-                            Promedio de Mediciones ({measurements.length})
+                            Promedio de Mediciones ({displayMeasurements.length})
                         </h3>
                         <div className="flex flex-col md:flex-row gap-5">
                             <div className="flex flex-col items-center gap-2 flex-shrink-0">
@@ -625,12 +664,12 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                 )}
 
                 {/* Historial de mediciones */}
-                {measurements.length > 0 && (
+                {displayMeasurements.length > 0 && (
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                         className="elegant-card p-6">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-xs font-bold text-[#a38105] uppercase tracking-widest">
-                                Historial de Mediciones ({measurements.length})
+                                Historial de Mediciones ({displayMeasurements.length})
                             </h3>
                             <button onClick={() => setShowClearConfirm(true)}
                                 className="flex items-center gap-1 text-[10px] text-red-400 hover:text-red-300 uppercase tracking-widest font-bold">
@@ -639,8 +678,8 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                         </div>
 
                         <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-                            {measurements.map((m, idx) => {
-                                const prevMeasurement = idx < measurements.length - 1 ? measurements[idx + 1] : null;
+                            {displayMeasurements.map((m, idx) => {
+                                const prevMeasurement = idx < displayMeasurements.length - 1 ? displayMeasurements[idx + 1] : null;
                                 const dE = prevMeasurement ? deltaE2000(m.color.L, m.color.a, m.color.b, prevMeasurement.color.L, prevMeasurement.color.a, prevMeasurement.color.b) : null;
 
                                 return (
@@ -745,8 +784,8 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                             <div className="relative">
                                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 tracking-tight">Limpiar mediciones</h3>
                                 <p className="text-slate-600 dark:text-slate-400 text-sm mb-8 leading-relaxed">
-                                    {measurements.length > 0
-                                        ? `Tienes ${measurements.length} medición${measurements.length !== 1 ? 'es' : ''} sin guardar. Se perderán todos los datos. ¿Deseas continuar?`
+                                    {displayMeasurements.length > 0
+                                        ? `Tienes ${displayMeasurements.length} medición${displayMeasurements.length !== 1 ? 'es' : ''} sin guardar. Se perderán todos los datos. ¿Deseas continuar?`
                                         : 'No hay mediciones activas. ¿Deseas limpiar de todas formas?'}
                                 </p>
                                 <div className="flex gap-3">
