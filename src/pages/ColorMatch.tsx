@@ -361,40 +361,40 @@ export default function ColorMatch() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isConnected, location.state, navigate]);
 
-    // Restore full state when returning from QualityControl
+    // Restore search state but always start on the initial interface
     useEffect(() => {
-            try {
-                const saved = localStorage.getItem('color_match_restore');
-                if (saved) {
-                    isRestoringRef.current = true;
-                    const s = JSON.parse(saved);
-                    if (s.patronL !== undefined) setPatronL(s.patronL);
-                    if (s.patronA !== undefined) setPatronA(s.patronA);
-                    if (s.patronB !== undefined) setPatronB(s.patronB);
-                    if (s.patronRed !== undefined) setPatronRed(s.patronRed);
-                    if (s.patronGreen !== undefined) setPatronGreen(s.patronGreen);
-                    if (s.patronBlue !== undefined) setPatronBlue(s.patronBlue);
-                    if (s.patronHex) setPatronHex(s.patronHex);
-                    if (s.inputMode) setInputMode(s.inputMode);
-                    if (s.maxResults) setMaxResults(s.maxResults);
-                    if (s.hasSearched) { setHasSearched(true); }
-                    if (s.searchResults?.length) setSearchResults(s.searchResults);
-                    if (s.selectedMatch) setSelectedMatch(s.selectedMatch);
-                    if (s.componentColors?.length) setComponentColors(s.componentColors);
-                    if (s.prepareAmount !== undefined) setPrepareAmount(s.prepareAmount);
-                    if (s.sampleL) setSampleL(s.sampleL);
-                    if (s.sampleA) setSampleA(s.sampleA);
-                    if (s.sampleB) setSampleB(s.sampleB);
-                    if (s.sampleDe !== undefined) setSampleDe(s.sampleDe);
-                    if (s.currentLote) setCurrentLote(s.currentLote);
-                    if (s.technicalLog?.length) setTechnicalLog(s.technicalLog);
-                    localStorage.removeItem('color_match_restore');
-                }
+        try {
+            const saved = localStorage.getItem('color_match_restore');
+            if (saved) {
+                const s = JSON.parse(saved);
+                if (s.patronL !== undefined) setPatronL(s.patronL);
+                if (s.patronA !== undefined) setPatronA(s.patronA);
+                if (s.patronB !== undefined) setPatronB(s.patronB);
+                if (s.patronRed !== undefined) setPatronRed(s.patronRed);
+                if (s.patronGreen !== undefined) setPatronGreen(s.patronGreen);
+                if (s.patronBlue !== undefined) setPatronBlue(s.patronBlue);
+                if (s.patronHex) setPatronHex(s.patronHex);
+                if (s.inputMode) setInputMode(s.inputMode);
+                if (s.maxResults) setMaxResults(s.maxResults);
+                if (s.hasSearched) setHasSearched(true);
+                if (s.searchResults?.length) setSearchResults(s.searchResults);
+            }
         } catch (e) {
             console.error('Error restoring ColorMatch state', e);
-            localStorage.removeItem('color_match_restore');
         }
     }, []);
+
+    // Save search state whenever it changes
+    useEffect(() => {
+        if (!hasSearched && !patronL && !patronA && !patronB) return;
+        localStorage.setItem('color_match_restore', JSON.stringify({
+            patronL, patronA, patronB, patronRed, patronGreen, patronBlue,
+            patronHex, inputMode, searchResults, maxResults, hasSearched,
+            selectedMatch: null, componentColors: [], prepareAmount: 1.0,
+            sampleL: null, sampleA: null, sampleB: null, sampleDe: null,
+            currentLote: '', technicalLog: [],
+        }));
+    }, [searchResults, patronL, patronA, patronB, inputMode, maxResults, hasSearched]);
 
     const handlePerformNewReading = async () => {
         const result = await measure();
@@ -915,14 +915,55 @@ export default function ColorMatch() {
         <div className="min-h-screen bg-slate-50 dark:bg-[#0A0F14] text-slate-800 dark:text-slate-200 font-sans flex flex-col overflow-x-hidden">
             {/* Header */}
             <header className="fixed top-0 z-10 flex w-full items-center justify-between border-b border-black/10 bg-[#CC5200] shadow-lg px-4 py-4">
-                <button onClick={() => navigate('/')} className="p-2 text-white hover:text-slate-200 transition-colors">
+                <button onClick={() => {
+                    if (selectedMatch) {
+                        setSelectedMatch(null);
+                        setComponentColors([]);
+                        setPrepareAmount(1.0);
+                    } else {
+                        navigate('/');
+                    }
+                }} className="p-2 text-white hover:text-slate-200 transition-colors">
                     <ArrowLeft className="h-6 w-6 text-white" />
                 </button>
                 <h1 className="text-lg font-semibold uppercase tracking-tight flex items-center gap-2 text-white">
                     <Search className="h-5 w-5 text-white" />
                     Búsqueda de Color
                 </h1>
-                <div className="w-10" />
+                {hasSearched ? (
+                    <button
+                        onClick={() => {
+                            setPatronL('');
+                            setPatronA('');
+                            setPatronB('');
+                            setPatronRed('');
+                            setPatronGreen('');
+                            setPatronBlue('');
+                            setPatronHex(null);
+                            setSearchResults([]);
+                            setHasSearched(false);
+                            setSelectedMatch(null);
+                            setComponentColors([]);
+                            setPrepareAmount(1.0);
+                            setSampleL(null);
+                            setSampleA(null);
+                            setSampleB(null);
+                            setSampleDe(null);
+                            setCurrentLote('');
+                            setTechnicalLog([]);
+                            localStorage.removeItem('color_match_restore');
+                        }}
+                        className="p-2 text-white hover:text-white/80 transition-colors"
+                        title="Resetear búsqueda"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="1 4 1 10 7 10" />
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                        </svg>
+                    </button>
+                ) : (
+                    <div className="w-10" />
+                )}
             </header>
 
             <main className="flex flex-col gap-4 pt-24 pb-8 px-4 max-w-lg mx-auto w-full flex-grow">
@@ -1154,19 +1195,36 @@ export default function ColorMatch() {
                                                             {match.formula.NOMBREFORMULA || match.formula.NOMBRE || 'Sin nombre'}
                                                         </h3>
                                                         <div className="flex items-center gap-2 mt-1">
-                                                            <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase border ${match.source === 'standard'
-                                                                ? 'bg-[#a38105]/20 text-[#d4af37] border-[#a38105]/30'
-                                                                : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700'
-                                                                }`}>
-                                                                {match.source === 'standard' ? 'Standard' : 'Personal'}
-                                                            </span>
-                                                            {match.formula.marca?.NOMBRE && (
-                                                                <span className="text-[8px] font-bold px-1.5 py-0.5 rounded uppercase border bg-blue-900/20 text-blue-400 border-blue-900/30">
-                                                                    {match.formula.marca.NOMBRE}
-                                                                </span>
+                                                            {match.source === 'standard' ? (
+                                                                <>
+                                                                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded uppercase border bg-[#a38105]/20 text-[#d4af37] border-[#a38105]/30">
+                                                                        STANDARD
+                                                                    </span>
+                                                                    {match.formula.marca?.NOMBRE && (
+                                                                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded uppercase border bg-blue-900/20 text-blue-400 border-blue-900/30">
+                                                                            {match.formula.marca.NOMBRE}
+                                                                        </span>
+                                                                    )}
+                                                                    {match.formula.producto?.PRODUCTO && (
+                                                                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded uppercase border bg-emerald-900/20 text-black border-emerald-900/30">
+                                                                            {match.formula.producto.PRODUCTO}
+                                                                        </span>
+                                                                    )}
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded uppercase border bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700">
+                                                                        PERSONAL
+                                                                    </span>
+                                                                    {match.formula.PRODUCTO && (
+                                                                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded uppercase border bg-emerald-900/20 text-black border-emerald-900/30">
+                                                                            {match.formula.PRODUCTO}
+                                                                        </span>
+                                                                    )}
+                                                                </>
                                                             )}
                                                             {match.formula.CODIGO && (
-                                                                <span className="text-[8px] text-slate-600 font-mono">
+                                                                <span className="text-[11px] text-slate-600 font-mono">
                                                                     {match.formula.CODIGO}
                                                                 </span>
                                                             )}
