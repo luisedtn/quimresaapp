@@ -475,24 +475,41 @@ app.get('/api/formulas', authenticateToken, async (req: Request, res: Response):
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 25;
         const search = (req.query.q as string) || '';
+        const sortBy = (req.query.sortBy as string) || 'FECHA';
         const skip = (page - 1) * limit;
 
-        const where: any = {};
+        const where: any = {
+            NOMBREFORMULA: { not: '' },
+            FECHA: { not: '' },
+            CODIGO: { not: '' },
+        };
         if (idcliente) {
             where.IDCLIENTE = idcliente;
         }
         if (search) {
-            where.OR = [
-                { NOMBREFORMULA: { contains: search, mode: 'insensitive' } },
-                { CODIGO: { contains: search, mode: 'insensitive' } }
+            where.AND = [
+                {
+                    OR: [
+                        { NOMBREFORMULA: { contains: search, mode: 'insensitive' } },
+                        { CODIGO: { contains: search, mode: 'insensitive' } }
+                    ]
+                }
             ];
         }
 
+        const orderBy: any = sortBy === 'NOMBREFORMULA'
+            ? [{ NOMBREFORMULA: 'asc' }]
+            : [{ FECHA: 'desc' }];
+
+        console.log(`[BACKEND] /api/formulas | sortBy=${sortBy} | page=${page} | skip=${skip} | orderBy=${JSON.stringify(orderBy)}`);
+
         const formulas = await prisma.formPersonales.findMany({
             where,
-            orderBy: [{ FECHA: 'desc' }],
+            orderBy,
             skip, take: limit
         });
+
+        console.log(`[BACKEND] /api/formulas | sortBy=${sortBy} | registros devueltos=${formulas.length} | page=${page}`, JSON.stringify(formulas, null, 2));
         res.json(formulas);
     } catch (error) {
         res.status(500).json({ error: 'Error al obtener fórmulas' });

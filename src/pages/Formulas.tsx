@@ -68,7 +68,7 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
   }, [loading, loadingMore, hasMore]);
 
   useEffect(() => {
-    // Reset state when filters change
+    console.log(`[FORMULAS] Reset por cambio de filtro | sortBy=${sortBy} | search="${debouncedSearchTerm}"`);
     setFormulas([]);
     setPage(1);
     setHasMore(true);
@@ -87,6 +87,8 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
         const userData = userDataStr ? JSON.parse(userDataStr) : null;
 
         const url = `${API_BASE_URL}/api/formulas?page=${page}&limit=25&q=${encodeURIComponent(debouncedSearchTerm)}&sortBy=${sortBy}`;
+
+        console.log(`[FORMULAS] Solicitando página ${page} | sortBy=${sortBy} | url=${url}`);
 
         const headers: any = { 'Authorization': `Bearer ${token}` };
         if (userData?.idcliente) {
@@ -111,6 +113,9 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
         }
 
         const data = await response.json();
+
+        const sortLabel = sortBy === 'FECHA' ? 'fecha (más reciente)' : 'nombre (alfabético)';
+        console.log(`[FORMULAS] Recibidos ${data.length} registros | sortBy=${sortBy} (${sortLabel}) | page=${page}`, JSON.stringify(data, null, 2));
 
         if (page === 1) {
           setFormulas(data);
