@@ -497,17 +497,41 @@ app.get('/api/formulas', authenticateToken, async (req: Request, res: Response):
             ];
         }
 
-        const orderBy: any = sortBy === 'NOMBREFORMULA'
-            ? [{ NOMBREFORMULA: 'asc' }]
-            : [{ FECHA: 'desc' }];
+        let formulas: any[];
 
-        console.log(`[BACKEND] /api/formulas | sortBy=${sortBy} | page=${page} | skip=${skip} | orderBy=${JSON.stringify(orderBy)}`);
+        if (sortBy === 'NOMBREFORMULA') {
+            formulas = await prisma.formPersonales.findMany({
+                where,
+                orderBy: [{ NOMBREFORMULA: 'asc' }],
+                skip, take: limit
+            });
+        } else {
+            const conds: string[] = [];
+            const params: any[] = [];
+            let idx = 1;
 
-        const formulas = await prisma.formPersonales.findMany({
-            where,
-            orderBy,
-            skip, take: limit
-        });
+            conds.push(`"NOMBREFORMULA" != ''`);
+            conds.push(`"FECHA" != ''`);
+            conds.push(`"CODIGO" != ''`);
+
+            if (idcliente) {
+                conds.push(`"IDCLIENTE" = $${idx++}`);
+                params.push(idcliente);
+            }
+
+            if (search) {
+                conds.push(`("NOMBREFORMULA" ILIKE $${idx} OR "CODIGO" ILIKE $${idx})`);
+                params.push(`%${search}%`);
+                idx++;
+            }
+
+            const whereSQL = conds.join(' AND ');
+            params.push(skip, limit);
+            const sql = `SELECT * FROM "formpersonales" WHERE ${whereSQL} ORDER BY TO_TIMESTAMP("FECHA", 'MM/DD/YYYY HH:MI:SS AM') DESC OFFSET $${idx++} LIMIT $${idx++}`;
+
+            console.log(`[BACKEND] /api/formulas | sortBy=FECHA (TO_TIMESTAMP) | sql=${sql} | params=${JSON.stringify(params)}`);
+            formulas = await prisma.$queryRawUnsafe(sql, ...params);
+        }
 
         console.log(`[BACKEND] /api/formulas | sortBy=${sortBy} | registros devueltos=${formulas.length} | page=${page}`, JSON.stringify(formulas, null, 2));
         res.json(formulas);
