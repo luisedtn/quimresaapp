@@ -462,7 +462,8 @@ export default function ColorMatch() {
 
             if (res.ok) {
                 const data: MatchResult[] = await res.json();
-                console.log(`Resultados de búsqueda recibidos: ${data.length} fórmulas encontradas`);
+                console.log(`[COLORMATCH] Fórmulas encontradas: ${data.length}`);
+                console.log('[COLORMATCH] Resultados recibidos del servidor:', JSON.stringify(data, null, 2));
                 // data already sorted by deltaE from backend
                 const processedResults = data.map(d => ({
                     ...d,
@@ -472,7 +473,7 @@ export default function ColorMatch() {
                         parseFloat(d.formula.B || '0'),
                     ),
                 }));
-                console.log('Resultados procesados y listos para mostrar');
+                console.log('[COLORMATCH] Resultados procesados con hex:', JSON.stringify(processedResults, null, 2));
                 setSearchResults(processedResults);
             }
         } catch (err) {

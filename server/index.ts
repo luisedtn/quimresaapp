@@ -785,6 +785,8 @@ app.post('/api/color-match', authenticateToken, async (req: Request, res: Respon
             L: { not: null, notIn: [''] },
             A: { not: null, notIn: [''] },
             B: { not: null, notIn: [''] },
+            FECHA: { not: '' },
+            FECHACREADA: { not: '' },
         };
         if (idcliente) {
             personalWhere.IDCLIENTE = idcliente;
