@@ -1680,6 +1680,37 @@ app.put('/api/bases/:id', authenticateToken, async (req: Request, res: Response)
     }
 });
 
+app.get('/api/bases/:id/pdf/:field', async (req: Request, res: Response): Promise<any> => {
+    try {
+        const token = req.headers['authorization']?.split(' ')[1] || req.query.token as string;
+        if (!token) return res.status(401).json({ error: 'Token requerido' });
+        jwt.verify(token, JWT_SECRET, async (err: any) => {
+            if (err) return res.status(403).json({ error: 'Token inválido o expirado' });
+            try {
+                const { id, field } = req.params;
+                if (!['FICHATECNICA', 'FICHASEGURIDAD'].includes(field)) {
+                    return res.status(400).json({ error: 'Campo inválido' });
+                }
+                const rows: any[] = await prisma.$queryRawUnsafe(
+                    `SELECT "${field}" FROM "BASES" WHERE "ID" = $1`, Number(id)
+                );
+                const base64 = rows[0]?.[field];
+                if (!base64) return res.status(404).json({ error: 'PDF no encontrado' });
+                const buffer = Buffer.from(base64, 'base64');
+                res.setHeader('Content-Type', 'application/pdf');
+                res.setHeader('Content-Disposition', 'inline');
+                res.send(buffer);
+            } catch (innerError: any) {
+                console.error('[ERROR] GET /api/bases/:id/pdf/:field:', innerError.message);
+                res.status(500).json({ error: 'Error al obtener PDF', details: innerError.message });
+            }
+        });
+    } catch (error: any) {
+        console.error('[ERROR] GET /api/bases/:id/pdf/:field:', error.message);
+        res.status(500).json({ error: 'Error al obtener PDF', details: error.message });
+    }
+});
+
 app.use('/controlcalidad', express.static(path.join(__dirname, '../controlcalidad')));
 
 const distPath = path.join(__dirname, '../dist');

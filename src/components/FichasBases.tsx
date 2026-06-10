@@ -37,8 +37,39 @@ interface FichasBasesProps {
 
 // ─── PDF Viewer ───────────────────────────────────────────────────────────────
 
-function PDFViewer({ base64Data, title, onClose }: { base64Data: string; title: string; onClose: () => void }) {
-  const src = base64Data.startsWith('data:') ? base64Data : `data:application/pdf;base64,${base64Data}`;
+function PDFViewer({ id, field, title, onClose }: { id: number; field: string; title: string; onClose: () => void }) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const blobUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_BASE_URL}/api/bases/${id}/pdf/${field}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        if (cancelled) return;
+        const url = URL.createObjectURL(blob);
+        blobUrlRef.current = url;
+        setBlobUrl(url);
+      } catch (e) {
+        console.error('[PDFViewer] Error:', e);
+        if (!cancelled) setLoadError(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
+    };
+  }, [id, field]);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -59,7 +90,25 @@ function PDFViewer({ base64Data, title, onClose }: { base64Data: string; title: 
         </button>
       </header>
       <div className="flex-1 overflow-hidden bg-slate-900">
-        <iframe src={src} className="w-full h-full" title={title} />
+        {loadError ? (
+          <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3">
+            <AlertTriangle className="w-8 h-8 text-red-400" />
+            <p className="text-sm">Error al cargar el PDF</p>
+            <button onClick={onClose} className="text-[#CC5200] underline text-xs">Cerrar</button>
+          </div>
+        ) : !blobUrl ? (
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="w-6 h-6 text-[#CC5200] animate-spin" />
+          </div>
+        ) : (
+          <object data={blobUrl} className="w-full h-full" title={title} type="application/pdf">
+            <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3">
+              <AlertTriangle className="w-8 h-8 text-slate-500" />
+              <p className="text-sm">No se pudo visualizar el PDF</p>
+              <button onClick={onClose} className="text-[#CC5200] underline text-xs">Cerrar</button>
+            </div>
+          </object>
+        )}
       </div>
     </motion.div>
   );
@@ -86,7 +135,7 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
 
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: number; field: 'FICHATECNICA' | 'FICHASEGURIDAD' } | null>(null);
-  const [pdfViewer, setPdfViewer] = useState<{ data: string; title: string } | null>(null);
+  const [pdfViewer, setPdfViewer] = useState<{ id: number; field: 'FICHATECNICA' | 'FICHASEGURIDAD'; title: string } | null>(null);
 
   const [hasMore, setHasMore] = useState(true);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -194,7 +243,9 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
       const res = await fetch(`${API_BASE_URL}/api/bases/productos`, { headers: getHeaders() });
       if (res.ok) {
         const data = await res.json();
-        setProductos(Array.isArray(data) ? data : []);
+        const list = Array.isArray(data) ? data : [];
+        console.log('[FichasBases] Productos cargados:', list.length, list);
+        setProductos(list);
       }
     } catch { /* ignore */ }
   }, [getHeaders]);
@@ -205,7 +256,9 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
       const res = await fetch(`${API_BASE_URL}/api/bases/grupos${params}`, { headers: getHeaders() });
       if (res.ok) {
         const data = await res.json();
-        setGrupos(Array.isArray(data) ? data : []);
+        const list = Array.isArray(data) ? data : [];
+        console.log('[FichasBases] Grupos cargados' + (producto ? ` para producto "${producto}"` : ''), list.length, list);
+        setGrupos(list);
       }
     } catch { /* ignore */ }
   }, [getHeaders]);
@@ -294,13 +347,10 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
     if (hasPdf) {
       return (
         <div className="w-full flex flex-col items-center gap-1">
-          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-            <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">OK</span>
-          </div>
+          <CheckCircle2 className="w-6 h-6 text-emerald-400" />
           <div className="w-full flex flex-col gap-1">
             <button
-              onClick={() => setPdfViewer({ data: base[field]!, title: `${base.CODIGO} – ${label}` })}
+              onClick={() => setPdfViewer({ id: base.ID, field, title: `${base.CODIGO} – ${label}` })}
               className="w-full flex items-center justify-center gap-1 px-1 py-1 rounded-lg bg-[#CC5200]/10 hover:bg-[#CC5200]/25 border border-[#CC5200]/20 text-[#CC5200] text-[9px] font-bold uppercase tracking-wide transition-all active:scale-95"
               title="Ver PDF"
             >
@@ -386,16 +436,15 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
           </div>
 
           {/* Filter row */}
-          <div className="flex gap-2 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex gap-2 pb-0.5">
             {/* Producto */}
             <div className="relative flex-shrink-0">
               <button
                 onClick={() => { setShowProductoFilter(v => !v); setShowGrupoFilter(false); }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wider border transition-all ${
-                  selectedProducto
-                    ? 'bg-[#CC5200]/15 border-[#CC5200]/40 text-[#CC5200]'
-                    : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300'
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wider border transition-all ${selectedProducto
+                  ? 'bg-[#CC5200]/15 border-[#CC5200]/40 text-[#CC5200]'
+                  : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300'
+                  }`}
               >
                 Producto{selectedProducto ? ` · ${selectedProducto.slice(0, 10)}` : ''}
                 <ChevronDown className={`w-3 h-3 transition-transform ${showProductoFilter ? 'rotate-180' : ''}`} />
@@ -419,9 +468,8 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
                       <div
                         key={p}
                         onClick={() => { setSelectedProducto(p); setShowProductoFilter(false); }}
-                        className={`px-4 py-3 text-xs cursor-pointer hover:bg-slate-800 transition-colors ${
-                          selectedProducto === p ? 'text-[#CC5200] font-bold' : 'text-slate-300'
-                        }`}
+                        className={`px-4 py-3 text-xs cursor-pointer hover:bg-slate-800 transition-colors ${selectedProducto === p ? 'text-[#CC5200] font-bold' : 'text-slate-300'
+                          }`}
                       >
                         {p}
                       </div>
@@ -435,11 +483,10 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
             <div className="relative flex-shrink-0">
               <button
                 onClick={() => { setShowGrupoFilter(v => !v); setShowProductoFilter(false); }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wider border transition-all ${
-                  selectedGrupo
-                    ? 'bg-[#CC5200]/15 border-[#CC5200]/40 text-[#CC5200]'
-                    : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300'
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wider border transition-all ${selectedGrupo
+                  ? 'bg-[#CC5200]/15 border-[#CC5200]/40 text-[#CC5200]'
+                  : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300'
+                  }`}
               >
                 Grupo{selectedGrupo ? ` · ${selectedGrupo.slice(0, 12)}` : ''}
                 <ChevronDown className={`w-3 h-3 transition-transform ${showGrupoFilter ? 'rotate-180' : ''}`} />
@@ -463,9 +510,8 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
                       <div
                         key={g}
                         onClick={() => { setSelectedGrupo(g); setShowGrupoFilter(false); }}
-                        className={`px-4 py-3 text-xs cursor-pointer hover:bg-slate-800 transition-colors ${
-                          selectedGrupo === g ? 'text-[#CC5200] font-bold' : 'text-slate-300'
-                        }`}
+                        className={`px-4 py-3 text-xs cursor-pointer hover:bg-slate-800 transition-colors ${selectedGrupo === g ? 'text-[#CC5200] font-bold' : 'text-slate-300'
+                          }`}
                       >
                         {g}
                       </div>
@@ -541,9 +587,9 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
             <div className="min-w-0">
               {/* Column headers */}
               <div className="sticky top-0 z-10 grid grid-cols-[1fr_100px_100px] bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 px-4 py-2.5">
-                <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">Código</span>
-                <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest text-center">F. Técnica</span>
-                <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest text-center">F. Seguridad</span>
+                <span className="text-[9px] font-bold text-white uppercase tracking-widest">Código</span>
+                <span className="text-[9px] font-bold text-white uppercase tracking-widest text-center">F. Técnica</span>
+                <span className="text-[9px] font-bold text-white uppercase tracking-widest text-center">F. Seguridad</span>
               </div>
 
               <AnimatePresence initial={false}>
@@ -556,15 +602,14 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
                     className="grid grid-cols-[1fr_100px_100px] px-4 py-3.5 border-b border-slate-800/60 hover:bg-slate-900/50 transition-colors"
                   >
                     {/* Código + Descripción */}
-                    <div>
-                      <span className="text-xs font-bold text-[#CC5200] uppercase tracking-wider">{base.CODIGO || '—'}</span>
+                    <div className='flex items-center flex-wrap -mt-0.5'>
+                      <span className="w-full text-xs font-bold text-[#CC5200] uppercase tracking-wider">{base.CODIGO || '—'}</span>
                       {base.GRUPO && (
-                        <div className="mt-0.5">
-                          <span className="text-[9px] text-slate-600 bg-slate-800/60 px-1.5 py-0.5 rounded-md">{base.GRUPO}</span>
+                        <div className="flex w-full">
+                          <span className="text-[10px] text-white bg-slate-800/60 px-1.5 py-0.5 rounded-md">{base.GRUPO}</span>
                         </div>
                       )}
-                      <div className="mt-2">
-                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">DESCRIPCIÓN</p>
+                      <div>
                         <p className="text-xs text-slate-200 leading-snug line-clamp-2">{base.DESCRIPCIO || '—'}</p>
                         {base.PRODUCTO && (
                           <p className="text-[9px] text-slate-500 mt-0.5 truncate">{base.PRODUCTO}</p>
@@ -573,10 +618,10 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
                     </div>
 
                     {/* Ficha Técnica */}
-                    <div>{renderPdfCell(base, 'FICHATECNICA')}</div>
+                    <div className="px-2 flex justify-center items-center">{renderPdfCell(base, 'FICHATECNICA')}</div>
 
                     {/* Ficha Seguridad */}
-                    <div>{renderPdfCell(base, 'FICHASEGURIDAD')}</div>
+                    <div className="px-2 flex justify-center items-center">{renderPdfCell(base, 'FICHASEGURIDAD')}</div>
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -651,7 +696,8 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
       <AnimatePresence>
         {pdfViewer && (
           <PDFViewer
-            base64Data={pdfViewer.data}
+            id={pdfViewer.id}
+            field={pdfViewer.field}
             title={pdfViewer.title}
             onClose={() => setPdfViewer(null)}
           />
