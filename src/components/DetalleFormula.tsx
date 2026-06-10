@@ -1,7 +1,12 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Beaker, User, Calendar, Droplets, MessageSquare, ClipboardList, Activity } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { X, Beaker, User, Calendar, Droplets, MessageSquare, ClipboardList, Activity, Loader2, FileText, AlertTriangle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 import { API_BASE_URL } from '../config';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 function labToHex(l: number, a: number, b: number): string {
     const y = (l + 16) / 116;
@@ -33,10 +38,16 @@ interface DetalleFormulaProps {
 }
 
 export default function DetalleFormula({ formula, isOpen, onClose }: DetalleFormulaProps) {
-    const [activeTab, setActiveTab] = useState<'mezcla' | 'lab' | 'procesos' | 'obs'>('mezcla');
+    const [activeTab, setActiveTab] = useState<'mezcla' | 'lab' | 'procesos' | 'obs' | 'fichatecnica' | 'fichaseguridad'>('mezcla');
     const [densities, setDensities] = useState<Record<string, number>>({});
     const [calculating, setCalculating] = useState(false);
     const [componentColors, setComponentColors] = useState<Record<string, any>>({});
+    const [basePdfData, setBasePdfData] = useState<{ FICHATECNICA: boolean; FICHASEGURIDAD: boolean; ID: number | null }>({ FICHATECNICA: false, FICHASEGURIDAD: false, ID: null });
+    const [pdfBlobUrls, setPdfBlobUrls] = useState<Record<string, string | null>>({});
+    const [pdfLoading, setPdfLoading] = useState<Record<string, boolean>>({});
+    const [pdfNumPages, setPdfNumPages] = useState<Record<string, number>>({});
+    const [pdfContainerWidth, setPdfContainerWidth] = useState(window.innerWidth);
+    const pdfContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (!isOpen || !formula) return;
@@ -119,6 +130,55 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
         };
 
         fetchData();
+    }, [isOpen, formula]);
+
+    // ── Fetch base PDF fields when formula opens ─────────────────────────────
+    useEffect(() => {
+        if (!isOpen || !formula) return;
+
+        // Resetear estado de PDFs al cambiar de fórmula
+        setBasePdfData({ FICHATECNICA: false, FICHASEGURIDAD: false, ID: null });
+        setPdfBlobUrls({});
+        setPdfLoading({});
+        setPdfNumPages({});
+
+        // Usar misma lógica robusta de resolución de código de base que los cálculos de volumen:
+        // priorizar RESERVA, luego CBASE, luego IDPRODUCTO
+        const baseCode = formula.RESERVA || formula.CBASE || formula.IDPRODUCTO?.toString();
+        if (!baseCode) {
+            console.log('[DetalleFormula] No se encontró código de base en la fórmula (RESERVA/CBASE/IDPRODUCTO)');
+            return;
+        }
+
+        const token = localStorage.getItem('token');
+        const userDataStr = localStorage.getItem('userData');
+        const userData = userDataStr ? JSON.parse(userDataStr) : null;
+        const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+        if (userData?.idcliente) headers['x-client-id'] = userData.idcliente.toString();
+
+        console.log(`[DetalleFormula] Buscando base en tabla BASES por CODIGO="${baseCode}"`);
+
+        fetch(`${API_BASE_URL}/api/bases?exactCode=${encodeURIComponent(baseCode)}&limit=1`, { headers })
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+                const record = data?.records?.[0];
+                console.log(`[DetalleFormula] Base encontrada para código "${baseCode}":`, record);
+                if (record) {
+                    const hasFT = record.FICHATECNICA === true || !!record.FICHATECNICA;
+                    const hasFS = record.FICHASEGURIDAD === true || !!record.FICHASEGURIDAD;
+                    console.log(`[DetalleFormula] FICHATECNICA ${hasFT ? '\u2713 DISPONIBLE' : '\u2717 NO DISPONIBLE'}`);
+                    console.log(`[DetalleFormula] FICHASEGURIDAD ${hasFS ? '\u2713 DISPONIBLE' : '\u2717 NO DISPONIBLE'}`);
+                    console.log(`[DetalleFormula] basePdfData.ID = ${record.ID}`);
+                    setBasePdfData({ FICHATECNICA: hasFT, FICHASEGURIDAD: hasFS, ID: record.ID });
+                } else {
+                    console.log(`[DetalleFormula] No se encontró registro de base para código "${baseCode}" — PDFs no disponibles`);
+                    setBasePdfData({ FICHATECNICA: false, FICHASEGURIDAD: false, ID: null });
+                }
+            })
+            .catch(err => {
+                console.log(`[DetalleFormula] Error al buscar base para código "${baseCode}":`, err);
+                setBasePdfData({ FICHATECNICA: false, FICHASEGURIDAD: false, ID: null });
+            });
     }, [isOpen, formula]);
 
     if (!formula) return null;
@@ -243,7 +303,109 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
         { id: 'lab', label: 'Colorimetría', icon: Activity },
         { id: 'procesos', label: 'Procesos', icon: ClipboardList },
         { id: 'obs', label: 'Notas', icon: MessageSquare },
+        { id: 'fichatecnica', label: 'F. Técnica', icon: FileText },
+        { id: 'fichaseguridad', label: 'F. Seguridad', icon: AlertTriangle },
     ];
+
+    // ── PDF helpers ─────────────────────────────────────────────────────────────
+    const loadPdfForField = (field: 'FICHATECNICA' | 'FICHASEGURIDAD') => {
+        if (!basePdfData.ID) {
+            console.log(`[DetalleFormula] loadPdfForField("${field}") — abortado: basePdfData.ID es nulo`);
+            return;
+        }
+        if (pdfBlobUrls[field] !== undefined) {
+            console.log(`[DetalleFormula] loadPdfForField("${field}") — ya cargado, URL:`, pdfBlobUrls[field]);
+            return;
+        }
+        if (pdfLoading[field]) {
+            console.log(`[DetalleFormula] loadPdfForField("${field}") — ya está cargando, ignorando`);
+            return;
+        }
+        console.log(`[DetalleFormula] loadPdfForField("${field}") — iniciando fetch... (baseId=${basePdfData.ID})`);
+        setPdfLoading(prev => ({ ...prev, [field]: true }));
+        const token = localStorage.getItem('token');
+        fetch(`${API_BASE_URL}/api/bases/${basePdfData.ID}/pdf/${field}`, {
+            headers: { Authorization: `Bearer ${token}` },
+        })
+            .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                console.log(`[DetalleFormula] loadPdfForField("${field}") — respuesta OK, convirtiendo a blob...`);
+                return r.blob();
+            })
+            .then(blob => {
+                console.log(`[DetalleFormula] loadPdfForField("${field}") — blob recibido (${blob.size} bytes), creando ObjectURL`);
+                setPdfBlobUrls(prev => ({ ...prev, [field]: URL.createObjectURL(blob) }));
+            })
+            .catch(err => {
+                console.log(`[DetalleFormula] loadPdfForField("${field}") — ERROR:`, err.message);
+                setPdfBlobUrls(prev => ({ ...prev, [field]: null }));
+            })
+            .finally(() => {
+                console.log(`[DetalleFormula] loadPdfForField("${field}") — finalizado`);
+                setPdfLoading(prev => ({ ...prev, [field]: false }));
+            });
+    };
+
+    const PdfTabContent = ({ field, hasPdf, label }: { field: 'FICHATECNICA' | 'FICHASEGURIDAD'; hasPdf: boolean; label: string }) => {
+        console.log(`[DetalleFormula] PdfTabContent render — field="${field}" hasPdf=${hasPdf} blobUrl=${pdfBlobUrls[field] ?? 'undefined'} isLoading=${pdfLoading[field]}`);
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        useEffect(() => {
+            console.log(`[DetalleFormula] PdfTabContent useEffect — field="${field}" hasPdf=${hasPdf} → ${hasPdf ? 'llamando loadPdfForField' : 'no hay PDF, saltando'}`);
+            if (hasPdf) loadPdfForField(field);
+        }, []);
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        useEffect(() => {
+            if (!pdfContainerRef.current) return;
+            const el = pdfContainerRef.current;
+            const update = () => { const w = el.clientWidth - 32; setPdfContainerWidth(w > 800 ? 800 : w); };
+            const obs = new ResizeObserver(update);
+            obs.observe(el); update();
+            return () => obs.disconnect();
+        }, []);
+
+        if (!hasPdf) return (
+            <div className="flex flex-col items-center justify-center gap-3 py-24" style={{ color: 'var(--text-muted)' }}>
+                <FileText className="w-12 h-12 opacity-20" />
+                <p className="text-sm font-medium italic">Sin {label}</p>
+            </div>
+        );
+        const blobUrl = pdfBlobUrls[field];
+        const isLoading = pdfLoading[field];
+        if (isLoading || blobUrl === undefined) return (
+            <div className="flex items-center justify-center py-24">
+                <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--accent-orange)' }} />
+            </div>
+        );
+        if (blobUrl === null) return (
+            <div className="flex flex-col items-center justify-center gap-3 py-24" style={{ color: 'var(--text-muted)' }}>
+                <AlertTriangle className="w-8 h-8 text-red-400" />
+                <p className="text-sm">Error al cargar el PDF</p>
+            </div>
+        );
+        return (
+            <Document
+                file={blobUrl}
+                onLoadSuccess={({ numPages }) => {
+                    console.log(`[DetalleFormula] Documento PDF "${field}" cargado — ${numPages} página(s)`);
+                    setPdfNumPages(prev => ({ ...prev, [field]: numPages }));
+                }}
+                onLoadError={(err) => {
+                    console.log(`[DetalleFormula] Error al renderizar PDF "${field}":`, err?.message || err);
+                    setPdfBlobUrls(prev => ({ ...prev, [field]: null }));
+                }}
+                loading={<div className="flex flex-col items-center gap-3 mt-16"><Loader2 className="w-7 h-7 animate-spin" style={{ color: 'var(--accent-orange)' }} /></div>}
+                error={<div className="flex flex-col items-center gap-3 mt-16"><AlertTriangle className="w-8 h-8 text-red-400" /><p className="text-sm" style={{ color: 'var(--text-muted)' }}>Error renderizando el documento.</p></div>}
+            >
+                {Array.from(new Array(pdfNumPages[field] || 0), (_, i) => (
+                    <div key={`page_${i + 1}`} className="mb-4 shadow-lg rounded overflow-hidden">
+                        <Page pageNumber={i + 1} width={pdfContainerWidth} renderTextLayer={false} renderAnnotationLayer={false}
+                            loading={<div className="animate-pulse bg-slate-700" style={{ width: pdfContainerWidth, height: 400 }} />}
+                        />
+                    </div>
+                ))}
+            </Document>
+        );
+    };
 
     return (
         <AnimatePresence>
@@ -978,6 +1140,20 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                             </p>
                                         </div>
                                     )}
+                                </div>
+                            )}
+
+                            {/* ══ TAB: FICHA TÉCNICA ══ */}
+                            {activeTab === 'fichatecnica' && (
+                                <div ref={pdfContainerRef} className="flex flex-col items-center p-4" style={{ minHeight: '100%', overflowY: 'auto' }}>
+                                    <PdfTabContent field="FICHATECNICA" hasPdf={basePdfData.FICHATECNICA} label="Ficha Técnica" />
+                                </div>
+                            )}
+
+                            {/* ══ TAB: FICHA SEGURIDAD ══ */}
+                            {activeTab === 'fichaseguridad' && (
+                                <div ref={pdfContainerRef} className="flex flex-col items-center p-4" style={{ minHeight: '100%', overflowY: 'auto' }}>
+                                    <PdfTabContent field="FICHASEGURIDAD" hasPdf={basePdfData.FICHASEGURIDAD} label="Ficha de Seguridad" />
                                 </div>
                             )}
                         </div>

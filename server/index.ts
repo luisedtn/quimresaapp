@@ -1579,7 +1579,7 @@ app.post('/api/deltarango/reset', authenticateToken, async (req: Request, res: R
 
 app.get('/api/bases', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
-        const { search, grupo, producto } = req.query;
+        const { search, grupo, producto, exactCode } = req.query;
         const page = Math.max(1, parseInt(req.query.page as string) || 1);
         const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 25));
         const offset = (page - 1) * limit;
@@ -1588,6 +1588,11 @@ app.get('/api/bases', authenticateToken, async (req: Request, res: Response): Pr
         const params: any[] = [];
         let paramIndex = 1;
 
+        if (exactCode) {
+            whereClause += ` AND "CODIGO" ILIKE $${paramIndex}`;
+            params.push(exactCode);
+            paramIndex++;
+        }
         if (search) {
             whereClause += ` AND ("CODIGO" ILIKE $${paramIndex} OR "DESCRIPCIO" ILIKE $${paramIndex})`;
             params.push(`%${search}%`);
@@ -1609,8 +1614,16 @@ app.get('/api/bases', authenticateToken, async (req: Request, res: Response): Pr
         );
         const total = Number(countResult[0]?.total) || 0;
 
+        // Cuando se busca por exactCode (metadatos para fichas), usar SELECT liviano
+        // que sólo trae presencia de PDF (no el contenido base64 completo)
+        const selectClause = exactCode
+            ? `"ID", "CODIGO", "DESCRIPCIO", "PRODUCTO", "GRUPO",
+               ("FICHATECNICA" IS NOT NULL AND "FICHATECNICA" != '') AS "FICHATECNICA",
+               ("FICHASEGURIDAD" IS NOT NULL AND "FICHASEGURIDAD" != '') AS "FICHASEGURIDAD"`
+            : `*`;
+
         const bases = await prisma.$queryRawUnsafe(
-            `SELECT * FROM "BASES"${whereClause} ORDER BY "CODIGO" ASC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+            `SELECT ${selectClause} FROM "BASES"${whereClause} ORDER BY "CODIGO" ASC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
             ...params, limit, offset
         );
 

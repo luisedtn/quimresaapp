@@ -107,14 +107,14 @@ function PDFViewer({ id, field, title, onClose }: { id: number; field: string; t
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[70000] flex flex-col bg-[#0A0F14]"
     >
-      <header className="flex-shrink-0 flex items-center gap-3 px-4 py-3.5 bg-[#0A0F14] border-b border-slate-800 shadow-lg">
+      <header className="flex-shrink-0 flex items-center gap-3 px-4 py-3.5 bg-[#CC5200] border-b border-slate-800 shadow-lg">
         <div className="p-2 rounded-xl bg-[#CC5200]/15 border border-[#CC5200]/20">
           <FileText className="w-4 h-4 text-[#CC5200]" />
         </div>
         <span className="flex-1 text-sm font-bold text-white truncate">{title}</span>
         <button
           onClick={onClose}
-          className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all active:scale-95"
+          className="p-2 rounded-xl bg-[#b85d00] hover:bg-slate-700 text-slate-400 hover:text-white transition-all active:scale-95"
         >
           <X className="w-5 h-5" />
         </button>
