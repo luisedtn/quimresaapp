@@ -66,9 +66,12 @@ function PDFViewer({ base64Data, title, onClose }: { base64Data: string; title: 
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+const PAGE_SIZE = 25;
+
 export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
   const [bases, setBases] = useState<Base[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [search, setSearch] = useState('');
@@ -84,7 +87,13 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: number; field: 'FICHATECNICA' | 'FICHASEGURIDAD' } | null>(null);
   const [pdfViewer, setPdfViewer] = useState<{ data: string; title: string } | null>(null);
 
+  const [hasMore, setHasMore] = useState(true);
+  const pageRef = useRef(1);
+  const hasMoreRef = useRef(true);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const filtersRef = useRef({ search: '', grupo: '', producto: '' });
 
   const getHeaders = useCallback(() => {
     const token = localStorage.getItem('token');
@@ -95,16 +104,28 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
     return headers;
   }, []);
 
-  useEffect(() => {
-    if (searchTimer.current) clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => setDebouncedSearch(search), 400);
-  }, [search]);
+  const mergeFilters = useCallback((rows: Base[]) => {
+    const gruposSet = new Set(grupos);
+    const productosSet = new Set(productos);
+    rows.forEach((b) => {
+      if (b.GRUPO) gruposSet.add(b.GRUPO);
+      if (b.PRODUCTO) productosSet.add(b.PRODUCTO);
+    });
+    setGrupos(Array.from(gruposSet).sort());
+    setProductos(Array.from(productosSet).sort());
+  }, [grupos, productos]);
 
-  const fetchBases = useCallback(async () => {
-    setIsLoading(true);
+  const fetchBases = useCallback(async (page: number, append: boolean) => {
+    if (append) {
+      setIsLoadingMore(true);
+    } else {
+      setIsLoading(true);
+    }
     setError(null);
     try {
       const params = new URLSearchParams();
+      params.set('page', String(page));
+      params.set('limit', String(PAGE_SIZE));
       if (debouncedSearch) params.set('search', debouncedSearch);
       if (selectedGrupo) params.set('grupo', selectedGrupo);
       if (selectedProducto) params.set('producto', selectedProducto);
@@ -113,27 +134,69 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
       const res = await fetch(url, { headers: getHeaders() });
       if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
       const data = await res.json();
-      const rows: Base[] = Array.isArray(data) ? data : (data.records ?? []);
-      setBases(rows);
+      const rows: Base[] = data.records ?? [];
+      const hasMore = data.hasMore ?? false;
 
-      const gruposSet = new Set<string>();
-      const productosSet = new Set<string>();
-      rows.forEach((b) => {
-        if (b.GRUPO) gruposSet.add(b.GRUPO);
-        if (b.PRODUCTO) productosSet.add(b.PRODUCTO);
-      });
-      setGrupos(Array.from(gruposSet).sort());
-      setProductos(Array.from(productosSet).sort());
+      if (append) {
+        setBases((prev) => [...prev, ...rows]);
+      } else {
+        setBases(rows);
+      }
+      hasMoreRef.current = hasMore;
+      setHasMore(hasMore);
+      mergeFilters(rows);
     } catch (e: any) {
       setError(e.message || 'Error de conexión');
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
-  }, [debouncedSearch, selectedGrupo, selectedProducto, getHeaders]);
+  }, [debouncedSearch, selectedGrupo, selectedProducto, getHeaders, mergeFilters]);
+
+  const resetAndFetch = useCallback(() => {
+    pageRef.current = 1;
+    hasMoreRef.current = true;
+    setHasMore(true);
+    filtersRef.current = { search: debouncedSearch, grupo: selectedGrupo, producto: selectedProducto };
+    fetchBases(1, false);
+  }, [fetchBases, debouncedSearch, selectedGrupo, selectedProducto]);
 
   useEffect(() => {
-    if (isOpen) fetchBases();
-  }, [isOpen, fetchBases]);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => setDebouncedSearch(search), 400);
+  }, [search]);
+
+  useEffect(() => {
+    if (isOpen) resetAndFetch();
+  }, [isOpen, resetAndFetch]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = filtersRef.current;
+    if (debouncedSearch !== prev.search || selectedGrupo !== prev.grupo || selectedProducto !== prev.producto) {
+      resetAndFetch();
+    }
+  }, [debouncedSearch, selectedGrupo, selectedProducto, isOpen, resetAndFetch]);
+
+  const loadMore = useCallback(() => {
+    if (isLoadingMore || !hasMoreRef.current) return;
+    pageRef.current += 1;
+    fetchBases(pageRef.current, true);
+  }, [isLoadingMore, fetchBases]);
+
+  useEffect(() => {
+    if (!isOpen || !hasMoreRef.current) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) loadMore();
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [isOpen, loadMore]);
 
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
@@ -203,23 +266,22 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
 
     if (hasPdf) {
       return (
-        <div className="flex flex-col items-center gap-1.5">
-          {/* Status badge */}
+        <div className="w-full flex flex-col items-center gap-1">
           <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
             <CheckCircle2 className="w-3 h-3 text-emerald-400" />
             <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">OK</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="w-full flex flex-col gap-1">
             <button
               onClick={() => setPdfViewer({ data: base[field]!, title: `${base.CODIGO} – ${label}` })}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#CC5200]/10 hover:bg-[#CC5200]/25 border border-[#CC5200]/20 text-[#CC5200] text-[9px] font-bold uppercase tracking-wide transition-all active:scale-95"
+              className="w-full flex items-center justify-center gap-1 px-1 py-1 rounded-lg bg-[#CC5200]/10 hover:bg-[#CC5200]/25 border border-[#CC5200]/20 text-[#CC5200] text-[9px] font-bold uppercase tracking-wide transition-all active:scale-95"
               title="Ver PDF"
             >
               <Eye className="w-3 h-3" /> Ver
             </button>
             <button
               onClick={() => setDeleteConfirm({ id: base.ID, field })}
-              className="p-1 rounded-lg bg-red-500/10 hover:bg-red-500/25 border border-red-500/20 text-red-400 transition-all active:scale-95"
+              className="w-full flex items-center justify-center gap-1 px-1 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/25 border border-red-500/20 text-red-400 transition-all active:scale-95"
               title="Eliminar"
             >
               <Trash2 className="w-3 h-3" />
@@ -232,10 +294,10 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
     }
 
     return (
-      <div className="flex justify-center">
+      <div className="w-full">
         <label
           htmlFor={inputId}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-[#CC5200]/15 border border-slate-700 hover:border-[#CC5200]/40 text-slate-400 hover:text-[#CC5200] text-[9px] font-bold uppercase tracking-wide cursor-pointer transition-all active:scale-95"
+          className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl bg-slate-800 hover:bg-[#CC5200]/15 border border-slate-700 hover:border-[#CC5200]/40 text-slate-400 hover:text-[#CC5200] text-[9px] font-bold uppercase tracking-wide cursor-pointer transition-all active:scale-95"
         >
           <Upload className="w-3 h-3" /> Agregar
         </label>
@@ -422,7 +484,7 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
                 <p className="text-slate-500 text-xs mt-1">{error}</p>
               </div>
               <button
-                onClick={fetchBases}
+                onClick={() => resetAndFetch()}
                 className="px-6 py-2 rounded-xl bg-[#CC5200]/15 hover:bg-[#CC5200]/25 border border-[#CC5200]/30 text-[#CC5200] text-xs font-bold uppercase tracking-widest transition-all active:scale-95"
               >
                 Reintentar
@@ -451,9 +513,8 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
           {!isLoading && !error && bases.length > 0 && (
             <div className="min-w-0">
               {/* Column headers */}
-              <div className="sticky top-0 z-10 grid grid-cols-[1fr_1.6fr_100px_100px] bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 px-4 py-2.5">
+              <div className="sticky top-0 z-10 grid grid-cols-[1fr_100px_100px] bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 px-4 py-2.5">
                 <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">Código</span>
-                <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">Descripción</span>
                 <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest text-center">F. Técnica</span>
                 <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest text-center">F. Seguridad</span>
               </div>
@@ -465,9 +526,9 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: Math.min(idx, 25) * 0.018 }}
-                    className="grid grid-cols-[1fr_1.6fr_100px_100px] items-center px-4 py-3.5 border-b border-slate-800/60 hover:bg-slate-900/50 transition-colors"
+                    className="grid grid-cols-[1fr_100px_100px] px-4 py-3.5 border-b border-slate-800/60 hover:bg-slate-900/50 transition-colors"
                   >
-                    {/* Código */}
+                    {/* Código + Descripción */}
                     <div>
                       <span className="text-xs font-bold text-[#CC5200] uppercase tracking-wider">{base.CODIGO || '—'}</span>
                       {base.GRUPO && (
@@ -475,14 +536,13 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
                           <span className="text-[9px] text-slate-600 bg-slate-800/60 px-1.5 py-0.5 rounded-md">{base.GRUPO}</span>
                         </div>
                       )}
-                    </div>
-
-                    {/* Descripción */}
-                    <div className="pr-2">
-                      <p className="text-xs text-slate-200 leading-snug line-clamp-2">{base.DESCRIPCIO || '—'}</p>
-                      {base.PRODUCTO && (
-                        <p className="text-[9px] text-slate-500 mt-0.5 truncate">{base.PRODUCTO}</p>
-                      )}
+                      <div className="mt-2">
+                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">DESCRIPCIÓN</p>
+                        <p className="text-xs text-slate-200 leading-snug line-clamp-2">{base.DESCRIPCIO || '—'}</p>
+                        {base.PRODUCTO && (
+                          <p className="text-[9px] text-slate-500 mt-0.5 truncate">{base.PRODUCTO}</p>
+                        )}
+                      </div>
                     </div>
 
                     {/* Ficha Técnica */}
@@ -494,11 +554,19 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
                 ))}
               </AnimatePresence>
 
-              {/* Footer count */}
+              {/* Sentinel + loading */}
               <div className="py-6 text-center">
-                <p className="text-[10px] text-slate-700 uppercase tracking-widest">
-                  — {bases.length} registro{bases.length !== 1 ? 's' : ''} —
-                </p>
+                <div ref={sentinelRef} className="h-4" />
+                {isLoadingMore && (
+                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.9, ease: 'linear' }}>
+                    <Loader2 className="w-5 h-5 text-[#CC5200] mx-auto" />
+                  </motion.div>
+                )}
+                {!hasMore && !isLoadingMore && (
+                  <p className="text-[10px] text-slate-700 uppercase tracking-widest">
+                    — {bases.length} registro{bases.length !== 1 ? 's' : ''} —
+                  </p>
+                )}
               </div>
             </div>
           )}

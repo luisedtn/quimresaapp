@@ -1580,30 +1580,41 @@ app.post('/api/deltarango/reset', authenticateToken, async (req: Request, res: R
 app.get('/api/bases', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
         const { search, grupo, producto } = req.query;
-        let sql = `SELECT * FROM "BASES" WHERE 1=1`;
+        const page = Math.max(1, parseInt(req.query.page as string) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 25));
+        const offset = (page - 1) * limit;
+
+        let whereClause = ` WHERE 1=1`;
         const params: any[] = [];
         let paramIndex = 1;
 
         if (search) {
-            sql += ` AND ("CODIGO" ILIKE $${paramIndex} OR "DESCRIPCIO" ILIKE $${paramIndex})`;
+            whereClause += ` AND ("CODIGO" ILIKE $${paramIndex} OR "DESCRIPCIO" ILIKE $${paramIndex})`;
             params.push(`%${search}%`);
             paramIndex++;
         }
         if (grupo) {
-            sql += ` AND "GRUPO" = $${paramIndex}`;
+            whereClause += ` AND "GRUPO" = $${paramIndex}`;
             params.push(grupo);
             paramIndex++;
         }
         if (producto) {
-            sql += ` AND "PRODUCTO" = $${paramIndex}`;
+            whereClause += ` AND "PRODUCTO" = $${paramIndex}`;
             params.push(producto);
             paramIndex++;
         }
 
-        sql += ` ORDER BY "CODIGO" ASC`;
+        const countResult: any[] = await prisma.$queryRawUnsafe(
+            `SELECT COUNT(*) as total FROM "BASES"${whereClause}`, ...params
+        );
+        const total = Number(countResult[0]?.total) || 0;
 
-        const bases = await prisma.$queryRawUnsafe(sql, ...params);
-        res.json(bases);
+        const bases = await prisma.$queryRawUnsafe(
+            `SELECT * FROM "BASES"${whereClause} ORDER BY "CODIGO" ASC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+            ...params, limit, offset
+        );
+
+        res.json({ records: bases, total, page, limit, hasMore: offset + limit < total });
     } catch (error: any) {
         console.error('[ERROR] GET /api/bases:', error.message);
         res.status(500).json({ error: 'Error al obtener bases', details: error.message });
