@@ -7,6 +7,7 @@ import { deltaE2000 } from '../services/NixBluetoothService';
 import GenerarPDF from '../components/GenerarPDF';
 import EscaneoQC from '../components/EscaneoQC';
 import { loadSettings } from '../components/DeviceSettings';
+import GuardarQCModal from '../components/GuardarQCModal';
 
 function labToHex(l: number, a: number, b: number): string {
   const y = (l + 16) / 116;
@@ -338,6 +339,7 @@ export default function QualityControl() {
   const [qcContextData, setQcContextData] = useState<any>(null);
   const [showPDF, setShowPDF] = useState(false);
   const [showNewQCModal, setShowNewQCModal] = useState(false);
+  const [isGuardarModalOpen, setIsGuardarModalOpen] = useState(false);
   const [qcSessionName, setQcSessionName] = useState('');
   const [qcSessionDesc, setQcSessionDesc] = useState('');
   const [isSessionActive, setIsSessionActive] = useState(false);
@@ -364,7 +366,7 @@ export default function QualityControl() {
   };
   // ─────────────────────────────────────────────────────────
 
-  const saveQCRecordToServer = async (name: string, desc: string, std: any, smp: any, pdfUrl?: string) => {
+  const saveQCRecordToServer = async (name: string, desc: string, std: any, smp: any, pdfUrl?: string, libId?: number, colId?: number) => {
     if (!std || !smp) return null;
     try {
       const token = localStorage.getItem('token');
@@ -412,7 +414,9 @@ export default function QualityControl() {
         modo_medicion: deviceSettings.measurementMode || null,
         densidad: deviceSettings.densityStatus || null,
         pdf_url: pdfUrl || qcContextData?.pdf_url || null,
-        fecha_registro: fechaLocal
+        fecha_registro: fechaLocal,
+        id_libreria: libId,
+        id_coleccion: colId
       };
 
       const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -675,25 +679,7 @@ export default function QualityControl() {
           {/* Si se ha escrito nombre/descripción Y se tienen datos de patrón y muestra, mostrar botón Guardar, si no, botón + */}
           {(qcSessionName || qcSessionDesc) && standard && sample ? (
             <button
-              onClick={async () => {
-                const record = await saveQCRecordToServer(qcSessionName, qcSessionDesc, standard, sample);
-                const newCtx = {
-                  standard,
-                  sample,
-                  timestamp: new Date().toISOString(),
-                  sessionName: qcSessionName,
-                  sessionDesc: qcSessionDesc,
-                  pdf_url: record?.pdf_url || null
-                };
-                setQcContextData(newCtx);
-                localStorage.setItem('qc_context', JSON.stringify(newCtx));
-                setIsSessionActive(true);
-                if (record) {
-                  showSnack('Control de calidad guardado con éxito en el servidor.');
-                } else {
-                  showSnack('Guardado localmente. Error al sincronizar con el servidor.', 'error');
-                }
-              }}
+              onClick={() => setIsGuardarModalOpen(true)}
               className="p-2 text-black hover:text-white transition-colors bg-black/10 hover:bg-black/20 rounded-lg shadow-sm"
               title="Guardar sesión"
             >
@@ -1172,6 +1158,34 @@ export default function QualityControl() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <GuardarQCModal
+        isOpen={isGuardarModalOpen}
+        onClose={() => setIsGuardarModalOpen(false)}
+        initialName={qcSessionName}
+        initialDesc={qcSessionDesc}
+        onSaveSuccess={async (name, desc, libId, colId) => {
+          const record = await saveQCRecordToServer(name, desc, standard, sample, undefined, libId, colId);
+          const newCtx = {
+            standard,
+            sample,
+            timestamp: new Date().toISOString(),
+            sessionName: name,
+            sessionDesc: desc,
+            pdf_url: record?.pdf_url || null
+          };
+          setQcSessionName(name);
+          setQcSessionDesc(desc);
+          setQcContextData(newCtx);
+          localStorage.setItem('qc_context', JSON.stringify(newCtx));
+          setIsSessionActive(true);
+          if (record) {
+            showSnack('Control de calidad guardado con éxito en el servidor.');
+          } else {
+            showSnack('Guardado localmente. Error al sincronizar con el servidor.', 'error');
+          }
+        }}
+      />
     </div>
   );
 }

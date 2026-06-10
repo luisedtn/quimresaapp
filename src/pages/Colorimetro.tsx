@@ -82,7 +82,7 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
         if (autoScan && !isConnected && isSupported) {
             scan();
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Auto-return logic when connected if we came from Scan
@@ -172,7 +172,7 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
             }
             sum.C += m.color.C;
             sum.H += m.color.H;
-            
+
             sum.X += m.color.X || 0;
             sum.Y += m.color.Y || 0;
             sum.Z += m.color.Z || 0;
@@ -202,7 +202,7 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
         };
         const LRV = sum.LRV / n;
         const Density = avgY > 0 ? (-Math.log10(avgY / 100)).toFixed(2) : "0.00";
-        
+
         const toHex = (v: number) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0');
         const avgHex = `#${toHex(avgR)}${toHex(avgG)}${toHex(avgBval)}`.toUpperCase();
         return { avgL, avgA, avgB_lab: avgB, avgR, avgG, avgB_rgb: avgBval, avgC, avgH, avgX, avgY, avgZ, cmyk, LRV, Density, avgHex };
@@ -230,11 +230,11 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
             {/* Header */}
             <header className="fixed top-0 z-10 flex w-full items-center border-b border-black/10 bg-[#CC5200] shadow-lg px-6 py-4">
                 <button onClick={() => navigate(returnTo || '/', { state: location.state })} className="p-2 text-black hover:text-white transition-colors hover:bg-black/10 rounded-lg mr-2">
-                    <ArrowLeft className="h-5 w-5 text-black" />
+                    <ArrowLeft className="h-5 w-5 text-white" />
                 </button>
                 <div className="flex-grow">
                     <h1 className="text-xl font-semibold tracking-tight text-white flex items-center gap-2">
-                        <Palette className="h-5 w-5 text-black" /> Colorímetro
+                        <Palette className="h-5 w-5 text-white" /> Colorímetro
                     </h1>
                     <p className="text-[10px] text-white/70 uppercase tracking-widest mt-1">Escaneo de Color Bluetooth · Nix Sensor</p>
                 </div>

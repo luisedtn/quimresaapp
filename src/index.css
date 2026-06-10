@@ -33,6 +33,20 @@
   --border-sidebar: #1e293b;
   --shadow-premium: 0 12px 30px -10px rgba(0, 0, 0, 0.8), 0 1px 1px rgba(255, 255, 255, 0.05) inset;
 
+  /* Translucent & Vivid variables for Detail Card system */
+  --bg-ingredient-card: rgba(13, 20, 30, 0.7);
+  --border-ingredient-card: rgba(38, 55, 77, 0.45);
+  --bg-base-card: rgba(184, 93, 0, 0.08);
+  --border-base-card: rgba(184, 93, 0, 0.22);
+  --bg-ingredient-icon: rgba(38, 55, 77, 0.6);
+  --bg-delta-hero: linear-gradient(135deg, rgba(184, 93, 0, 0.14) 0%, rgba(13, 20, 30, 0.9) 100%);
+  --bg-table-header: rgba(5, 8, 12, 0.7);
+  --bg-table-row-alt: rgba(5, 8, 12, 0.4);
+  --bg-close-btn: rgba(38, 55, 77, 0.5);
+  --border-close-btn: rgba(38, 55, 77, 0.7);
+  --drag-handle: rgba(255, 255, 255, 0.15);
+  --bg-tabs-nav: rgba(5, 8, 12, 0.9);
+
   background-color: var(--bg-app);
   color: var(--text-primary);
   color-scheme: dark;
@@ -69,6 +83,20 @@
   /* Fondo menú arena/crema de la imagen */
   --border-sidebar: rgba(0, 44, 108, 0.18);
   --shadow-premium: 0 12px 28px -10px rgba(0, 44, 108, 0.12), 0 1px 3px rgba(0, 44, 108, 0.05);
+
+  /* Translucent & Vivid variables for Detail Card system in light theme */
+  --bg-ingredient-card: rgba(255, 255, 255, 0.85);
+  --border-ingredient-card: rgba(0, 44, 108, 0.15);
+  --bg-base-card: rgba(184, 93, 0, 0.08);
+  --border-base-card: rgba(184, 93, 0, 0.3);
+  --bg-ingredient-icon: rgba(0, 44, 108, 0.08);
+  --bg-delta-hero: linear-gradient(135deg, rgba(184, 93, 0, 0.08) 0%, rgba(255, 255, 255, 0.95) 100%);
+  --bg-table-header: rgba(0, 44, 108, 0.08);
+  --bg-table-row-alt: rgba(0, 44, 108, 0.03);
+  --bg-close-btn: rgba(0, 44, 108, 0.08);
+  --border-close-btn: rgba(0, 44, 108, 0.15);
+  --drag-handle: rgba(0, 44, 108, 0.2);
+  --bg-tabs-nav: var(--bg-sidebar);
 
   background-color: var(--bg-app);
   color: var(--text-primary);
@@ -112,9 +140,9 @@ div.min-h-screen.bg-\[\#0A0F14\] {
 /* Encabezados y barras de navegación — color más oscuro de la paleta corporativa */
 header.bg-\[\#0A0F14\]\/80,
 header {
-  background-color: #a38105 !important;
+  background-color: var(--accent-orange) !important;
   border-color: rgba(255, 255, 255, 0.10) !important;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35) !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25) !important;
 }
 
 header h1,
@@ -240,7 +268,7 @@ div.h-\[1px\].bg-slate-800 {
 
 .light .text-white,
 .light .text-blanco {
-  color: var(--text-primary) !important;
+  color: #ffffff !important;
 }
 
 /* Mantener texto blanco en botones y elementos con fondo en tema claro */
@@ -1084,8 +1112,13 @@ select::placeholder {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ── HSV Color Picker Range Sliders ── */
@@ -1129,12 +1162,24 @@ select::placeholder {
 /* Hue gradient */
 .hsv-slider--hue {
   background: linear-gradient(to right,
-    hsl(0, 100%, 50%),
-    hsl(60, 100%, 50%),
-    hsl(120, 100%, 50%),
-    hsl(180, 100%, 50%),
-    hsl(240, 100%, 50%),
-    hsl(300, 100%, 50%),
-    hsl(360, 100%, 50%)
-  ) !important;
+      hsl(0, 100%, 50%),
+      hsl(60, 100%, 50%),
+      hsl(120, 100%, 50%),
+      hsl(180, 100%, 50%),
+      hsl(240, 100%, 50%),
+      hsl(300, 100%, 50%),
+      hsl(360, 100%, 50%)) !important;
+}
+
+/* Close button component styles */
+.close-btn {
+  background-color: var(--bg-close-btn);
+  border: 1px solid var(--border-close-btn);
+  color: var(--text-muted);
+}
+
+.close-btn:hover {
+  background-color: rgba(184, 93, 0, 0.2) !important;
+  border-color: rgba(184, 93, 0, 0.4) !important;
+  color: var(--accent-orange) !important;
 }

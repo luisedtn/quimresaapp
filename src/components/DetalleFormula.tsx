@@ -1,7 +1,30 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Beaker, Tag, User, Calendar, Info, Layers, Droplets, ChevronRight, MessageSquare, ClipboardList, Activity } from 'lucide-react';
+import { X, Beaker, User, Calendar, Droplets, MessageSquare, ClipboardList, Activity } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config';
+
+function labToHex(l: number, a: number, b: number): string {
+    const y = (l + 16) / 116;
+    const x = a / 500 + y;
+    const z = y - b / 200;
+    const x3 = x * x * x, y3 = y * y * y, z3 = z * z * z;
+    const xr = x3 > 0.008856 ? x3 : (x - 16 / 116) / 7.787;
+    const yr = y3 > 0.008856 ? y3 : (y - 16 / 116) / 7.787;
+    const zr = z3 > 0.008856 ? z3 : (z - 16 / 116) / 7.787;
+    const rl = xr * 3.2406 + yr * -1.5372 + zr * -0.4986;
+    const gl = xr * -0.9689 + yr * 1.8758 + zr * 0.0415;
+    const bl = xr * 0.0557 + yr * -0.2040 + zr * 1.0570;
+    const gamma = (c: number) => Math.round(Math.max(0, Math.min(255, ((c > 0.0031308 ? 1.055 * Math.pow(c, 1 / 2.4) - 0.055 : 12.92 * c)) * 255)));
+    return `#${gamma(rl).toString(16).padStart(2, '0')}${gamma(gl).toString(16).padStart(2, '0')}${gamma(bl).toString(16).padStart(2, '0')}`;
+}
+
+const getFormulaColor = (f: any) => {
+    const l = f.L !== undefined && f.L !== null ? f.L : f.l;
+    const a = f.A !== undefined && f.A !== null ? f.A : f.a;
+    const b = f.B !== undefined && f.B !== null ? f.B : f.b;
+    if (l === undefined || l === null || l === '') return '#1e293b';
+    return labToHex(parseFloat(String(l)), parseFloat(String(a || '0')), parseFloat(String(b || '0')));
+};
 
 interface DetalleFormulaProps {
     formula: any;
@@ -13,16 +36,15 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
     const [activeTab, setActiveTab] = useState<'mezcla' | 'lab' | 'procesos' | 'obs'>('mezcla');
     const [densities, setDensities] = useState<Record<string, number>>({});
     const [calculating, setCalculating] = useState(false);
+    const [componentColors, setComponentColors] = useState<Record<string, any>>({});
 
     useEffect(() => {
         if (!isOpen || !formula) return;
 
-        const fetchDensities = async () => {
+        const fetchData = async () => {
             setCalculating(true);
             const codes = new Set<string>();
 
-            // Identificar Código de la Base
-            // En Standard: puede ser el nombre (PRODUCTO) o el ID
             console.log("FORMULAPRODUCTO", formula, formula.producto)
             const baseCodeName = formula.RESERVA;
             const baseId = formula.RESERVA;
@@ -53,6 +75,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
 
             try {
                 const token = localStorage.getItem('token');
+
                 const res = await fetch(`${API_BASE_URL}/api/componentes/densidades`, {
                     method: 'POST',
                     headers: {
@@ -70,17 +93,52 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                     });
                     setDensities(densityMap);
                 }
+
+                const resCol = await fetch(`${API_BASE_URL}/api/componentes/colores`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ codigos: Array.from(codes) })
+                });
+
+                if (resCol.ok) {
+                    const colorData = await resCol.json();
+                    const colorMap: Record<string, any> = {};
+                    colorData.forEach((item: any) => {
+                        colorMap[item.code] = item;
+                    });
+                    setComponentColors(colorMap);
+                }
             } catch (err) {
-                console.error("Error fetching densities:", err);
+                console.error("Error fetching component data:", err);
             } finally {
                 setCalculating(false);
             }
         };
 
-        fetchDensities();
+        fetchData();
     }, [isOpen, formula]);
 
     if (!formula) return null;
+
+    const getColorStyle = (code: string): React.CSSProperties => {
+        const cc = componentColors[code];
+        if (!cc) return { backgroundColor: '#555555' };
+        if (cc.isBase && cc.baseType === 'transparent') {
+            return {
+                backgroundColor: '#ffffff',
+                backgroundImage: 'linear-gradient(45deg, #aaa 25%, transparent 25%), linear-gradient(-45deg, #aaa 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #aaa 75%), linear-gradient(-45deg, transparent 75%, #aaa 75%)',
+                backgroundSize: '8px 8px',
+                backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px',
+            };
+        }
+        if (cc.isBase && cc.baseType === 'white') {
+            return { backgroundColor: '#ffffff' };
+        }
+        return { backgroundColor: cc.rgb || '#555555' };
+    };
 
     const formatDate = (dateStr: string) => {
         if (!dateStr) return '';
@@ -93,21 +151,17 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
         }
     };
 
-    // --- CÁLCULOS DE VOLUMEN Y DENSIDAD (Física Real) ---
-
+    // --- CÁLCULOS DE VOLUMEN Y DENSIDAD ---
     const rawIngredients: any[] = [];
     console.log("DENSIDADES DE TODOS LOS ELEMENTOS", densities)
-    // 1. Identificar Base
     const baseCodeName = formula.RESERVA;
     const baseId = formula.IDPRODUCTO?.toString();
     const baseCodePersonal = formula.CBASE;
 
-    // Seleccionar el código que realmente tenga densidad en el mapa, o el nombre por defecto
     const baseCode = (baseCodeName && densities[baseCodeName]) ? baseCodeName :
         (baseId && densities[baseId]) ? baseId :
             (baseCodePersonal && densities[baseCodePersonal]) ? baseCodePersonal :
                 (baseCodeName || baseCodePersonal || baseId);
-
 
     const baseMass = parseFloat(formula.BASE || formula.QBASE || '0');
     console.log("FORMULARECIBIDA", formula);
@@ -116,7 +170,6 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
         rawIngredients.push({ code: baseCode, mass: baseMass, type: 'BASE' });
     }
 
-    // 2. Colorantes
     for (let i = 1; i <= 13; i++) {
         const code = formula[`C${i}`];
         const mass = parseFloat(formula[`Q${i}`] || '0');
@@ -124,7 +177,6 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
             rawIngredients.push({ code, mass, type: 'COLORANTE' });
         }
     }
-    // 3. Aditivos A
     for (let i = 1; i <= 6; i++) {
         const code = formula[`A${i}`];
         const mass = parseFloat(formula[`AQ${i}`] || '0');
@@ -132,7 +184,6 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
             rawIngredients.push({ code, mass, type: 'ADITIVO A' });
         }
     }
-    // 4. Aditivos B
     for (let i = 1; i <= 2; i++) {
         const code = formula[`B${i}`];
         const mass = parseFloat(formula[`BQ${i}`] || '0');
@@ -141,72 +192,41 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
         }
     }
 
-
-
-
-    // CÁLCULO DE DENSIDAD DE MEZCLA Y VOLUMEN TOTAL
-    // Densidad = Masa / Volumen
-    // Volumen Total = Sumatoria(Masa_i / Densidad_i)
-
     let totalRawMass = 0;
     let totalRawVolume = 0;
-
-    console.log(`[DENSIDAD] --- INICIO CÁLCULO PASO A PASO ---`);
-    console.log(`[DENSIDAD] Objetivo: rho_mix = Sum(Masas) / Sum(Masas/Densidades)`);
 
     const totalMass = rawIngredients.reduce((accumulator, ing) => {
         return accumulator + (ing.mass || 0);
     }, 0);
 
-    console.log(`Masa Total Acumulada: ${totalMass.toFixed(2)} g`);
-    rawIngredients[0].mass = 1000 - (totalMass - baseMass);
+    if (rawIngredients.length > 0) {
+        rawIngredients[0].mass = 1000 - (totalMass - baseMass);
+    }
 
     const ingredientsWithPhysics = rawIngredients.map((ing, index) => {
         const rho = densities[ing.code] || 1.0;
         const vol = ing.mass / rho;
-
-        const prevMass = totalRawMass;
-        const prevVol = totalRawVolume;
-
         totalRawMass += ing.mass;
         totalRawVolume += vol;
-
-        console.log(`[DENSIDAD] Paso ${index + 1}: Componente ${ing.code}`);
-        console.log(`  > Masa: ${ing.mass} g`);
-        console.log(`  > Densidad Elemento: ${rho}`);
-        console.log(`  > Cociente (M/D): ${ing.mass} / ${rho} = ${vol.toFixed(4)} ml`);
-        console.log(`  > Suma Acumulada: Masa=${totalRawMass.toFixed(2)}g, Vol=${totalRawVolume.toFixed(2)}ml`);
-
         return { ...ing, rho, vol };
     });
 
     const calculatedMixtureDensity = totalRawVolume > 0 ? (totalRawMass / totalRawVolume) : 1.0;
-    console.log(`[DENSIDAD] RESULTADO FINAL: ${totalRawMass.toFixed(2)} / ${totalRawVolume.toFixed(2)} = ${calculatedMixtureDensity.toFixed(4)}`);
+    const volumeFactor = calculatedMixtureDensity;
 
-    // Factor de escala para formar exactamente 1000 ml
-    const volumeFactor = calculatedMixtureDensity
-    //totalRawVolume > 0 ? 1000 / totalRawVolume : 1;
-    console.log(`[DENSIDAD] Factor de volumen para 1 litro: 1000 / ${totalRawVolume.toFixed(2)} = ${volumeFactor.toFixed(4)}`);
-
-    // Cantidades finales para el usuario (Escaladas a 1 Litro)
     let finalMassSum = 0;
     const processedIngredients = ingredientsWithPhysics.map(ing => {
-        const finalVol = ing.mass * volumeFactor; // Volumen en ml (Suma = 1000)
-        //const finalGrams = finalVol * ing.rho;   // Masa en gramos
+        const finalVol = ing.mass * volumeFactor;
         finalMassSum += finalVol;
-
-        console.log(`[FINAL] ${ing.code} | ml: ${ing.vol.toFixed(2)} | g: ${finalVol.toFixed(2)}`);
-
         return {
             ...ing,
             ml: finalVol,
             grams: ing.mass,
-            percentage: (finalVol / 10) // (ml / 1000) * 100
+            percentage: (finalVol / 10)
         };
     });
 
     const mixtureDensityDisplay = totalRawVolume > 0 ? (finalMassSum / 1000) : calculatedMixtureDensity;
-    console.log(`[CÁLCULO] --- Finalizado. Masa Total: ${finalMassSum.toFixed(2)} g ---`);
 
     const processes = [
         { id: 1, text: formula.PROCESOS },
@@ -215,276 +235,612 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
         { id: 4, text: formula.PROCESOS4 },
     ].filter(p => p.text);
 
+    const formulaHex = getFormulaColor(formula);
+
+    // Tab config
+    const tabs = [
+        { id: 'mezcla', label: 'Fórmula', icon: Droplets },
+        { id: 'lab', label: 'Colorimetría', icon: Activity },
+        { id: 'procesos', label: 'Procesos', icon: ClipboardList },
+        { id: 'obs', label: 'Notas', icon: MessageSquare },
+    ];
+
     return (
         <AnimatePresence>
             {isOpen && (
                 <>
-                    {/* Backdrop */}
+                    {/* ── Backdrop ── */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm"
+                        className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-md"
                     />
 
-                    {/* Drawer */}
+                    {/* ── Drawer ── */}
                     <motion.div
                         initial={{ y: '100%' }}
                         animate={{ y: 0 }}
                         exit={{ y: '100%' }}
-                        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed inset-x-0 bottom-0 z-[70] h-[94vh] w-full overflow-hidden rounded-t-[2.5rem] bg-[#0A0F14] border-t border-slate-800 shadow-2xl flex flex-col"
+                        transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+                        className="fixed inset-x-0 bottom-0 z-[70] h-[94vh] w-full overflow-hidden rounded-t-[2.5rem] shadow-2xl flex flex-col"
+                        style={{ backgroundColor: 'var(--bg-app)', borderTop: '1px solid var(--border-card)' }}
                     >
-                        {/* Handle */}
-                        <div className="flex justify-center p-3">
-                            <div className="h-1 w-10 rounded-full bg-slate-800" />
+                        {/* ── Drag Handle ── */}
+                        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+                            <div className="h-1 w-14 rounded-full" style={{ backgroundColor: 'var(--drag-handle)' }} />
                         </div>
 
-                        {/* Header Area */}
-                        <div className="px-4 sm:px-6 pb-4 sm:pb-6 pt-2">
-                            <div className="flex items-start justify-between mb-3 sm:mb-4">
-                                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                        {/* ── Header ── */}
+                        <div
+                            className="flex-shrink-0 px-4 sm:px-6 pt-2 pb-4"
+                            style={{ borderBottom: '1px solid var(--border-card)' }}
+                        >
+                            {/* Top row: color swatch + title + close */}
+                            <div className="flex items-start justify-between mb-3 gap-3">
+                                <div className="flex items-center gap-3 min-w-0 flex-1">
+                                    {/* Color swatch */}
                                     <div
-                                        className="h-10 w-10 sm:h-14 sm:w-14 rounded-2xl border-2 border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.5)] overflow-hidden flex-shrink-0"
-                                        style={{ backgroundColor: `lab(${formula.L} ${formula.A} ${formula.B})` }}
+                                        className="h-12 w-12 rounded-2xl flex-shrink-0 overflow-hidden shadow-lg"
+                                        style={{
+                                            backgroundColor: formulaHex
+                                        }}
                                     >
-                                        <div className="h-full w-full bg-gradient-to-tr from-black/20 to-transparent" />
+                                        <div className="h-full w-full" />
                                     </div>
+
+                                    {/* Title block */}
                                     <div className="min-w-0 flex-1">
-                                        <h2 className="text-base sm:text-xl font-black text-white leading-tight truncate">{formula.NOMBREFORMULA}</h2>
-                                        <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1">
-                                            <span className="text-[9px] sm:text-[10px] font-bold text-[#B85D00] bg-[#B85D00]/10 px-1.5 sm:px-2 py-0.5 rounded border border-[#B85D00]/20 uppercase tracking-widest">
+                                        <h2
+                                            className="text-lg sm:text-xl font-black leading-tight truncate"
+                                            style={{ color: 'var(--text-primary)' }}
+                                        >
+                                            {formula.NOMBREFORMULA}
+                                        </h2>
+                                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                                            {/* Código badge — naranja acento */}
+                                            <span
+                                                className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md"
+                                                style={{
+                                                    color: 'var(--accent-orange)',
+                                                    backgroundColor: 'rgba(184,93,0,0.12)',
+                                                    border: '1px solid rgba(184,93,0,0.25)'
+                                                }}
+                                            >
                                                 {formula.CODIGO || 'SIN CÓDIGO'}
                                             </span>
-                                            {mixtureDensityDisplay && (
-                                                <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                                                    ρ mix: {mixtureDensityDisplay.toFixed(4)}
+                                            {/* Densidad badge */}
+                                            {mixtureDensityDisplay > 0 && (
+                                                <span
+                                                    className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md"
+                                                    style={{
+                                                        color: 'var(--text-muted)',
+                                                        backgroundColor: 'var(--bg-close-btn)',
+                                                        border: '1px solid var(--border-close-btn)'
+                                                    }}
+                                                >
+                                                    ρ {mixtureDensityDisplay.toFixed(4)}
                                                 </span>
                                             )}
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Close button */}
                                 <button
                                     onClick={onClose}
-                                    className="h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors flex-shrink-0 ml-2"
+                                    className="flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-full transition-all duration-200 active:scale-90 close-btn"
                                 >
-                                    <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                                    <X className="h-4 w-4" />
                                 </button>
                             </div>
 
-                            {/* Info Chips Scroller */}
-                            <div className="flex gap-2 sm:gap-3 overflow-x-auto no-scrollbar pb-2 -mx-4 sm:mx-0 px-4 sm:px-0">
-                                <div className="flex-shrink-0 bg-slate-900/50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl border border-slate-800/50 flex items-center gap-1.5 sm:gap-2">
-                                    <User className="h-3 w-3 text-blue-400 flex-shrink-0" />
-                                    <p className="text-[9px] sm:text-[10px] text-white font-bold truncate max-w-[100px] sm:max-w-[120px]">{formula.NOMBRECLI || 'N/A'}</p>
+                            {/* ── Info Chips ── */}
+                            <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 sm:mx-0 px-4 sm:px-0 pb-0.5">
+                                {/* Cliente */}
+                                <div
+                                    className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-xl"
+                                    style={{
+                                        backgroundColor: 'var(--bg-ingredient-card)',
+                                        border: '1px solid var(--border-ingredient-card)'
+                                    }}
+                                >
+                                    <User className="h-3 w-3 flex-shrink-0" style={{ color: 'var(--accent-color)' }} />
+                                    <p
+                                        className="text-[9px] sm:text-[10px] font-bold truncate max-w-[100px] sm:max-w-[130px]"
+                                        style={{ color: 'var(--text-primary)' }}
+                                    >
+                                        {formula.NOMBRECLI || 'N/A'}
+                                    </p>
                                 </div>
-                                <div className="flex-shrink-0 bg-slate-900/50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl border border-slate-800/50 flex items-center gap-1.5 sm:gap-2">
-                                    <Calendar className="h-3 w-3 text-emerald-400 flex-shrink-0" />
-                                    <p className="text-[9px] sm:text-[10px] text-white font-bold whitespace-nowrap">{formatDate(formula.FECHA)}</p>
+                                {/* Fecha */}
+                                <div
+                                    className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-xl"
+                                    style={{
+                                        backgroundColor: 'var(--bg-ingredient-card)',
+                                        border: '1px solid var(--border-ingredient-card)'
+                                    }}
+                                >
+                                    <Calendar className="h-3 w-3 flex-shrink-0 text-emerald-400" />
+                                    <p
+                                        className="text-[9px] sm:text-[10px] font-bold whitespace-nowrap"
+                                        style={{ color: 'var(--text-primary)' }}
+                                    >
+                                        {formatDate(formula.FECHA)}
+                                    </p>
                                 </div>
-                                <div className="flex-shrink-0 bg-slate-900/50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl border border-slate-800/50 flex items-center gap-1.5 sm:gap-2">
-                                    <Beaker className="h-3 w-3 text-[#B85D00] flex-shrink-0" />
-                                    <p className="text-[9px] sm:text-[10px] text-white font-bold whitespace-nowrap">{formula.CANTIDAD || '0'} {formula.UNIDAD || 'LT'}</p>
+                                {/* Cantidad */}
+                                <div
+                                    className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-xl"
+                                    style={{
+                                        backgroundColor: 'var(--bg-ingredient-card)',
+                                        border: '1px solid var(--border-ingredient-card)'
+                                    }}
+                                >
+                                    <Beaker className="h-3 w-3 flex-shrink-0" style={{ color: 'var(--accent-orange)' }} />
+                                    <p
+                                        className="text-[9px] sm:text-[10px] font-bold whitespace-nowrap"
+                                        style={{ color: 'var(--text-primary)' }}
+                                    >
+                                        {formula.CANTIDAD || '0'} {formula.UNIDAD || 'LT'}
+                                    </p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Navigation Tabs */}
-                        <div className="flex px-6 border-b border-white/5 bg-slate-950/50 gap-8 overflow-x-auto no-scrollbar">
-                            {[
-                                { id: 'mezcla', label: 'Fórmula', icon: Droplets },
-                                { id: 'lab', label: 'Colorimetría', icon: Activity },
-                                { id: 'procesos', label: 'Procesos', icon: ClipboardList },
-                                { id: 'obs', label: 'Notas', icon: MessageSquare },
-                            ].map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id as any)}
-                                    className={`flex items-center gap-2 py-4 border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id
-                                        ? 'border-[#B85D00] text-white font-bold'
-                                        : 'border-transparent text-slate-600 hover:text-slate-400'
-                                        }`}
-                                >
-                                    <tab.icon className={`h-3.5 w-3.5 ${activeTab === tab.id ? 'text-[#B85D00]' : ''}`} />
-                                    <span className="text-[10px] uppercase font-bold tracking-widest">{tab.label}</span>
-                                </button>
-                            ))}
+                        {/* ── Navigation Tabs ── */}
+                        <div
+                            className="flex-shrink-0 flex px-4 pb-2 sm:px-6 gap-1 overflow-x-auto no-scrollbar"
+                            style={{
+                                backgroundColor: 'var(--bg-tabs-nav)',
+                                borderBottom: '1px solid var(--border-card)'
+                            }}
+                        >
+                            {tabs.map((tab) => {
+                                const isActive = activeTab === tab.id;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id as any)}
+                                        className="flex items-center gap-1.5 py-3.5 px-1 border-b-2 transition-all duration-200 whitespace-nowrap flex-shrink-0"
+                                        style={{
+                                            borderBottomColor: isActive ? 'var(--accent-orange)' : 'transparent',
+                                            color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
+                                            fontWeight: isActive ? '700' : '500',
+                                            marginRight: '16px'
+                                        }}
+                                    >
+                                        <tab.icon
+                                            className="h-3.5 w-3.5 transition-colors duration-200"
+                                            style={{ color: isActive ? 'var(--accent-orange)' : 'var(--text-muted)' }}
+                                        />
+                                        <span className="text-[10px] uppercase tracking-widest">{tab.label}</span>
+                                    </button>
+                                );
+                            })}
                         </div>
 
-                        {/* Content Area */}
-                        <div className="flex-grow overflow-y-auto bg-[#070B0F]">
+                        {/* ── Content Area ── */}
+                        <div className="flex-grow overflow-y-auto" style={{ backgroundColor: 'var(--bg-app)' }}>
+
+                            {/* ══ TAB: FÓRMULA ══ */}
                             {activeTab === 'mezcla' && (
-                                <div className="p-6 space-y-6">
+                                <div className="p-4 sm:p-6 space-y-4">
+
+                                    {/* Calculating indicator */}
                                     {calculating && (
-                                        <div className="flex items-center gap-3 bg-[#B85D00]/10 p-3 rounded-xl border border-[#B85D00]/20 animate-pulse">
-                                            <div className="h-4 w-4 rounded-full border-2 border-[#B85D00] border-t-transparent animate-spin"></div>
-                                            <p className="text-[10px] font-bold text-[#B85D00] uppercase tracking-widest">Calculando densidades y volumen...</p>
-                                        </div>
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -8 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="flex items-center gap-3 p-3 rounded-xl"
+                                            style={{
+                                                backgroundColor: 'rgba(184,93,0,0.08)',
+                                                border: '1px solid rgba(184,93,0,0.2)'
+                                            }}
+                                        >
+                                            <div
+                                                className="h-4 w-4 rounded-full border-2 border-t-transparent animate-spin flex-shrink-0"
+                                                style={{ borderColor: 'var(--accent-orange)', borderTopColor: 'transparent' }}
+                                            />
+                                            <p
+                                                className="text-[10px] font-bold uppercase tracking-widest"
+                                                style={{ color: 'var(--accent-orange)' }}
+                                            >
+                                                Calculando densidades y volumen...
+                                            </p>
+                                        </motion.div>
                                     )}
 
-                                    {/* Summary row */}
-                                    <div className="flex items-center justify-between text-[8px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-[0.1em] sm:tracking-[0.2em] px-1 sm:px-2">
-                                        <span className="truncate min-w-0 mr-2">Componente | ρ</span>
-                                        <div className="flex gap-2 sm:gap-8 flex-shrink-0">
-                                            <span className="hidden sm:inline">Mililitros (ml)</span>
-                                            <span className="sm:hidden">ml</span>
-                                            <span className="w-12 sm:w-16 text-right">Gramos</span>
+                                    {/* Column headers */}
+                                    <div
+                                        className="flex items-center justify-between px-2"
+                                        style={{ color: 'var(--text-muted)' }}
+                                    >
+                                        <span className="text-[9px] font-bold uppercase tracking-[0.15em]">Componente | ρ</span>
+                                        <div className="flex gap-6 flex-shrink-0">
+                                            <span className="text-[9px] font-bold uppercase tracking-[0.15em]">ml</span>
+                                            <span className="text-[9px] font-bold uppercase tracking-[0.15em] w-14 text-right">g</span>
                                         </div>
                                     </div>
 
+                                    {/* Ingredient rows */}
                                     <div className="space-y-2">
-                                        {processedIngredients.map((item, index) => (
-                                            <div
-                                                key={index}
-                                                className={`p-4 rounded-3xl border flex flex-col gap-3 transition-all ${item.type === 'BASE'
-                                                    ? 'bg-[#B85D00]/5 border-[#B85D00]/20 shadow-[0_10px_30px_rgba(192,114,4,0.05)]'
-                                                    : 'bg-slate-900 border-slate-800'
-                                                    }`}
-                                            >
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className={`h-8 w-8 rounded-xl flex items-center justify-center ${item.type === 'BASE' ? 'bg-[#B85D00] text-white shadow-lg shadow-[#B85D00]/20' : 'bg-slate-800 text-slate-500'
-                                                            }`}>
-                                                            <Beaker className="h-4 w-4" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-sm font-bold text-white tracking-tight">{item.code}</p>
-                                                            <div className="flex items-center gap-2">
-                                                                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">{item.type} | ρ {item.rho.toFixed(3)}</p>
-                                                                <span className="text-slate-700">•</span>
-                                                                <p className="text-[9px] text-blue-400 font-bold uppercase">{item.percentage.toFixed(2)}%</p>
+                                        {processedIngredients.map((item, index) => {
+                                            const isBase = item.type === 'BASE';
+                                            return (
+                                                <motion.div
+                                                    key={index}
+                                                    initial={{ opacity: 0, x: -8 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ delay: index * 0.04 }}
+                                                    className="flex items-center justify-between p-3.5 rounded-2xl transition-all duration-200"
+                                                    style={{
+                                                        backgroundColor: isBase
+                                                            ? 'var(--bg-base-card)'
+                                                            : 'var(--bg-ingredient-card)',
+                                                        border: isBase
+                                                            ? 'var(--border-base-card)'
+                                                            : 'var(--border-ingredient-card)',
+                                                        boxShadow: isBase
+                                                            ? '0 4px 20px rgba(184,93,0,0.05)'
+                                                            : 'none'
+                                                    }}
+                                                >
+                                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                        {/* Color Swatch */}
+                                                        <div
+                                                            className="h-9 w-9 rounded-xl flex-shrink-0 shadow-inner border border-white/10"
+                                                            style={getColorStyle(item.code)}
+                                                        />
+                                                        {/* Info */}
+                                                        <div className="min-w-0">
+                                                            <p
+                                                                className="text-sm font-bold tracking-tight truncate"
+                                                                style={{ color: 'var(--text-primary)' }}
+                                                            >
+                                                                {item.code}
+                                                            </p>
+                                                            <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                                                                <span
+                                                                    className="text-[9px] font-bold uppercase tracking-wider"
+                                                                    style={{ color: 'var(--text-muted)' }}
+                                                                >
+                                                                    {item.type} · ρ {item.rho.toFixed(3)}
+                                                                </span>
+                                                                <span style={{ color: 'var(--border-ingredient-card)', fontSize: '8px' }}>•</span>
+                                                                <span className="text-[9px] font-bold uppercase text-blue-400">
+                                                                    {item.percentage.toFixed(2)}%
+                                                                </span>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="text-right flex items-center gap-2 sm:gap-6">
+
+                                                    {/* Values */}
+                                                    <div className="text-right flex items-center gap-4 flex-shrink-0 ml-2">
                                                         <div>
-                                                            <p className={`text-sm sm:text-lg font-mono font-bold ${item.type === 'BASE' ? 'text-[#B85D00]' : 'text-white'}`}>
+                                                            <p
+                                                                className="text-base sm:text-lg font-mono font-black"
+                                                                style={{ color: isBase ? 'var(--accent-orange)' : 'var(--text-primary)' }}
+                                                            >
                                                                 {item.ml.toFixed(2)}
                                                             </p>
                                                         </div>
-                                                        <div className="w-12 sm:w-16">
-                                                            <p className="text-xs sm:text-sm font-mono font-bold text-slate-500">
+                                                        <div className="w-14">
+                                                            <p
+                                                                className="text-xs sm:text-sm font-mono font-bold"
+                                                                style={{ color: 'var(--text-muted)' }}
+                                                            >
                                                                 {item.grams.toFixed(1)}
                                                             </p>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </div>
-                                        ))}
+                                                </motion.div>
+                                            );
+                                        })}
                                     </div>
 
-                                    {/* Totals & Metadata */}
-                                    <div className="pt-4 space-y-4">
-                                        <div className="bg-slate-900/30 p-5 rounded-[2rem] border border-white/5 space-y-3">
+                                    {/* ── Totales ── */}
+                                    <div className="pt-1 space-y-3">
+                                        {/* Totals card */}
+                                        <div
+                                            className="p-5 rounded-2xl space-y-3"
+                                            style={{
+                                                backgroundColor: 'var(--bg-ingredient-card)',
+                                                border: '1px solid var(--border-ingredient-card)'
+                                            }}
+                                        >
+                                            {/* Top accent line */}
+                                            <div
+                                                className="h-0.5 w-full rounded-full -mt-1 mb-3"
+                                                style={{ background: 'linear-gradient(to right, var(--accent-orange), rgba(184,93,0,0.1))' }}
+                                            />
                                             <div className="flex items-center justify-between">
-                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Volumen</span>
-                                                <span className="text-xl font-mono font-black text-white">1000.00 <span className="text-xs text-slate-500 font-bold ml-1">ml</span></span>
+                                                <span
+                                                    className="text-[10px] font-bold uppercase tracking-widest"
+                                                    style={{ color: 'var(--text-muted)' }}
+                                                >
+                                                    Total Volumen
+                                                </span>
+                                                <span
+                                                    className="text-xl font-mono font-black"
+                                                    style={{ color: 'var(--text-primary)' }}
+                                                >
+                                                    1000.00
+                                                    <span
+                                                        className="text-xs font-bold ml-1"
+                                                        style={{ color: 'var(--text-muted)' }}
+                                                    >
+                                                        ml
+                                                    </span>
+                                                </span>
                                             </div>
                                             <div className="flex items-center justify-between">
-                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Masa Total</span>
-                                                <span className="text-lg font-mono font-bold text-slate-400">{finalMassSum.toFixed(1)} <span className="text-xs text-slate-600 font-bold ml-1">g</span></span>
+                                                <span
+                                                    className="text-[10px] font-bold uppercase tracking-widest"
+                                                    style={{ color: 'var(--text-muted)' }}
+                                                >
+                                                    Masa Total
+                                                </span>
+                                                <span
+                                                    className="text-lg font-mono font-bold"
+                                                    style={{ color: 'var(--text-secondary)' }}
+                                                >
+                                                    {finalMassSum.toFixed(1)}
+                                                    <span
+                                                        className="text-xs font-bold ml-1"
+                                                        style={{ color: 'var(--text-muted)' }}
+                                                    >
+                                                        g
+                                                    </span>
+                                                </span>
                                             </div>
-                                            <div className="h-[1px] w-full bg-white/5" />
+                                            <div
+                                                className="h-px w-full"
+                                                style={{ backgroundColor: 'var(--border-ingredient-card)' }}
+                                            />
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
-                                                    <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest mb-1">Muestras</p>
-                                                    <p className="text-xs text-white font-bold">{formula.NOMUESTRAS || '0'}</p>
+                                                    <p
+                                                        className="text-[9px] font-bold uppercase tracking-widest mb-1"
+                                                        style={{ color: 'var(--text-muted)' }}
+                                                    >
+                                                        Muestras
+                                                    </p>
+                                                    <p
+                                                        className="text-sm font-bold"
+                                                        style={{ color: 'var(--text-primary)' }}
+                                                    >
+                                                        {formula.NOMUESTRAS || '0'}
+                                                    </p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest mb-1">Preparación</p>
-                                                    <p className="text-xs text-white font-bold">#{formula.VARIANTE || '1'}</p>
+                                                    <p
+                                                        className="text-[9px] font-bold uppercase tracking-widest mb-1"
+                                                        style={{ color: 'var(--text-muted)' }}
+                                                    >
+                                                        Preparación
+                                                    </p>
+                                                    <p
+                                                        className="text-sm font-bold"
+                                                        style={{ color: 'var(--text-primary)' }}
+                                                    >
+                                                        #{formula.VARIANTE || '1'}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
 
+                                        {/* Producto / Sustrato */}
                                         <div className="grid grid-cols-2 gap-3">
-                                            <div className="bg-slate-950 p-4 rounded-2xl border border-white/5">
-                                                <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest mb-1">Producto</p>
-                                                <p className="text-xs text-slate-300 font-medium truncate">{formula.PRODUCTO || 'N/A'}</p>
-                                            </div>
-                                            <div className="bg-slate-950 p-4 rounded-2xl border border-white/5">
-                                                <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest mb-1">Sustrato</p>
-                                                <p className="text-xs text-slate-300 font-medium truncate">{formula.SUSTRATO || 'N/A'}</p>
-                                            </div>
+                                            {[
+                                                { label: 'Producto', value: formula.PRODUCTO },
+                                                { label: 'Sustrato', value: formula.SUSTRATO }
+                                            ].map(({ label, value }) => (
+                                                <div
+                                                    key={label}
+                                                    className="p-4 rounded-xl"
+                                                    style={{
+                                                        backgroundColor: 'var(--bg-ingredient-card)',
+                                                        border: '1px solid var(--border-ingredient-card)'
+                                                    }}
+                                                >
+                                                    <p
+                                                        className="text-[9px] font-bold uppercase tracking-widest mb-1"
+                                                        style={{ color: 'var(--text-muted)' }}
+                                                    >
+                                                        {label}
+                                                    </p>
+                                                    <p
+                                                        className="text-xs font-medium truncate"
+                                                        style={{ color: 'var(--text-secondary)' }}
+                                                    >
+                                                        {value || 'N/A'}
+                                                    </p>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                 </div>
                             )}
 
+                            {/* ══ TAB: COLORIMETRÍA ══ */}
                             {activeTab === 'lab' && (
-                                <div className="p-6 space-y-8">
-                                    {/* Pattern vs Formula Comparison */}
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between px-2">
-                                            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Comparativa LAB</h4>
-                                            <Tag className="h-3.5 w-3.5 text-[#B85D00]" />
+                                <div className="p-4 sm:p-6 space-y-5">
+
+                                    {/* LAB Comparison table */}
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between px-1 mb-3">
+                                            <h4
+                                                className="text-[10px] font-bold uppercase tracking-[0.2em]"
+                                                style={{ color: 'var(--text-muted)' }}
+                                            >
+                                                Comparativa CIELAB
+                                            </h4>
+                                            <Activity className="h-3.5 w-3.5" style={{ color: 'var(--accent-orange)' }} />
                                         </div>
 
-                                        <div className="bg-slate-900/40 rounded-[2.5rem] border border-white/5 overflow-hidden">
-                                            <div className="grid grid-cols-3 bg-white/5 border-b border-white/5">
-                                                <div className="p-4 text-center border-r border-white/5">
-                                                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Canal</span>
-                                                </div>
-                                                <div className="p-4 text-center border-r border-white/5">
-                                                    <span className="text-[9px] text-[#B85D00] font-bold uppercase tracking-widest">Patrón</span>
-                                                </div>
-                                                <div className="p-4 text-center">
-                                                    <span className="text-[9px] text-blue-400 font-bold uppercase tracking-widest">Fórmula</span>
-                                                </div>
+                                        <div
+                                            className="rounded-2xl overflow-hidden"
+                                            style={{
+                                                backgroundColor: 'var(--bg-ingredient-card)',
+                                                border: '1px solid var(--border-ingredient-card)'
+                                            }}
+                                        >
+                                            {/* Table header */}
+                                            <div
+                                                className="grid grid-cols-3"
+                                                style={{ backgroundColor: 'var(--bg-table-header)', borderBottom: '1px solid var(--border-ingredient-card)' }}
+                                            >
+                                                {['Canal', 'Patrón', 'Fórmula'].map((h, i) => (
+                                                    <div
+                                                        key={h}
+                                                        className="p-3 text-center"
+                                                        style={{ borderRight: i < 2 ? '1px solid var(--border-ingredient-card)' : 'none' }}
+                                                    >
+                                                        <span
+                                                            className="text-[9px] font-bold uppercase tracking-widest"
+                                                            style={{
+                                                                color: i === 1
+                                                                    ? 'var(--accent-orange)'
+                                                                    : i === 2
+                                                                        ? 'var(--accent-color)'
+                                                                        : 'var(--text-muted)'
+                                                            }}
+                                                        >
+                                                            {h}
+                                                        </span>
+                                                    </div>
+                                                ))}
                                             </div>
+
+                                            {/* Rows */}
                                             {[
-                                                { label: 'L*', p: formula.LO, f: formula.L, color: 'text-white' },
-                                                { label: 'a*', p: formula.AO, f: formula.A, color: 'text-emerald-400' },
-                                                { label: 'b*', p: formula.BO, f: formula.B, color: 'text-amber-400' },
+                                                { label: 'L*', p: formula.LO, f: formula.L, color: 'var(--text-primary)' },
+                                                { label: 'a*', p: formula.AO, f: formula.A, color: '#34d399' },
+                                                { label: 'b*', p: formula.BO, f: formula.B, color: '#fbbf24' },
                                             ].map((row, idx) => (
-                                                <div key={idx} className={`grid grid-cols-3 ${idx < 2 ? 'border-b border-white/5' : ''}`}>
-                                                    <div className="p-5 text-center border-r border-white/5 bg-slate-950/30">
-                                                        <span className="text-sm font-black text-slate-500">{row.label}</span>
+                                                <div
+                                                    key={idx}
+                                                    className="grid grid-cols-3"
+                                                    style={{ borderBottom: idx < 2 ? '1px solid var(--border-ingredient-card)' : 'none' }}
+                                                >
+                                                    <div
+                                                        className="p-4 text-center"
+                                                        style={{
+                                                            borderRight: '1px solid var(--border-ingredient-card)',
+                                                            backgroundColor: 'var(--bg-table-row-alt)'
+                                                        }}
+                                                    >
+                                                        <span
+                                                            className="text-sm font-black"
+                                                            style={{ color: 'var(--text-muted)' }}
+                                                        >
+                                                            {row.label}
+                                                        </span>
                                                     </div>
-                                                    <div className="p-5 text-center border-r border-white/5">
-                                                        <span className={`text-sm font-mono font-bold ${row.color}`}>{parseFloat(row.p || '0').toFixed(2)}</span>
+                                                    <div
+                                                        className="p-4 text-center"
+                                                        style={{ borderRight: '1px solid var(--border-ingredient-card)' }}
+                                                    >
+                                                        <span className="text-sm font-mono font-bold" style={{ color: row.color }}>
+                                                            {parseFloat(row.p || '0').toFixed(2)}
+                                                        </span>
                                                     </div>
-                                                    <div className="p-5 text-center bg-slate-900/20">
-                                                        <span className={`text-sm font-mono font-bold ${row.color}`}>{parseFloat(row.f || '0').toFixed(2)}</span>
+                                                    <div className="p-4 text-center" style={{ backgroundColor: 'var(--bg-table-row-alt)' }}>
+                                                        <span className="text-sm font-mono font-bold" style={{ color: row.color }}>
+                                                            {parseFloat(row.f || '0').toFixed(2)}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
 
-                                    {/* Detailed Deltas */}
-                                    <div className="space-y-4">
-                                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2">Diferenciales (Delta)</h4>
-                                        <div className="grid grid-cols-3 gap-3">
-                                            <div className="bg-slate-900 p-5 rounded-3xl border border-white/5 text-center">
-                                                <p className="text-[9px] text-slate-500 font-bold uppercase mb-2">ΔL</p>
-                                                <p className={`font-mono text-lg font-bold ${parseFloat(formula.DELTAL || '0') >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                                    {formula.DELTAL || '0.00'}
-                                                </p>
-                                            </div>
-                                            <div className="bg-slate-900 p-5 rounded-3xl border border-white/5 text-center">
-                                                <p className="text-[9px] text-slate-500 font-bold uppercase mb-2">Δa</p>
-                                                <p className={`font-mono text-lg font-bold ${parseFloat(formula.DELTAA || '0') >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                                    {formula.DELTAA || '0.00'}
-                                                </p>
-                                            </div>
-                                            <div className="bg-slate-900 p-5 rounded-3xl border border-white/5 text-center">
-                                                <p className="text-[9px] text-slate-500 font-bold uppercase mb-2">Δb</p>
-                                                <p className={`font-mono text-lg font-bold ${parseFloat(formula.DELTAB || '0') >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                                    {formula.DELTAB || '0.00'}
-                                                </p>
-                                            </div>
+                                    {/* Deltas */}
+                                    <div className="space-y-3">
+                                        <h4
+                                            className="text-[10px] font-bold uppercase tracking-[0.2em] px-1"
+                                            style={{ color: 'var(--text-muted)' }}
+                                        >
+                                            Diferenciales (Δ)
+                                        </h4>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {[
+                                                { key: 'DELTAL', label: 'ΔL' },
+                                                { key: 'DELTAA', label: 'Δa' },
+                                                { key: 'DELTAB', label: 'Δb' }
+                                            ].map(({ key, label }) => {
+                                                const val = parseFloat(formula[key] || '0');
+                                                const positive = val >= 0;
+                                                return (
+                                                    <div
+                                                        key={key}
+                                                        className="p-4 rounded-xl text-center"
+                                                        style={{
+                                                            backgroundColor: 'var(--bg-ingredient-card)',
+                                                            border: '1px solid var(--border-ingredient-card)'
+                                                        }}
+                                                    >
+                                                        <p
+                                                            className="text-[9px] font-bold uppercase tracking-widest mb-2"
+                                                            style={{ color: 'var(--text-muted)' }}
+                                                        >
+                                                            {label}
+                                                        </p>
+                                                        <p
+                                                            className="font-mono text-lg font-black"
+                                                            style={{ color: positive ? '#34d399' : '#f87171' }}
+                                                        >
+                                                            {formula[key] || '0.00'}
+                                                        </p>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
 
-                                        {/* Total Delta E */}
-                                        <div className="relative group overflow-hidden bg-gradient-to-br from-[#B85D00]/20 to-slate-900 p-8 rounded-[3rem] border border-[#B85D00]/30 flex flex-col items-center justify-center gap-2 shadow-xl">
-                                            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_30%_20%,rgba(192,114,4,0.1),transparent)]" />
-                                            <div className="h-12 w-12 rounded-2xl bg-[#B85D00] flex items-center justify-center text-white shadow-2xl shadow-[#B85D00]/40 z-10">
-                                                <span className="font-black text-xl">ΔE</span>
+                                        {/* ΔE Total — hero card */}
+                                        <div
+                                            className="relative overflow-hidden p-6 rounded-2xl flex flex-col items-center justify-center gap-3"
+                                            style={{
+                                                background: 'var(--bg-delta-hero)',
+                                                border: '1px solid rgba(184,93,0,0.3)',
+                                                boxShadow: '0 8px 32px rgba(184,93,0,0.08)'
+                                            }}
+                                        >
+                                            {/* Radial glow */}
+                                            <div
+                                                className="absolute inset-0"
+                                                style={{
+                                                    background: 'radial-gradient(circle at 30% 20%, rgba(184,93,0,0.1), transparent 70%)',
+                                                    pointerEvents: 'none'
+                                                }}
+                                            />
+                                            {/* Accent top bar */}
+                                            <div
+                                                className="absolute top-0 left-0 right-0 h-0.5"
+                                                style={{ background: 'linear-gradient(to right, var(--accent-orange), transparent)' }}
+                                            />
+
+                                            <div
+                                                className="relative h-11 w-11 rounded-2xl flex items-center justify-center shadow-lg z-10"
+                                                style={{
+                                                    backgroundColor: 'var(--accent-orange)',
+                                                    boxShadow: '0 4px 16px rgba(184,93,0,0.4)'
+                                                }}
+                                            >
+                                                <span className="font-black text-sm text-white">ΔE</span>
                                             </div>
-                                            <p className="text-[10px] font-bold text-[#B85D00] uppercase tracking-[0.3em] z-10">Diferencia Total</p>
-                                            <span className="font-mono text-5xl text-white font-black tracking-tighter drop-shadow-lg z-10">
+                                            <p
+                                                className="relative text-[10px] font-bold uppercase tracking-[0.3em] z-10"
+                                                style={{ color: 'var(--accent-orange)' }}
+                                            >
+                                                Diferencia Total
+                                            </p>
+                                            <span
+                                                className="relative font-mono text-5xl sm:text-6xl font-black tracking-tighter z-10 drop-shadow-lg"
+                                                style={{ color: 'var(--text-primary)' }}
+                                            >
                                                 {formula.DELTA || '0.00'}
                                             </span>
                                         </div>
@@ -492,56 +848,166 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                 </div>
                             )}
 
+                            {/* ══ TAB: PROCESOS ══ */}
                             {activeTab === 'procesos' && (
-                                <div className="p-6 space-y-6">
+                                <div className="p-4 sm:p-6 space-y-4">
                                     {processes.length > 0 ? (
                                         <div className="relative">
-                                            <div className="absolute left-6 top-4 bottom-4 w-0.5 bg-slate-800" />
-                                            <div className="space-y-8">
+                                            {/* Timeline line */}
+                                            <div
+                                                className="absolute left-5 top-3 bottom-3 w-0.5"
+                                                style={{ backgroundColor: 'rgba(184,93,0,0.2)' }}
+                                            />
+                                            <div className="space-y-4">
                                                 {processes.map((proc, idx) => (
-                                                    <div key={idx} className="relative flex items-start gap-4 pl-12">
-                                                        <div className="absolute left-4 top-1 h-4 w-4 -translate-x-1/2 rounded-full border-2 border-[#B85D00] bg-[#0A0F14] z-10" />
-                                                        <div className="bg-slate-900/60 p-5 rounded-3xl border border-slate-800/50 w-full">
-                                                            <div className="flex items-center gap-2 mb-3">
-                                                                <span className="h-6 w-6 rounded-lg bg-[#B85D00]/20 text-[#B85D00] text-[10px] font-bold flex items-center justify-center">{proc.id}</span>
-                                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Paso del Proceso</span>
-                                                            </div>
-                                                            <p className="text-sm text-slate-300 leading-relaxed font-medium">{proc.text}</p>
+                                                    <motion.div
+                                                        key={idx}
+                                                        initial={{ opacity: 0, x: -12 }}
+                                                        animate={{ opacity: 1, x: 0 }}
+                                                        transition={{ delay: idx * 0.08 }}
+                                                        className="relative flex items-start gap-4 pl-10"
+                                                    >
+                                                        {/* Timeline dot */}
+                                                        <div
+                                                            className="absolute left-3 top-1.5 h-4 w-4 -translate-x-1/2 rounded-full z-10 flex items-center justify-center"
+                                                            style={{
+                                                                border: '2px solid var(--accent-orange)',
+                                                                backgroundColor: 'var(--bg-app)'
+                                                            }}
+                                                        >
+                                                            <div
+                                                                className="h-1.5 w-1.5 rounded-full"
+                                                                style={{ backgroundColor: 'var(--accent-orange)' }}
+                                                            />
                                                         </div>
-                                                    </div>
+
+                                                        {/* Process card */}
+                                                        <div
+                                                            className="w-full p-4 rounded-xl transition-all duration-200"
+                                                            style={{
+                                                                backgroundColor: 'var(--bg-ingredient-card)',
+                                                                border: '1px solid var(--border-ingredient-card)'
+                                                            }}
+                                                        >
+                                                            <div className="flex items-center gap-2 mb-2">
+                                                                <span
+                                                                    className="h-5 w-5 rounded-lg text-[9px] font-black flex items-center justify-center"
+                                                                    style={{
+                                                                        backgroundColor: 'rgba(184,93,0,0.2)',
+                                                                        color: 'var(--accent-orange)'
+                                                                    }}
+                                                                >
+                                                                    {proc.id}
+                                                                </span>
+                                                                <span
+                                                                    className="text-[10px] font-bold uppercase tracking-widest"
+                                                                    style={{ color: 'var(--text-muted)' }}
+                                                                >
+                                                                    Paso del Proceso
+                                                                </span>
+                                                            </div>
+                                                            <p
+                                                                className="text-sm leading-relaxed font-medium"
+                                                                style={{ color: 'var(--text-secondary)' }}
+                                                            >
+                                                                {proc.text}
+                                                            </p>
+                                                        </div>
+                                                    </motion.div>
                                                 ))}
                                             </div>
                                         </div>
                                     ) : (
                                         <div className="py-20 text-center">
-                                            <ClipboardList className="h-12 w-12 text-slate-800 mx-auto mb-4" />
-                                            <p className="text-sm text-slate-600 font-medium italic">No hay procesos definidos.</p>
+                                            <ClipboardList
+                                                className="h-10 w-10 mx-auto mb-3 opacity-20"
+                                                style={{ color: 'var(--text-muted)' }}
+                                            />
+                                            <p
+                                                className="text-sm font-medium italic"
+                                                style={{ color: 'var(--text-muted)' }}
+                                            >
+                                                No hay procesos definidos.
+                                            </p>
                                         </div>
                                     )}
                                 </div>
                             )}
 
+                            {/* ══ TAB: NOTAS ══ */}
                             {activeTab === 'obs' && (
-                                <div className="p-6 h-full">
+                                <div className="p-4 sm:p-6">
                                     {formula.OBSERVACIONES ? (
-                                        <div className="bg-slate-900/40 p-6 rounded-[2rem] border border-slate-800/60 shadow-inner">
-                                            <MessageSquare className="h-6 w-6 text-[#B85D00] mb-4 opacity-50" />
-                                            <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line font-medium italic">"{formula.OBSERVACIONES}"</p>
+                                        <div
+                                            className="p-5 rounded-2xl"
+                                            style={{
+                                                backgroundColor: 'var(--bg-ingredient-card)',
+                                                border: '1px solid var(--border-ingredient-card)'
+                                            }}
+                                        >
+                                            <div className="flex items-center gap-2 mb-4">
+                                                <MessageSquare
+                                                    className="h-4 w-4"
+                                                    style={{ color: 'var(--accent-orange)', opacity: 0.7 }}
+                                                />
+                                                <span
+                                                    className="text-[10px] font-bold uppercase tracking-widest"
+                                                    style={{ color: 'var(--text-muted)' }}
+                                                >
+                                                    Observaciones
+                                                </span>
+                                            </div>
+                                            <p
+                                                className="text-sm leading-relaxed whitespace-pre-line font-medium italic"
+                                                style={{ color: 'var(--text-secondary)' }}
+                                            >
+                                                "{formula.OBSERVACIONES}"
+                                            </p>
                                         </div>
                                     ) : (
                                         <div className="py-20 text-center">
-                                            <MessageSquare className="h-12 w-12 text-slate-800 mx-auto mb-4" />
-                                            <p className="text-sm text-slate-600 font-medium italic">No hay observaciones.</p>
+                                            <MessageSquare
+                                                className="h-10 w-10 mx-auto mb-3 opacity-20"
+                                                style={{ color: 'var(--text-muted)' }}
+                                            />
+                                            <p
+                                                className="text-sm font-medium italic"
+                                                style={{ color: 'var(--text-muted)' }}
+                                            >
+                                                No hay observaciones.
+                                            </p>
                                         </div>
                                     )}
                                 </div>
                             )}
                         </div>
 
-                        {/* Footer */}
-                        <div className="p-6 bg-[#0A0F14] border-t border-slate-800">
-                            <button onClick={onClose} className="w-full py-4 bg-[#B85D00] text-white rounded-2xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-[#B85D00]/20">
-                                Cerrar Detalle
+                        {/* ── Footer CTA ── */}
+                        <div
+                            className="flex-shrink-0 p-4 sm:p-5"
+                            style={{
+                                backgroundColor: 'var(--bg-tabs-nav)',
+                                borderTop: '1px solid var(--border-card)'
+                            }}
+                        >
+                            <button
+                                onClick={onClose}
+                                className="w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs text-white transition-all duration-200 active:scale-[0.98] relative overflow-hidden group"
+                                style={{
+                                    background: 'linear-gradient(135deg, #CC5200 0%, var(--accent-orange) 50%, #CC5200 100%)',
+                                    backgroundSize: '200% 100%',
+                                    boxShadow: '0 4px 20px rgba(184,93,0,0.3), 0 1px 0 rgba(255,255,255,0.08) inset'
+                                }}
+                                onMouseEnter={e => {
+                                    (e.currentTarget as HTMLButtonElement).style.backgroundPosition = '100% 0';
+                                    (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 28px rgba(204,82,0,0.45), 0 1px 0 rgba(255,255,255,0.1) inset';
+                                }}
+                                onMouseLeave={e => {
+                                    (e.currentTarget as HTMLButtonElement).style.backgroundPosition = '0% 0';
+                                    (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 20px rgba(184,93,0,0.3), 0 1px 0 rgba(255,255,255,0.08) inset';
+                                }}
+                            >
+                                <span className="relative z-10">Cerrar Detalle</span>
                             </button>
                         </div>
                     </motion.div>

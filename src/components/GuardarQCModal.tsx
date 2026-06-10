@@ -1,17 +1,12 @@
 import { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config';
-import { loadSettings } from '../components/DeviceSettings';
 
-interface GuardarEscaneoProps {
+interface GuardarQCModalProps {
   isOpen: boolean;
   onClose: () => void;
-  measurement: any;
-  onSaveSuccess: (savedMedicion: any) => void;
-  onLogout?: () => void;
-  blancoReferencia?: string;
-  modoMedicion?: string;
-  densidad?: string;
-  promedio?: number;
+  onSaveSuccess: (name: string, desc: string, libId: number, colId: number) => Promise<void>;
+  initialName?: string;
+  initialDesc?: string;
 }
 
 interface Libreria {
@@ -24,23 +19,18 @@ interface Coleccion {
   nombre: string;
 }
 
-export default function GuardarEscaneo({
+export default function GuardarQCModal({
   isOpen,
   onClose,
-  measurement,
   onSaveSuccess,
-  onLogout,
-  blancoReferencia,
-  modoMedicion,
-  densidad,
-  promedio
-}: GuardarEscaneoProps) {
-  const [colorName, setColorName] = useState('');
-  const [notes, setNotes] = useState('');
+  initialName = '',
+  initialDesc = ''
+}: GuardarQCModalProps) {
+  const [sessionName, setSessionName] = useState(initialName);
+  const [notes, setNotes] = useState(initialDesc);
 
   const [libraryObj, setLibraryObj] = useState<Libreria | null>(null);
   const [collectionObj, setCollectionObj] = useState<Coleccion | null>(null);
-
   const [collections, setCollections] = useState<Coleccion[]>([]);
 
   const [view, setView] = useState<'main' | 'select-collection' | 'add-collection'>('main');
@@ -49,10 +39,12 @@ export default function GuardarEscaneo({
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  const userDataStr = localStorage.getItem('userData');
+  const userDataObj = userDataStr ? JSON.parse(userDataStr) : null;
+  const clientName = userDataObj?.empresa || 'Cliente Default';
+
   const getHeaders = () => {
     const token = localStorage.getItem('token');
-    const userDataStr = localStorage.getItem('userData');
-    const userDataObj = userDataStr ? JSON.parse(userDataStr) : null;
     const headers: any = {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`
@@ -63,10 +55,6 @@ export default function GuardarEscaneo({
     return headers;
   };
 
-  const userDataStr = localStorage.getItem('userData');
-  const userDataObj = userDataStr ? JSON.parse(userDataStr) : null;
-  const clientName = userDataObj?.empresa || 'Cliente Default';
-
   const fetchOrCreateLibrary = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/librerias`, { headers: getHeaders() });
@@ -76,6 +64,7 @@ export default function GuardarEscaneo({
         if (clientLib) {
           setLibraryObj(clientLib);
         } else {
+          // create it automatically if not found
           const resCreate = await fetch(`${API_BASE_URL}/api/librerias`, {
             method: 'POST',
             headers: getHeaders(),
@@ -109,21 +98,14 @@ export default function GuardarEscaneo({
 
   useEffect(() => {
     if (isOpen) {
-      if (measurement?.color?.hex) {
-        setColorName(`Color ${measurement.color.hex.toUpperCase()}`);
-      } else {
-        setColorName('Color Escaneado');
-      }
-      setNotes('');
-      setLibraryObj(null);
-      setCollectionObj(null);
+      setSessionName(initialName);
+      setNotes(initialDesc);
       setErrorMessage('');
       setView('main');
       setNewItemName('');
-
       fetchOrCreateLibrary();
     }
-  }, [isOpen, measurement]);
+  }, [isOpen, initialName, initialDesc]);
 
   useEffect(() => {
     if (libraryObj) {
@@ -134,12 +116,12 @@ export default function GuardarEscaneo({
   }, [libraryObj]);
 
   const handleSave = async () => {
-    if (!colorName.trim()) {
-      setErrorMessage('Por favor ingresa un nombre para el color');
+    if (!sessionName.trim()) {
+      setErrorMessage('Por favor ingresa un nombre/lote para el control');
       return;
     }
     if (!libraryObj) {
-      setErrorMessage('Por favor selecciona una librería');
+      setErrorMessage('Falta la librería por defecto');
       return;
     }
     if (!collectionObj) {
@@ -150,56 +132,7 @@ export default function GuardarEscaneo({
     setIsSaving(true);
     setErrorMessage('');
     try {
-      const currentSettings = loadSettings();
-      const c = measurement.color;
-      const bodyPayload: any = {
-        nombre: colorName.trim(),
-        id_libreria: libraryObj.id,
-        id_coleccion: collectionObj.id,
-        notas: notes.trim() || null,
-        fecha: measurement.timestamp || new Date().toISOString(),
-        L: c.L,
-        A: c.a,
-        B: c.b,
-        R: c.R,
-        G: c.G,
-        RB: c.B,
-        C: c.C,
-        H: c.H,
-        X: c.X,
-        Y: c.Y,
-        Z: c.Z,
-        hex: c.hex,
-        LRV: c.LRV,
-        Density: c.Density,
-        blanco_referencia: blancoReferencia || currentSettings.referenceWhite || null,
-        modo_medicion: modoMedicion || currentSettings.measurementMode || null,
-        densidad: densidad || currentSettings.densityStatus || null,
-        promedio: promedio || currentSettings.multiPointAveraging || null,
-      };
-      if (c.cmyk) {
-        bodyPayload.cmykC = c.cmyk.C;
-        bodyPayload.cmykM = c.cmyk.M;
-        bodyPayload.cmykY = c.cmyk.Y;
-        bodyPayload.cmykK = c.cmyk.K;
-      }
-
-      const res = await fetch(`${API_BASE_URL}/api/mediciones`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify(bodyPayload)
-      });
-
-      if (!res.ok) {
-        if (res.status === 401 || res.status === 403) {
-          onLogout?.();
-          return;
-        }
-        throw new Error('No se pudo guardar la medición');
-      }
-
-      const savedMed = await res.json();
-      onSaveSuccess(savedMed);
+      await onSaveSuccess(sessionName.trim(), notes.trim(), libraryObj.id, collectionObj.id);
       onClose();
     } catch (err: any) {
       setErrorMessage(err.message || 'Error al guardar');
@@ -212,7 +145,7 @@ export default function GuardarEscaneo({
 
   const renderMainForm = () => (
     <div className="flex flex-col flex-1 p-6">
-      <h2 className="text-center text-lg font-bold tracking-wide mb-6 text-slate-900 dark:text-white">Guardar medición</h2>
+      <h2 className="text-center text-lg font-bold tracking-wide mb-6 text-slate-900 dark:text-white">Guardar Control de Calidad</h2>
 
       {errorMessage && (
         <div className="mb-4 text-xs font-semibold text-red-700 dark:text-red-500 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded p-2 text-center">
@@ -222,13 +155,13 @@ export default function GuardarEscaneo({
 
       <div className="space-y-5 flex-1">
         <div className="relative">
-          <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-500 uppercase tracking-widest mb-1">Nombre de fórmula *</label>
+          <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-500 uppercase tracking-widest mb-1">Nombre / Lote *</label>
           <input
             type="text"
-            value={colorName}
-            onChange={(e) => setColorName(e.target.value)}
+            value={sessionName}
+            onChange={(e) => setSessionName(e.target.value)}
             className="w-full bg-transparent border-b border-slate-300 dark:border-slate-800 focus:border-blue-500 dark:focus:border-[#d4af37] text-sm py-1.5 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600 text-slate-900 dark:text-white font-medium"
-            placeholder="Nombre de la medición"
+            placeholder="Nombre o lote de la muestra"
           />
         </div>
 
@@ -244,7 +177,7 @@ export default function GuardarEscaneo({
           <div
             onClick={() => {
               if (!libraryObj) {
-                setErrorMessage('Primero debes seleccionar una librería');
+                setErrorMessage('Cargando librería...');
               } else {
                 setView('select-collection');
               }
@@ -346,7 +279,7 @@ export default function GuardarEscaneo({
   const renderAddView = (
     title: string,
     label: string,
-    onSave: () => void,
+    onSaveAdd: () => void,
     onCancel: () => void
   ) => (
     <div className="flex flex-col flex-1 p-6">
@@ -376,7 +309,7 @@ export default function GuardarEscaneo({
         </button>
         <button
           type="button"
-          onClick={onSave}
+          onClick={onSaveAdd}
           disabled={!newItemName.trim() || isSaving}
           className="flex-1 flex items-center justify-center text-xs font-bold uppercase tracking-widest bg-[#1e293b] text-white hover:bg-slate-700 dark:bg-[#d4af37] dark:text-black dark:hover:bg-[#c9a227] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -387,7 +320,7 @@ export default function GuardarEscaneo({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[60001] flex items-center justify-center  backdrop-blur-sm p-4">
       <div className="w-full max-w-sm rounded-[10px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0A0F14]/40 backdrop-blur-xl text-slate-900 dark:text-white shadow-2xl overflow-hidden flex flex-col min-h-[280px]">
         {view === 'main' && renderMainForm()}
 
@@ -403,7 +336,7 @@ export default function GuardarEscaneo({
         )}
 
         {view === 'add-collection' && renderAddView(
-          'Seleccionar colección',
+          'Crear colección',
           'Colección',
           async () => {
             if (newItemName.trim() && libraryObj) {

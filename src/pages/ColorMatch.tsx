@@ -366,6 +366,7 @@ export default function ColorMatch() {
         try {
             const saved = localStorage.getItem('color_match_restore');
             if (saved) {
+                isRestoringRef.current = true;
                 const s = JSON.parse(saved);
                 if (s.patronL !== undefined) setPatronL(s.patronL);
                 if (s.patronA !== undefined) setPatronA(s.patronA);

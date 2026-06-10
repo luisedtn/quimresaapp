@@ -218,6 +218,26 @@ export default function Scan({ userData, onLogout }: ScanProps) {
         </div>
 
         <div className="flex items-center gap-1">
+          {displayMeasurement && !isMeasuring && (
+            <>
+              <button
+                onClick={handleShare}
+                disabled={!historyMeasurement && settings.measurementTrigger === 'manual' && measurements.length < settings.multiPointAveraging}
+                className="p-2 text-white/70 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Compartir"
+              >
+                <Share2 className="h-6 w-6 text-white" />
+              </button>
+              <button
+                onClick={handleSaveMeasurement}
+                disabled={isSaving || !!historyMeasurement || (!historyMeasurement && settings.measurementTrigger === 'manual' && measurements.length < settings.multiPointAveraging)}
+                className="p-2 text-white/70 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Guardar"
+              >
+                {isSaving ? <RefreshCcw className="h-6 w-6 text-white animate-spin" /> : <Save className="h-6 w-6 text-white" />}
+              </button>
+            </>
+          )}
           <button onClick={() => setIsHistorialOpen(true)} className="p-2 text-white/70 hover:text-white transition-colors">
             <History className="h-6 w-6 text-white" />
           </button>
@@ -366,24 +386,6 @@ export default function Scan({ userData, onLogout }: ScanProps) {
                     <span className="text-white font-mono font-bold tracking-tighter text-lg uppercase">
                       {displayMeasurement.color.hex}
                     </span>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleShare}
-                      disabled={!historyMeasurement && settings.measurementTrigger === 'manual' && measurements.length < settings.multiPointAveraging}
-                      className="p-3 bg-black/30 hover:bg-[#a38105]/40 backdrop-blur-md rounded-full border border-white/10 hover:border-[#a38105]/60 text-white transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
-                      title="Compartir"
-                    >
-                      <Share2 className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={handleSaveMeasurement}
-                      disabled={isSaving || !!historyMeasurement || (!historyMeasurement && settings.measurementTrigger === 'manual' && measurements.length < settings.multiPointAveraging)}
-                      className="p-3 bg-black/30 hover:bg-[#a38105]/40 backdrop-blur-md rounded-full border border-white/10 hover:border-[#a38105]/60 text-white transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      {isSaving ? <RefreshCcw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                    </button>
                   </div>
                 </div>
               )}

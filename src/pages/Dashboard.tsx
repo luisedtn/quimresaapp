@@ -141,7 +141,7 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowExitConfirm(false)}
-                    className="flex-1 px-6 py-3 rounded-xl bg-[#a38105] hover:bg-[#FF8409]/80 text-white text-xs font-bold uppercase tracking-widest transition-all active:scale-95"
+                    className="flex-1 px-6 py-3 rounded-xl bg-[var(--accent-orange)] hover:bg-[var(--accent-orange-hover)] text-white text-xs font-bold uppercase tracking-widest transition-all active:scale-95"
                   >
                     Cancelar
                   </button>
@@ -229,8 +229,8 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
               }}
               className="elegant-card flex items-center gap-4 p-5 text-left transition-all duration-300 group border border-slate-200/60 dark:border-slate-800/80 rounded-2xl w-full"
             >
-              <div className="rounded-xl p-3.5 bg-gradient-to-br from-[#a38105]/15 to-[#a38105]/5 dark:from-slate-800/80 dark:to-slate-900/80 border border-[#a38105]/15 dark:border-slate-700/50 flex-shrink-0 flex items-center justify-center transition-all duration-300 group-hover:from-[#a38105]/25 group-hover:to-[#a38105]/15">
-                <item.icon className="h-6 w-6 text-[#a38105] dark:text-[#d4af37] transition-transform duration-300 group-hover:scale-110" />
+              <div className="rounded-xl p-3.5 bg-gradient-to-br from-[var(--accent-orange)]/15 to-[var(--accent-orange)]/5 border border-[var(--accent-orange)]/15 dark:border-slate-700/50 flex-shrink-0 flex items-center justify-center transition-all duration-300 group-hover:from-[var(--accent-orange)]/25 group-hover:to-[var(--accent-orange)]/15">
+                <item.icon className="h-6 w-6 text-[var(--accent-orange)] transition-transform duration-300 group-hover:scale-110" />
               </div>
               <div className="flex-grow min-w-0 pr-2">
                 <h3 className="text-base font-bold tracking-tight transition-colors group-hover:text-[#005EC3] dark:group-hover:text-blue-400" style={{ color: 'var(--text-primary)' }}>

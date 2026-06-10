@@ -187,7 +187,7 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
       {/* ── Header ── */}
       <header className="fixed top-0 z-10 flex w-full items-center justify-between border-b border-black/10 bg-[#CC5200] shadow-lg px-4 py-4">
         <button onClick={() => navigate(-1)} className="p-2 text-black hover:text-white transition-colors">
-          <ArrowLeft className="h-6 w-6 text-black" />
+          <ArrowLeft className="h-6 w-6 text-white" />
         </button>
         <h1 className="text-lg font-semibold uppercase tracking-tight text-white">Fórmulas Personales</h1>
         <div className="w-10"></div>
@@ -256,7 +256,7 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
                         {/* Color circle */}
                         <div
                           className="formula-card__color-circle"
-                          style={{ backgroundColor: formulaColor }}
+                          style={{ backgroundColor: formulaColor, boxShadow: 'none', border: 'none' }}
                           title="Vista de color"
                         />
 

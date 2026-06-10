@@ -42,7 +42,7 @@ export default function Sidebar({ isOpen, onClose, onLogout, userData }: Sidebar
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed inset-y-0 left-0 z-50 w-full max-w-[300px] bg-[#0A0F14] border-r border-slate-800 flex flex-col shadow-2xl"
           >
-            <div className="flex items-center justify-between px-6 py-5 bg-[#a38105] shadow-md">
+            <div className="flex items-center justify-between px-6 py-5 bg-[var(--accent-orange)] shadow-md">
               <h2 className="text-xs font-bold text-white uppercase tracking-widest">Menú de Laboratorio</h2>
               <button onClick={onClose} className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all">
                 <X className="h-5 w-5" />
@@ -168,13 +168,13 @@ function AccordionSection({
         onClick={() => setIsOpen(!isOpen)}
         className="w-full text-left px-6 py-2 flex items-center justify-between group focus:outline-none"
       >
-        <h3 className="text-base font-bold tracking-tight group-hover:text-[#a38105] dark:group-hover:text-blue-400 transition-colors" style={{ color: 'var(--text-primary)' }}>{title}</h3>
+        <h3 className="text-base font-bold tracking-tight group-hover:text-[var(--accent-orange)] dark:group-hover:text-blue-400 transition-colors" style={{ color: 'var(--text-primary)' }}>{title}</h3>
         <motion.div
           initial={false}
           animate={{ rotate: isOpen ? 90 : 0 }}
           transition={{ duration: 0.2 }}
         >
-          <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-[#a38105] dark:group-hover:text-blue-400 transition-colors" />
+          <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-[var(--accent-orange)] dark:group-hover:text-blue-400 transition-colors" />
         </motion.div>
       </button>
       <div className="px-6 mb-2">
@@ -204,10 +204,10 @@ function SidebarItem({ icon: Icon, label, showChevron, onClick }: { icon: any, l
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center justify-between px-6 py-3.5 hover:bg-[#a38105]/10 dark:hover:bg-[#002C6C]/20 transition-all group text-left focus:outline-none"
+      className="w-full flex items-center justify-between px-6 py-3.5 hover:bg-[var(--accent-orange)]/10 dark:hover:bg-[var(--accent-color)]/20 transition-all group text-left focus:outline-none"
     >
       <div className="flex items-center gap-4">
-        <Icon className="h-4 w-4 text-slate-500 group-hover:text-[#a38105] dark:group-hover:text-[#38bdf8] transition-colors" />
+        <Icon className="h-4 w-4 text-slate-500 group-hover:text-[var(--accent-orange)] dark:group-hover:text-[#38bdf8] transition-colors" />
         <span className="text-sm font-medium transition-colors group-hover:text-slate-900 dark:group-hover:text-white" style={{ color: 'var(--text-secondary)' }}>{label}</span>
       </div>
       {showChevron && <ChevronRight className="h-4 w-4 text-slate-400 dark:text-slate-600 transition-transform group-hover:translate-x-0.5" />}
