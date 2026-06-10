@@ -17,6 +17,12 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+
+// Configurar el Worker de PDF.js para Vite
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -40,6 +46,9 @@ interface FichasBasesProps {
 function PDFViewer({ id, field, title, onClose }: { id: number; field: string; title: string; onClose: () => void }) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loadError, setLoadError] = useState(false);
+  const [numPages, setNumPages] = useState<number>();
+  const [containerWidth, setContainerWidth] = useState<number>(window.innerWidth);
+  const containerRef = useRef<HTMLDivElement>(null);
   const blobUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -70,6 +79,27 @@ function PDFViewer({ id, field, title, onClose }: { id: number; field: string; t
     };
   }, [id, field]);
 
+  useEffect(() => {
+    if (!blobUrl || !containerRef.current) return;
+
+    const handleResize = () => {
+      if (containerRef.current) {
+        const availableWidth = containerRef.current.clientWidth - 32;
+        setContainerWidth(availableWidth > 800 ? 800 : availableWidth);
+      }
+    };
+
+    const observer = new ResizeObserver(handleResize);
+    observer.observe(containerRef.current);
+    handleResize();
+
+    return () => observer.disconnect();
+  }, [blobUrl]);
+
+  function onDocumentLoadSuccess({ numPages }: { numPages: number }): void {
+    setNumPages(numPages);
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -89,7 +119,7 @@ function PDFViewer({ id, field, title, onClose }: { id: number; field: string; t
           <X className="w-5 h-5" />
         </button>
       </header>
-      <div className="flex-1 overflow-hidden bg-slate-900">
+      <div ref={containerRef} className="flex-1 overflow-y-auto bg-slate-900/40 flex flex-col items-center p-4">
         {loadError ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3">
             <AlertTriangle className="w-8 h-8 text-red-400" />
@@ -97,17 +127,46 @@ function PDFViewer({ id, field, title, onClose }: { id: number; field: string; t
             <button onClick={onClose} className="text-[#CC5200] underline text-xs">Cerrar</button>
           </div>
         ) : !blobUrl ? (
-          <div className="flex items-center justify-center h-full">
+          <div className="flex items-center justify-center h-full py-20">
             <Loader2 className="w-6 h-6 text-[#CC5200] animate-spin" />
           </div>
         ) : (
-          <object data={blobUrl} className="w-full h-full" title={title} type="application/pdf">
-            <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3">
-              <AlertTriangle className="w-8 h-8 text-slate-500" />
-              <p className="text-sm">No se pudo visualizar el PDF</p>
-              <button onClick={onClose} className="text-[#CC5200] underline text-xs">Cerrar</button>
-            </div>
-          </object>
+          <Document
+            file={blobUrl}
+            onLoadSuccess={onDocumentLoadSuccess}
+            onLoadError={(e) => {
+              console.error('[PDFViewer] Error de renderizado:', e);
+              setLoadError(true);
+            }}
+            loading={
+              <div className="flex flex-col items-center space-y-4 text-slate-400 mt-20">
+                <Loader2 className="w-8 h-8 animate-spin text-[#CC5200]" />
+                <span className="font-bold tracking-widest uppercase text-[10px]">Cargando PDF...</span>
+              </div>
+            }
+            error={
+              <div className="bg-red-500/20 text-red-400 font-bold p-8 rounded-2xl border border-red-500/50 text-center max-w-sm mt-20">
+                ⚠️ Error renderizando el documento.
+              </div>
+            }
+          >
+            {Array.from(new Array(numPages), (el, index) => (
+              <div key={`page_${index + 1}`} className="mb-4 shadow-2xl bg-white rounded-lg overflow-hidden">
+                <Page
+                  pageNumber={index + 1}
+                  width={containerWidth}
+                  renderTextLayer={false}
+                  renderAnnotationLayer={false}
+                  loading={
+                    <div
+                      className="animate-pulse bg-slate-800"
+                      style={{ width: containerWidth, height: 400 }}
+                    ></div>
+                  }
+                />
+              </div>
+            ))}
+          </Document>
         )}
       </div>
     </motion.div>

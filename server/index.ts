@@ -1696,7 +1696,11 @@ app.get('/api/bases/:id/pdf/:field', async (req: Request, res: Response): Promis
                 );
                 const base64 = rows[0]?.[field];
                 if (!base64) return res.status(404).json({ error: 'PDF no encontrado' });
-                const buffer = Buffer.from(base64, 'base64');
+                
+                const parts = base64.split('base64,');
+                const base64Data = parts.length > 1 ? parts[1] : parts[0];
+                const buffer = Buffer.from(base64Data, 'base64');
+                
                 res.setHeader('Content-Type', 'application/pdf');
                 res.setHeader('Content-Disposition', 'inline');
                 res.send(buffer);
