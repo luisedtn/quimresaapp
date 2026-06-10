@@ -1575,6 +1575,70 @@ app.post('/api/deltarango/reset', authenticateToken, async (req: Request, res: R
 
 // ─── END DeltaRango ────────────────────────────────────────────────────────────
 
+// ─── BASES (Fichas Técnicas / Seguridad) ─────────────────────────────────────
+
+app.get('/api/bases', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { search, grupo, producto } = req.query;
+        let sql = `SELECT * FROM "BASES" WHERE 1=1`;
+        const params: any[] = [];
+        let paramIndex = 1;
+
+        if (search) {
+            sql += ` AND ("CODIGO" ILIKE $${paramIndex} OR "DESCRIPCIO" ILIKE $${paramIndex})`;
+            params.push(`%${search}%`);
+            paramIndex++;
+        }
+        if (grupo) {
+            sql += ` AND "GRUPO" = $${paramIndex}`;
+            params.push(grupo);
+            paramIndex++;
+        }
+        if (producto) {
+            sql += ` AND "PRODUCTO" = $${paramIndex}`;
+            params.push(producto);
+            paramIndex++;
+        }
+
+        sql += ` ORDER BY "CODIGO" ASC`;
+
+        const bases = await prisma.$queryRawUnsafe(sql, ...params);
+        res.json(bases);
+    } catch (error: any) {
+        console.error('[ERROR] GET /api/bases:', error.message);
+        res.status(500).json({ error: 'Error al obtener bases', details: error.message });
+    }
+});
+
+app.put('/api/bases/:id', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { id } = req.params;
+        const { FICHATECNICA, FICHASEGURIDAD } = req.body;
+
+        if (FICHATECNICA !== undefined) {
+            await prisma.$executeRawUnsafe(
+                `UPDATE "BASES" SET "FICHATECNICA" = $1 WHERE "ID" = $2`,
+                FICHATECNICA, Number(id)
+            );
+        } else if (FICHASEGURIDAD !== undefined) {
+            await prisma.$executeRawUnsafe(
+                `UPDATE "BASES" SET "FICHASEGURIDAD" = $1 WHERE "ID" = $2`,
+                FICHASEGURIDAD, Number(id)
+            );
+        } else {
+            return res.status(400).json({ error: 'Debe enviar FICHATECNICA o FICHASEGURIDAD' });
+        }
+
+        const updated: any[] = await prisma.$queryRawUnsafe(
+            `SELECT * FROM "BASES" WHERE "ID" = $1`, Number(id)
+        );
+        res.json(updated[0] || {});
+    } catch (error: any) {
+        console.error('[ERROR] PUT /api/bases/:id:', error.message);
+        res.status(500).json({ error: 'Error al actualizar base', details: error.message });
+    }
+});
+
 app.use('/controlcalidad', express.static(path.join(__dirname, '../controlcalidad')));
 
 const distPath = path.join(__dirname, '../dist');
