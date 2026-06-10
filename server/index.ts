@@ -1621,6 +1621,36 @@ app.get('/api/bases', authenticateToken, async (req: Request, res: Response): Pr
     }
 });
 
+app.get('/api/bases/productos', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const rows: any[] = await prisma.$queryRawUnsafe(
+            `SELECT DISTINCT "PRODUCTO" FROM "BASES" WHERE "PRODUCTO" IS NOT NULL ORDER BY "PRODUCTO"`
+        );
+        res.json(rows.map(r => r.PRODUCTO));
+    } catch (error: any) {
+        console.error('[ERROR] GET /api/bases/productos:', error.message);
+        res.status(500).json({ error: 'Error al obtener productos', details: error.message });
+    }
+});
+
+app.get('/api/bases/grupos', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { producto } = req.query;
+        let sql = `SELECT DISTINCT "GRUPO" FROM "BASES" WHERE "GRUPO" IS NOT NULL`;
+        const params: any[] = [];
+        if (producto) {
+            sql += ` AND "PRODUCTO" = $1`;
+            params.push(producto);
+        }
+        sql += ` ORDER BY "GRUPO"`;
+        const rows: any[] = await prisma.$queryRawUnsafe(sql, ...params);
+        res.json(rows.map(r => r.GRUPO));
+    } catch (error: any) {
+        console.error('[ERROR] GET /api/bases/grupos:', error.message);
+        res.status(500).json({ error: 'Error al obtener grupos', details: error.message });
+    }
+});
+
 app.put('/api/bases/:id', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
         const { id } = req.params;

@@ -5,6 +5,7 @@ import {
   Search,
   X,
   ChevronDown,
+  ChevronUp,
   Upload,
   CheckCircle2,
   Trash2,
@@ -88,9 +89,11 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
   const [pdfViewer, setPdfViewer] = useState<{ data: string; title: string } | null>(null);
 
   const [hasMore, setHasMore] = useState(true);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const pageRef = useRef(1);
   const hasMoreRef = useRef(true);
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const isFetchingRef = useRef(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const filtersRef = useRef({ search: '', grupo: '', producto: '' });
@@ -104,23 +107,11 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
     return headers;
   }, []);
 
-  const mergeFilters = useCallback((rows: Base[]) => {
-    const gruposSet = new Set(grupos);
-    const productosSet = new Set(productos);
-    rows.forEach((b) => {
-      if (b.GRUPO) gruposSet.add(b.GRUPO);
-      if (b.PRODUCTO) productosSet.add(b.PRODUCTO);
-    });
-    setGrupos(Array.from(gruposSet).sort());
-    setProductos(Array.from(productosSet).sort());
-  }, [grupos, productos]);
-
   const fetchBases = useCallback(async (page: number, append: boolean) => {
-    if (append) {
-      setIsLoadingMore(true);
-    } else {
-      setIsLoading(true);
-    }
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+    if (append) setIsLoadingMore(true);
+    else setIsLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams();
@@ -135,23 +126,23 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
       if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
       const data = await res.json();
       const rows: Base[] = data.records ?? [];
-      const hasMore = data.hasMore ?? false;
+      const more = data.hasMore ?? false;
 
       if (append) {
         setBases((prev) => [...prev, ...rows]);
       } else {
         setBases(rows);
       }
-      hasMoreRef.current = hasMore;
-      setHasMore(hasMore);
-      mergeFilters(rows);
+      hasMoreRef.current = more;
+      setHasMore(more);
     } catch (e: any) {
       setError(e.message || 'Error de conexión');
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
+      isFetchingRef.current = false;
     }
-  }, [debouncedSearch, selectedGrupo, selectedProducto, getHeaders, mergeFilters]);
+  }, [debouncedSearch, selectedGrupo, selectedProducto, getHeaders]);
 
   const resetAndFetch = useCallback(() => {
     pageRef.current = 1;
@@ -161,42 +152,78 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
     fetchBases(1, false);
   }, [fetchBases, debouncedSearch, selectedGrupo, selectedProducto]);
 
+  const resetAndFetchRef = useRef(resetAndFetch);
+  resetAndFetchRef.current = resetAndFetch;
+
   useEffect(() => {
     if (searchTimer.current) clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(() => setDebouncedSearch(search), 400);
   }, [search]);
 
   useEffect(() => {
-    if (isOpen) resetAndFetch();
-  }, [isOpen, resetAndFetch]);
+    if (!isOpen) return;
+    resetAndFetchRef.current();
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
     const prev = filtersRef.current;
     if (debouncedSearch !== prev.search || selectedGrupo !== prev.grupo || selectedProducto !== prev.producto) {
-      resetAndFetch();
+      resetAndFetchRef.current();
     }
-  }, [debouncedSearch, selectedGrupo, selectedProducto, isOpen, resetAndFetch]);
-
-  const loadMore = useCallback(() => {
-    if (isLoadingMore || !hasMoreRef.current) return;
-    pageRef.current += 1;
-    fetchBases(pageRef.current, true);
-  }, [isLoadingMore, fetchBases]);
+  }, [debouncedSearch, selectedGrupo, selectedProducto, isOpen]);
 
   useEffect(() => {
-    if (!isOpen || !hasMoreRef.current) return;
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) loadMore();
-      },
-      { rootMargin: '200px' }
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [isOpen, loadMore]);
+    if (!isOpen) return;
+    const el = containerRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      setShowScrollTop(el.scrollTop > 600);
+      if (!hasMoreRef.current || isFetchingRef.current) return;
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 400) {
+        pageRef.current += 1;
+        fetchBases(pageRef.current, true);
+      }
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [isOpen, fetchBases]);
+
+  const fetchProductos = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bases/productos`, { headers: getHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        setProductos(Array.isArray(data) ? data : []);
+      }
+    } catch { /* ignore */ }
+  }, [getHeaders]);
+
+  const fetchGrupos = useCallback(async (producto?: string) => {
+    try {
+      const params = producto ? `?producto=${encodeURIComponent(producto)}` : '';
+      const res = await fetch(`${API_BASE_URL}/api/bases/grupos${params}`, { headers: getHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        setGrupos(Array.isArray(data) ? data : []);
+      }
+    } catch { /* ignore */ }
+  }, [getHeaders]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    fetchProductos();
+  }, [isOpen, fetchProductos]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (selectedProducto) {
+      setSelectedGrupo('');
+      fetchGrupos(selectedProducto);
+    } else {
+      fetchGrupos();
+    }
+  }, [selectedProducto, isOpen, fetchGrupos]);
 
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
@@ -360,50 +387,6 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
 
           {/* Filter row */}
           <div className="flex gap-2 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
-            {/* Grupo */}
-            <div className="relative flex-shrink-0">
-              <button
-                onClick={() => { setShowGrupoFilter(v => !v); setShowProductoFilter(false); }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wider border transition-all ${
-                  selectedGrupo
-                    ? 'bg-[#CC5200]/15 border-[#CC5200]/40 text-[#CC5200]'
-                    : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300'
-                }`}
-              >
-                Grupo{selectedGrupo ? ` · ${selectedGrupo.slice(0, 12)}` : ''}
-                <ChevronDown className={`w-3 h-3 transition-transform ${showGrupoFilter ? 'rotate-180' : ''}`} />
-              </button>
-              <AnimatePresence>
-                {showGrupoFilter && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -6, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -6, scale: 0.97 }}
-                    transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-                    className="absolute top-full mt-2 left-0 z-20 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl min-w-[180px] max-h-[240px] overflow-y-auto"
-                  >
-                    <div
-                      onClick={() => { setSelectedGrupo(''); setShowGrupoFilter(false); }}
-                      className="px-4 py-3 text-xs cursor-pointer hover:bg-slate-800 text-slate-500 border-b border-slate-800"
-                    >
-                      — Todos los grupos
-                    </div>
-                    {grupos.map((g) => (
-                      <div
-                        key={g}
-                        onClick={() => { setSelectedGrupo(g); setShowGrupoFilter(false); }}
-                        className={`px-4 py-3 text-xs cursor-pointer hover:bg-slate-800 transition-colors ${
-                          selectedGrupo === g ? 'text-[#CC5200] font-bold' : 'text-slate-300'
-                        }`}
-                      >
-                        {g}
-                      </div>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
             {/* Producto */}
             <div className="relative flex-shrink-0">
               <button
@@ -448,6 +431,50 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
               </AnimatePresence>
             </div>
 
+            {/* Grupo / Familia */}
+            <div className="relative flex-shrink-0">
+              <button
+                onClick={() => { setShowGrupoFilter(v => !v); setShowProductoFilter(false); }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wider border transition-all ${
+                  selectedGrupo
+                    ? 'bg-[#CC5200]/15 border-[#CC5200]/40 text-[#CC5200]'
+                    : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300'
+                }`}
+              >
+                Grupo{selectedGrupo ? ` · ${selectedGrupo.slice(0, 12)}` : ''}
+                <ChevronDown className={`w-3 h-3 transition-transform ${showGrupoFilter ? 'rotate-180' : ''}`} />
+              </button>
+              <AnimatePresence>
+                {showGrupoFilter && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                    transition={{ type: 'spring', damping: 30, stiffness: 400 }}
+                    className="absolute top-full mt-2 left-0 z-20 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl min-w-[180px] max-h-[240px] overflow-y-auto"
+                  >
+                    <div
+                      onClick={() => { setSelectedGrupo(''); setShowGrupoFilter(false); }}
+                      className="px-4 py-3 text-xs cursor-pointer hover:bg-slate-800 text-slate-500 border-b border-slate-800"
+                    >
+                      — Todos los grupos
+                    </div>
+                    {grupos.map((g) => (
+                      <div
+                        key={g}
+                        onClick={() => { setSelectedGrupo(g); setShowGrupoFilter(false); }}
+                        className={`px-4 py-3 text-xs cursor-pointer hover:bg-slate-800 transition-colors ${
+                          selectedGrupo === g ? 'text-[#CC5200] font-bold' : 'text-slate-300'
+                        }`}
+                      >
+                        {g}
+                      </div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             {/* Clear active filters */}
             {hasActiveFilters && (
               <button
@@ -461,7 +488,7 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
         </div>
 
         {/* ── Content ── */}
-        <div className="flex-1 overflow-auto" onClick={() => { setShowGrupoFilter(false); setShowProductoFilter(false); }}>
+        <div ref={containerRef} className="flex-1 overflow-auto" onClick={() => { setShowGrupoFilter(false); setShowProductoFilter(false); }}>
 
           {/* Loading */}
           {isLoading && (
@@ -554,9 +581,8 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
                 ))}
               </AnimatePresence>
 
-              {/* Sentinel + loading */}
+              {/* Loading / end indicator */}
               <div className="py-6 text-center">
-                <div ref={sentinelRef} className="h-4" />
                 {isLoadingMore && (
                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.9, ease: 'linear' }}>
                     <Loader2 className="w-5 h-5 text-[#CC5200] mx-auto" />
@@ -629,6 +655,21 @@ export default function FichasBases({ isOpen, onClose }: FichasBasesProps) {
             title={pdfViewer.title}
             onClose={() => setPdfViewer(null)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* ── FAB scroll to top ── */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={() => containerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="fixed bottom-6 right-6 z-[80000] w-12 h-12 rounded-2xl bg-[#CC5200] hover:bg-[#E06000] text-white shadow-2xl shadow-[#CC5200]/30 flex items-center justify-center transition-all active:scale-90"
+          >
+            <ChevronUp className="w-5 h-5" />
+          </motion.button>
         )}
       </AnimatePresence>
     </>
