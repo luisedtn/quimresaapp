@@ -37,6 +37,89 @@ interface DetalleFormulaProps {
     onClose: () => void;
 }
 
+// ── PdfTabContent — componente de nivel superior para identidad estable ───────
+interface PdfTabContentProps {
+    field: 'FICHATECNICA' | 'FICHASEGURIDAD';
+    hasPdf: boolean;
+    label: string;
+    pdfBlobUrls: Record<string, string | null>;
+    pdfLoading: Record<string, boolean>;
+    pdfNumPages: Record<string, number>;
+    pdfContainerWidth: number;
+    containerRef: React.RefObject<HTMLDivElement | null>;
+    onContainerResize: (width: number) => void;
+    onPageCount: (field: string, count: number) => void;
+    onLoadError: (field: string) => void;
+}
+
+function PdfTabContent({
+    field, hasPdf, label,
+    pdfBlobUrls, pdfLoading, pdfNumPages,
+    pdfContainerWidth, containerRef,
+    onContainerResize, onPageCount, onLoadError
+}: PdfTabContentProps) {
+    useEffect(() => {
+        if (!containerRef.current) return;
+        const el = containerRef.current;
+        const update = () => {
+            const w = el.clientWidth - 32;
+            onContainerResize(w > 800 ? 800 : w);
+        };
+        const obs = new ResizeObserver(update);
+        obs.observe(el);
+        update();
+        return () => obs.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    if (!hasPdf) return (
+        <div className="flex flex-col items-center justify-center gap-3 py-24" style={{ color: 'var(--text-muted)' }}>
+            <FileText className="w-12 h-12 opacity-20" />
+            <p className="text-sm font-medium italic">Sin {label}</p>
+        </div>
+    );
+    const blobUrl = pdfBlobUrls[field];
+    const isLoading = pdfLoading[field];
+    if (isLoading || blobUrl === undefined) return (
+        <div className="flex items-center justify-center py-24">
+            <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--accent-orange)' }} />
+        </div>
+    );
+    if (blobUrl === null) return (
+        <div className="flex flex-col items-center justify-center gap-3 py-24" style={{ color: 'var(--text-muted)' }}>
+            <AlertTriangle className="w-8 h-8 text-red-400" />
+            <p className="text-sm">Error al cargar el PDF</p>
+        </div>
+    );
+    return (
+        <Document
+            file={blobUrl}
+            onLoadSuccess={({ numPages }) => {
+                console.log(`[PdfTabContent] "${field}" cargado — ${numPages} página(s)`);
+                onPageCount(field, numPages);
+            }}
+            onLoadError={(err) => {
+                console.log(`[PdfTabContent] Error al renderizar "${field}":`, err?.message || err);
+                onLoadError(field);
+            }}
+            loading={<div className="flex flex-col items-center gap-3 mt-16"><Loader2 className="w-7 h-7 animate-spin" style={{ color: 'var(--accent-orange)' }} /></div>}
+            error={<div className="flex flex-col items-center gap-3 mt-16"><AlertTriangle className="w-8 h-8 text-red-400" /><p className="text-sm" style={{ color: 'var(--text-muted)' }}>Error renderizando el documento.</p></div>}
+        >
+            {Array.from(new Array(pdfNumPages[field] || 0), (_, i) => (
+                <div key={`page_${i + 1}`} className="mb-4 shadow-lg rounded overflow-hidden">
+                    <Page
+                        pageNumber={i + 1}
+                        width={pdfContainerWidth}
+                        renderTextLayer={false}
+                        renderAnnotationLayer={false}
+                        loading={<div className="animate-pulse bg-slate-700" style={{ width: pdfContainerWidth, height: 400 }} />}
+                    />
+                </div>
+            ))}
+        </Document>
+    );
+}
+
 export default function DetalleFormula({ formula, isOpen, onClose }: DetalleFormulaProps) {
     const [activeTab, setActiveTab] = useState<'mezcla' | 'lab' | 'procesos' | 'obs' | 'fichatecnica' | 'fichaseguridad'>('mezcla');
     const [densities, setDensities] = useState<Record<string, number>>({});
@@ -46,8 +129,34 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
     const [pdfBlobUrls, setPdfBlobUrls] = useState<Record<string, string | null>>({});
     const [pdfLoading, setPdfLoading] = useState<Record<string, boolean>>({});
     const [pdfNumPages, setPdfNumPages] = useState<Record<string, number>>({});
-    const [pdfContainerWidth, setPdfContainerWidth] = useState(window.innerWidth);
+    const [pdfContainerWidth, setPdfContainerWidth] = useState(600);
     const pdfContainerRef = useRef<HTMLDivElement>(null);
+    const [isSuper, setIsSuper] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        setIsSuper(null);
+        const token = localStorage.getItem('token');
+        fetch(`${API_BASE_URL}/api/cliente`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                console.log("[DetalleFormula] Datos de cliente recibidos:", data);
+                if (data) {
+                    const superUser = data.issuper === true;
+                    console.log(`[DetalleFormula] Clasificación del cliente: ¿Es Superusuario (issuper)? ${superUser ? "SÍ (mostrar ingredientes)" : "NO (ocultar ingredientes)"}`);
+                    setIsSuper(superUser);
+                } else {
+                    console.log("[DetalleFormula] No se recibieron datos de cliente. Definiendo issuper = false");
+                    setIsSuper(false);
+                }
+            })
+            .catch(err => {
+                console.error("Error fetching client super status:", err);
+                setIsSuper(false);
+            });
+    }, [isOpen]);
 
     useEffect(() => {
         if (!isOpen || !formula) return;
@@ -181,6 +290,42 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
             });
     }, [isOpen, formula]);
 
+    // ── Disparar carga del PDF cuando se activa el tab o cuando llega el ID de la base ──
+    useEffect(() => {
+        if (!isOpen) return;
+        const field = activeTab === 'fichatecnica' ? 'FICHATECNICA'
+            : activeTab === 'fichaseguridad' ? 'FICHASEGURIDAD'
+            : null;
+        if (!field) return;
+        if (!basePdfData.ID) return;
+        const hasPdf = field === 'FICHATECNICA' ? basePdfData.FICHATECNICA : basePdfData.FICHASEGURIDAD;
+        if (!hasPdf) return;
+        if (pdfBlobUrls[field] !== undefined) return;
+        if (pdfLoading[field]) return;
+
+        console.log(`[DetalleFormula] Iniciando carga PDF para "${field}" (baseId=${basePdfData.ID})`);
+        setPdfLoading(prev => ({ ...prev, [field]: true }));
+        const token = localStorage.getItem('token');
+        fetch(`${API_BASE_URL}/api/bases/${basePdfData.ID}/pdf/${field}`, {
+            headers: { Authorization: `Bearer ${token}` },
+        })
+            .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.blob();
+            })
+            .then(blob => {
+                console.log(`[DetalleFormula] PDF "${field}" recibido (${blob.size} bytes)`);
+                setPdfBlobUrls(prev => ({ ...prev, [field]: URL.createObjectURL(blob) }));
+            })
+            .catch(err => {
+                console.error(`[DetalleFormula] Error cargando PDF "${field}":`, err.message);
+                setPdfBlobUrls(prev => ({ ...prev, [field]: null }));
+            })
+            .finally(() => {
+                setPdfLoading(prev => ({ ...prev, [field]: false }));
+            });
+    }, [isOpen, activeTab, basePdfData.ID, basePdfData.FICHATECNICA, basePdfData.FICHASEGURIDAD]);
+
     if (!formula) return null;
 
     const getColorStyle = (code: string): React.CSSProperties => {
@@ -307,105 +452,6 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
         { id: 'fichaseguridad', label: 'F. Seguridad', icon: AlertTriangle },
     ];
 
-    // ── PDF helpers ─────────────────────────────────────────────────────────────
-    const loadPdfForField = (field: 'FICHATECNICA' | 'FICHASEGURIDAD') => {
-        if (!basePdfData.ID) {
-            console.log(`[DetalleFormula] loadPdfForField("${field}") — abortado: basePdfData.ID es nulo`);
-            return;
-        }
-        if (pdfBlobUrls[field] !== undefined) {
-            console.log(`[DetalleFormula] loadPdfForField("${field}") — ya cargado, URL:`, pdfBlobUrls[field]);
-            return;
-        }
-        if (pdfLoading[field]) {
-            console.log(`[DetalleFormula] loadPdfForField("${field}") — ya está cargando, ignorando`);
-            return;
-        }
-        console.log(`[DetalleFormula] loadPdfForField("${field}") — iniciando fetch... (baseId=${basePdfData.ID})`);
-        setPdfLoading(prev => ({ ...prev, [field]: true }));
-        const token = localStorage.getItem('token');
-        fetch(`${API_BASE_URL}/api/bases/${basePdfData.ID}/pdf/${field}`, {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then(r => {
-                if (!r.ok) throw new Error('HTTP ' + r.status);
-                console.log(`[DetalleFormula] loadPdfForField("${field}") — respuesta OK, convirtiendo a blob...`);
-                return r.blob();
-            })
-            .then(blob => {
-                console.log(`[DetalleFormula] loadPdfForField("${field}") — blob recibido (${blob.size} bytes), creando ObjectURL`);
-                setPdfBlobUrls(prev => ({ ...prev, [field]: URL.createObjectURL(blob) }));
-            })
-            .catch(err => {
-                console.log(`[DetalleFormula] loadPdfForField("${field}") — ERROR:`, err.message);
-                setPdfBlobUrls(prev => ({ ...prev, [field]: null }));
-            })
-            .finally(() => {
-                console.log(`[DetalleFormula] loadPdfForField("${field}") — finalizado`);
-                setPdfLoading(prev => ({ ...prev, [field]: false }));
-            });
-    };
-
-    const PdfTabContent = ({ field, hasPdf, label }: { field: 'FICHATECNICA' | 'FICHASEGURIDAD'; hasPdf: boolean; label: string }) => {
-        console.log(`[DetalleFormula] PdfTabContent render — field="${field}" hasPdf=${hasPdf} blobUrl=${pdfBlobUrls[field] ?? 'undefined'} isLoading=${pdfLoading[field]}`);
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        useEffect(() => {
-            console.log(`[DetalleFormula] PdfTabContent useEffect — field="${field}" hasPdf=${hasPdf} → ${hasPdf ? 'llamando loadPdfForField' : 'no hay PDF, saltando'}`);
-            if (hasPdf) loadPdfForField(field);
-        }, []);
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        useEffect(() => {
-            if (!pdfContainerRef.current) return;
-            const el = pdfContainerRef.current;
-            const update = () => { const w = el.clientWidth - 32; setPdfContainerWidth(w > 800 ? 800 : w); };
-            const obs = new ResizeObserver(update);
-            obs.observe(el); update();
-            return () => obs.disconnect();
-        }, []);
-
-        if (!hasPdf) return (
-            <div className="flex flex-col items-center justify-center gap-3 py-24" style={{ color: 'var(--text-muted)' }}>
-                <FileText className="w-12 h-12 opacity-20" />
-                <p className="text-sm font-medium italic">Sin {label}</p>
-            </div>
-        );
-        const blobUrl = pdfBlobUrls[field];
-        const isLoading = pdfLoading[field];
-        if (isLoading || blobUrl === undefined) return (
-            <div className="flex items-center justify-center py-24">
-                <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--accent-orange)' }} />
-            </div>
-        );
-        if (blobUrl === null) return (
-            <div className="flex flex-col items-center justify-center gap-3 py-24" style={{ color: 'var(--text-muted)' }}>
-                <AlertTriangle className="w-8 h-8 text-red-400" />
-                <p className="text-sm">Error al cargar el PDF</p>
-            </div>
-        );
-        return (
-            <Document
-                file={blobUrl}
-                onLoadSuccess={({ numPages }) => {
-                    console.log(`[DetalleFormula] Documento PDF "${field}" cargado — ${numPages} página(s)`);
-                    setPdfNumPages(prev => ({ ...prev, [field]: numPages }));
-                }}
-                onLoadError={(err) => {
-                    console.log(`[DetalleFormula] Error al renderizar PDF "${field}":`, err?.message || err);
-                    setPdfBlobUrls(prev => ({ ...prev, [field]: null }));
-                }}
-                loading={<div className="flex flex-col items-center gap-3 mt-16"><Loader2 className="w-7 h-7 animate-spin" style={{ color: 'var(--accent-orange)' }} /></div>}
-                error={<div className="flex flex-col items-center gap-3 mt-16"><AlertTriangle className="w-8 h-8 text-red-400" /><p className="text-sm" style={{ color: 'var(--text-muted)' }}>Error renderizando el documento.</p></div>}
-            >
-                {Array.from(new Array(pdfNumPages[field] || 0), (_, i) => (
-                    <div key={`page_${i + 1}`} className="mb-4 shadow-lg rounded overflow-hidden">
-                        <Page pageNumber={i + 1} width={pdfContainerWidth} renderTextLayer={false} renderAnnotationLayer={false}
-                            loading={<div className="animate-pulse bg-slate-700" style={{ width: pdfContainerWidth, height: 400 }} />}
-                        />
-                    </div>
-                ))}
-            </Document>
-        );
-    };
 
     return (
         <AnimatePresence>
@@ -614,93 +660,118 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                         </motion.div>
                                     )}
 
-                                    {/* Column headers */}
-                                    <div
-                                        className="flex items-center justify-between px-2"
-                                        style={{ color: 'var(--text-muted)' }}
-                                    >
-                                        <span className="text-[9px] font-bold uppercase tracking-[0.15em]">Componente | ρ</span>
-                                        <div className="flex gap-6 flex-shrink-0">
-                                            <span className="text-[9px] font-bold uppercase tracking-[0.15em]">ml</span>
-                                            <span className="text-[9px] font-bold uppercase tracking-[0.15em] w-14 text-right">g</span>
+                                    {isSuper === null ? (
+                                        <div className="flex justify-center py-10">
+                                            <div className="formula-spinner formula-spinner--sm"></div>
                                         </div>
-                                    </div>
+                                    ) : isSuper === false ? (
+                                        <div
+                                            className="p-8 rounded-2xl text-center border border-dashed flex flex-col items-center justify-center gap-2"
+                                            style={{
+                                                backgroundColor: 'var(--bg-ingredient-card)',
+                                                borderColor: 'var(--border-ingredient-card)',
+                                                color: 'var(--text-muted)'
+                                            }}
+                                        >
+                                            <Droplets className="w-8 h-8 opacity-20 mb-1" />
+                                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                                                Fórmula Confidencial
+                                            </p>
+                                            <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
+                                                Su cuenta no tiene privilegios para visualizar los componentes o pigmentos detallados de esta fórmula.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {/* Column headers */}
+                                            <div
+                                                className="flex items-center justify-between px-2"
+                                                style={{ color: 'var(--text-muted)' }}
+                                            >
+                                                <span className="text-[9px] font-bold uppercase tracking-[0.15em]">Componente | ρ</span>
+                                                <div className="flex gap-6 flex-shrink-0">
+                                                    <span className="text-[9px] font-bold uppercase tracking-[0.15em]">ml</span>
+                                                    <span className="text-[9px] font-bold uppercase tracking-[0.15em] w-14 text-right">g</span>
+                                                </div>
+                                            </div>
 
-                                    {/* Ingredient rows */}
-                                    <div className="space-y-2">
-                                        {processedIngredients.map((item, index) => {
-                                            const isBase = item.type === 'BASE';
-                                            return (
-                                                <motion.div
-                                                    key={index}
-                                                    initial={{ opacity: 0, x: -8 }}
-                                                    animate={{ opacity: 1, x: 0 }}
-                                                    transition={{ delay: index * 0.04 }}
-                                                    className="flex items-center justify-between p-3.5 rounded-2xl transition-all duration-200"
-                                                    style={{
-                                                        backgroundColor: isBase
-                                                            ? 'var(--bg-base-card)'
-                                                            : 'var(--bg-ingredient-card)',
-                                                        border: isBase
-                                                            ? 'var(--border-base-card)'
-                                                            : 'var(--border-ingredient-card)',
-                                                        boxShadow: isBase
-                                                            ? '0 4px 20px rgba(184,93,0,0.05)'
-                                                            : 'none'
-                                                    }}
-                                                >
-                                                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                                                        {/* Color Swatch */}
-                                                        <div
-                                                            className="h-9 w-9 rounded-xl flex-shrink-0 shadow-inner border border-white/10"
-                                                            style={getColorStyle(item.code)}
-                                                        />
-                                                        {/* Info */}
-                                                        <div className="min-w-0">
-                                                            <p
-                                                                className="text-sm font-bold tracking-tight truncate"
-                                                                style={{ color: 'var(--text-primary)' }}
-                                                            >
-                                                                {item.code}
-                                                            </p>
-                                                            <div className="flex items-center gap-2 flex-wrap mt-0.5">
-                                                                <span
-                                                                    className="text-[9px] font-bold uppercase tracking-wider"
-                                                                    style={{ color: 'var(--text-muted)' }}
-                                                                >
-                                                                    {item.type} · ρ {item.rho.toFixed(3)}
-                                                                </span>
-                                                                <span style={{ color: 'var(--border-ingredient-card)', fontSize: '8px' }}>•</span>
-                                                                <span className="text-[9px] font-bold uppercase text-blue-400">
-                                                                    {item.percentage.toFixed(2)}%
-                                                                </span>
+                                            {/* Ingredient rows */}
+                                            <div className="space-y-2">
+                                                {processedIngredients.map((item, index) => {
+                                                    const isBase = item.type === 'BASE';
+                                                    return (
+                                                        <motion.div
+                                                            key={index}
+                                                            initial={{ opacity: 0, x: -8 }}
+                                                            animate={{ opacity: 1, x: 0 }}
+                                                            transition={{ delay: index * 0.04 }}
+                                                            className="flex items-center justify-between p-3.5 rounded-2xl transition-all duration-200"
+                                                            style={{
+                                                                backgroundColor: isBase
+                                                                    ? 'var(--bg-base-card)'
+                                                                    : 'var(--bg-ingredient-card)',
+                                                                border: isBase
+                                                                    ? 'var(--border-base-card)'
+                                                                    : 'var(--border-ingredient-card)',
+                                                                boxShadow: isBase
+                                                                    ? '0 4px 20px rgba(184,93,0,0.05)'
+                                                                    : 'none'
+                                                            }}
+                                                        >
+                                                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                                {/* Color Swatch */}
+                                                                <div
+                                                                    className="h-9 w-9 rounded-xl flex-shrink-0 shadow-inner border border-white/10"
+                                                                    style={getColorStyle(item.code)}
+                                                                />
+                                                                {/* Info */}
+                                                                <div className="min-w-0">
+                                                                    <p
+                                                                        className="text-sm font-bold tracking-tight truncate"
+                                                                        style={{ color: 'var(--text-primary)' }}
+                                                                    >
+                                                                        {item.code}
+                                                                    </p>
+                                                                    <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                                                                        <span
+                                                                            className="text-[9px] font-bold uppercase tracking-wider"
+                                                                            style={{ color: 'var(--text-muted)' }}
+                                                                        >
+                                                                            {item.type} · ρ {item.rho.toFixed(3)}
+                                                                        </span>
+                                                                        <span style={{ color: 'var(--border-ingredient-card)', fontSize: '8px' }}>•</span>
+                                                                        <span className="text-[9px] font-bold uppercase text-blue-400">
+                                                                            {item.percentage.toFixed(2)}%
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    </div>
 
-                                                    {/* Values */}
-                                                    <div className="text-right flex items-center gap-4 flex-shrink-0 ml-2">
-                                                        <div>
-                                                            <p
-                                                                className="text-base sm:text-lg font-mono font-black"
-                                                                style={{ color: isBase ? 'var(--accent-orange)' : 'var(--text-primary)' }}
-                                                            >
-                                                                {item.ml.toFixed(2)}
-                                                            </p>
-                                                        </div>
-                                                        <div className="w-14">
-                                                            <p
-                                                                className="text-xs sm:text-sm font-mono font-bold"
-                                                                style={{ color: 'var(--text-muted)' }}
-                                                            >
-                                                                {item.grams.toFixed(1)}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </motion.div>
-                                            );
-                                        })}
-                                    </div>
+                                                            {/* Values */}
+                                                            <div className="text-right flex items-center gap-4 flex-shrink-0 ml-2">
+                                                                <div>
+                                                                    <p
+                                                                        className="text-base sm:text-lg font-mono font-black"
+                                                                        style={{ color: isBase ? 'var(--accent-orange)' : 'var(--text-primary)' }}
+                                                                    >
+                                                                        {item.ml.toFixed(2)}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="w-14">
+                                                                    <p
+                                                                        className="text-xs sm:text-sm font-mono font-bold"
+                                                                        style={{ color: 'var(--text-muted)' }}
+                                                                    >
+                                                                        {item.grams.toFixed(1)}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </motion.div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </>
+                                    )}
 
                                     {/* ── Totales ── */}
                                     <div className="pt-1 space-y-3">
@@ -954,7 +1025,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                                             className="font-mono text-lg font-black"
                                                             style={{ color: positive ? '#34d399' : '#f87171' }}
                                                         >
-                                                            {formula[key] || '0.00'}
+                                                            {val.toFixed(2)}
                                                         </p>
                                                     </div>
                                                 );
@@ -1070,7 +1141,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                                             </div>
                                                             <p
                                                                 className="text-sm leading-relaxed font-medium"
-                                                                style={{ color: 'var(--text-secondary)' }}
+                                                                style={{ color: 'var(--text-secondary)', whiteSpace: 'pre-line' }}
                                                             >
                                                                 {proc.text}
                                                             </p>
@@ -1121,7 +1192,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                             </div>
                                             <p
                                                 className="text-sm leading-relaxed whitespace-pre-line font-medium italic"
-                                                style={{ color: 'var(--text-secondary)' }}
+                                                style={{ color: 'var(--text-secondary)', whiteSpace: 'pre-line' }}
                                             >
                                                 "{formula.OBSERVACIONES}"
                                             </p>
@@ -1146,14 +1217,38 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                             {/* ══ TAB: FICHA TÉCNICA ══ */}
                             {activeTab === 'fichatecnica' && (
                                 <div ref={pdfContainerRef} className="flex flex-col items-center p-4" style={{ minHeight: '100%', overflowY: 'auto' }}>
-                                    <PdfTabContent field="FICHATECNICA" hasPdf={basePdfData.FICHATECNICA} label="Ficha Técnica" />
+                                    <PdfTabContent
+                                        field="FICHATECNICA"
+                                        hasPdf={basePdfData.FICHATECNICA}
+                                        label="Ficha Técnica"
+                                        pdfBlobUrls={pdfBlobUrls}
+                                        pdfLoading={pdfLoading}
+                                        pdfNumPages={pdfNumPages}
+                                        pdfContainerWidth={pdfContainerWidth}
+                                        containerRef={pdfContainerRef}
+                                        onContainerResize={setPdfContainerWidth}
+                                        onPageCount={(f, c) => setPdfNumPages(p => ({ ...p, [f]: c }))}
+                                        onLoadError={(f) => setPdfBlobUrls(p => ({ ...p, [f]: null }))}
+                                    />
                                 </div>
                             )}
 
                             {/* ══ TAB: FICHA SEGURIDAD ══ */}
                             {activeTab === 'fichaseguridad' && (
                                 <div ref={pdfContainerRef} className="flex flex-col items-center p-4" style={{ minHeight: '100%', overflowY: 'auto' }}>
-                                    <PdfTabContent field="FICHASEGURIDAD" hasPdf={basePdfData.FICHASEGURIDAD} label="Ficha de Seguridad" />
+                                    <PdfTabContent
+                                        field="FICHASEGURIDAD"
+                                        hasPdf={basePdfData.FICHASEGURIDAD}
+                                        label="Ficha de Seguridad"
+                                        pdfBlobUrls={pdfBlobUrls}
+                                        pdfLoading={pdfLoading}
+                                        pdfNumPages={pdfNumPages}
+                                        pdfContainerWidth={pdfContainerWidth}
+                                        containerRef={pdfContainerRef}
+                                        onContainerResize={setPdfContainerWidth}
+                                        onPageCount={(f, c) => setPdfNumPages(p => ({ ...p, [f]: c }))}
+                                        onLoadError={(f) => setPdfBlobUrls(p => ({ ...p, [f]: null }))}
+                                    />
                                 </div>
                             )}
                         </div>

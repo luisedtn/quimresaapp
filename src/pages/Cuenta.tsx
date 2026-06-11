@@ -68,13 +68,45 @@ function LocateControl({ setPosition }: { setPosition: (pos: L.LatLng) => void }
         e.stopPropagation();
         setLocating(true);
         try {
-            const coordinates = await Geolocation.getCurrentPosition();
+            let hasPermission = false;
+            try {
+                const checkStatus = await Geolocation.checkPermissions();
+                if (checkStatus.location === 'granted') {
+                    hasPermission = true;
+                } else {
+                    const reqStatus = await Geolocation.requestPermissions({ permissions: ['location'] });
+                    if (reqStatus.location === 'granted') {
+                        hasPermission = true;
+                    } else {
+                        alert('Permiso de ubicación denegado. Actívalo en los ajustes del dispositivo para usar esta función.');
+                        setLocating(false);
+                        return;
+                    }
+                }
+            } catch (err: any) {
+                // Si falla aquí, suele ser porque el GPS está apagado (Location services disabled)
+                // o estamos en web donde no soporta checkPermissions.
+                console.warn('[Geolocation] check/request permissions falló:', err);
+            }
+
+            const coordinates = await Geolocation.getCurrentPosition({
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            });
             const newPos = L.latLng(coordinates.coords.latitude, coordinates.coords.longitude);
             setPosition(newPos);
             map.flyTo(newPos, 16);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error getting location', error);
-            alert('Asegúrate de conceder permisos de ubicación.');
+            const msg = error?.message || '';
+            if (msg.toLowerCase().includes('location services are disabled')) {
+                alert('El GPS está desactivado. Por favor, activa la ubicación (GPS) en tu dispositivo.');
+            } else if (msg.toLowerCase().includes('denied') || msg.toLowerCase().includes('permission')) {
+                alert('Permiso de ubicación denegado. Asegúrate de conceder los permisos en los ajustes.');
+            } else {
+                alert(`No se pudo obtener la ubicación: ${msg || 'Error desconocido'}`);
+            }
         } finally {
             setLocating(false);
         }
@@ -292,12 +324,12 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
 
             {/* Header */}
             <header className="fixed top-0 z-10 flex w-full items-center border-b border-black/10 bg-[#CC5200] shadow-lg px-6 py-4">
-                <button onClick={() => navigate('/')} className="p-2 text-black hover:text-white transition-colors hover:bg-black/10 rounded-lg mr-2">
-                    <ArrowLeft className="h-5 w-5 text-black" />
+                <button onClick={() => navigate('/')} className="p-2 text-white hover:text-white/80 transition-colors hover:bg-black/10 rounded-lg mr-2">
+                    <ArrowLeft className="h-5 w-5 text-white" />
                 </button>
                 <div>
                     <h1 className="text-xl font-semibold tracking-tight text-white flex items-center gap-2">
-                        <User className="h-5 w-5 text-black" /> Mi Cuenta
+                        <User className="h-5 w-5 text-white" /> Mi Cuenta
                     </h1>
                     <p className="text-[10px] text-white/70 uppercase tracking-widest mt-1">Configuración y datos de empresa</p>
                 </div>
@@ -345,11 +377,11 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Nombre Comercial</label>
-                                        <input type="text" value={formData.NOMBRE} onChange={e => setFormData({ ...formData, NOMBRE: e.target.value })} required className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-[#B85D00] outline-none" />
+                                        <input type="text" value={formData.NOMBRE} onChange={e => setFormData({ ...formData, NOMBRE: e.target.value })} required className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm focus:border-[#B85D00] outline-none" />
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">RUC</label>
-                                        <input type="text" value={formData.NIF} onChange={e => setFormData({ ...formData, NIF: e.target.value })} required className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-[#B85D00] outline-none" />
+                                        <input type="text" value={formData.NIF} onChange={e => setFormData({ ...formData, NIF: e.target.value })} required className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm focus:border-[#B85D00] outline-none" />
                                     </div>
                                 </div>
 
@@ -360,21 +392,21 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
                                         <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">País</label>
-                                        <input list="countries-list" value={formData.PAIS} onChange={(e) => handleCountryChange(e.target.value)} placeholder="Busca o selecciona..." className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none" />
+                                        <input list="countries-list" value={formData.PAIS} onChange={(e) => handleCountryChange(e.target.value)} placeholder="Busca o selecciona..." className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" />
                                         <datalist id="countries-list">
                                             {countries.map(c => <option key={c.isoCode} value={c.name} />)}
                                         </datalist>
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Provincia/Estado</label>
-                                        <input list="states-list" value={formData.PROVINCIA} onChange={(e) => handleStateChange(e.target.value)} disabled={!formData.PAIS} placeholder={!formData.PAIS ? "Elige País Primero" : "Elige..."} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none disabled:opacity-50" />
+                                        <input list="states-list" value={formData.PROVINCIA} onChange={(e) => handleStateChange(e.target.value)} disabled={!formData.PAIS} placeholder={!formData.PAIS ? "Elige País Primero" : "Elige..."} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm focus:border-blue-500 outline-none disabled:opacity-50" />
                                         <datalist id="states-list">
                                             {states.map(s => <option key={s.isoCode} value={s.name} />)}
                                         </datalist>
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Ciudad/Población</label>
-                                        <input list="cities-list" value={formData.POBLACION} onChange={e => setFormData({ ...formData, POBLACION: e.target.value })} disabled={!formData.PROVINCIA} placeholder={!formData.PROVINCIA ? "Elige Provincia..." : "Elige..."} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none disabled:opacity-50" />
+                                        <input list="cities-list" value={formData.POBLACION} onChange={e => setFormData({ ...formData, POBLACION: e.target.value })} disabled={!formData.PROVINCIA} placeholder={!formData.PROVINCIA ? "Elige Provincia..." : "Elige..."} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm focus:border-blue-500 outline-none disabled:opacity-50" />
                                         <datalist id="cities-list">
                                             {cities.map(cty => <option key={cty.name} value={cty.name} />)}
                                         </datalist>
@@ -382,7 +414,7 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Dirección Exacta</label>
-                                    <input type="text" value={formData.DIRECCION} onChange={e => setFormData({ ...formData, DIRECCION: e.target.value })} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none" />
+                                    <input type="text" value={formData.DIRECCION} onChange={e => setFormData({ ...formData, DIRECCION: e.target.value })} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" />
                                 </div>
 
                                 <div className="mt-4">
@@ -414,15 +446,15 @@ export default function Cuenta({ userData, onLogout }: { userData: any; onLogout
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
                                         <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Teléfono Fijo</label>
-                                        <input id="TELEFONO" type="tel" value={formData.TELEFONO} onChange={e => setFormData({ ...formData, TELEFONO: e.target.value })} placeholder="Ej. +34 91..." className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none" />
+                                        <input id="TELEFONO" type="tel" value={formData.TELEFONO} onChange={e => setFormData({ ...formData, TELEFONO: e.target.value })} placeholder="Ej. +34 91..." className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" />
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Móvil (Celular)</label>
-                                        <input id="MOVIL" type="tel" value={formData.MOVIL} onChange={e => setFormData({ ...formData, MOVIL: e.target.value })} placeholder="Ej. +34 6..." className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none" />
+                                        <input id="MOVIL" type="tel" value={formData.MOVIL} onChange={e => setFormData({ ...formData, MOVIL: e.target.value })} placeholder="Ej. +34 6..." className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" />
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Encargado de cuenta</label>
-                                        <input type="text" value={formData.CONTACTO} onChange={e => setFormData({ ...formData, CONTACTO: e.target.value })} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-blue-500 outline-none" />
+                                        <input type="text" value={formData.CONTACTO} onChange={e => setFormData({ ...formData, CONTACTO: e.target.value })} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" />
                                     </div>
                                 </div>
 

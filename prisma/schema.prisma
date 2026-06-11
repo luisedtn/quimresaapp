@@ -39,6 +39,7 @@ model Cliente {
   PORCENTAJE Decimal?         @db.Decimal
   ACTIVO     Decimal?         @db.Decimal
   autorizado Boolean?         @default(true)
+  issuper    Boolean?         @default(false)
   LOGO       String?
   PAIS       String?
   LATITUD    String?
