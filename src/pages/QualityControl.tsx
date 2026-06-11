@@ -789,8 +789,12 @@ export default function QualityControl() {
           <ColorDeltaChart standard={standard} sample={sample} />
         </motion.div>
 
-        {/* Formula Information */}
-        {qcContextData && qcContextData.componentColors && (
+        {/* Formula Information — only for superusers */}
+        {qcContextData && qcContextData.componentColors && (() => {
+          const userDataStr = localStorage.getItem('userData');
+          const userData = userDataStr ? JSON.parse(userDataStr) : null;
+          return userData?.issuper === true;
+        })() && (
           <div className="elegant-card rounded-2xl border border-slate-200 dark:border-slate-800/80 p-5 space-y-4 bg-white dark:bg-slate-900/20 shadow-lg">
             <div className="flex items-end justify-between border-b border-slate-200 dark:border-slate-700/50 pb-3">
               <div>

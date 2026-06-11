@@ -200,7 +200,7 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
           <input
             type="text"
             placeholder="Buscar por nombre, lote, cliente o código..."
-            className="w-full rounded-xl bg-slate-900 border border-slate-800 py-3 pr-4 pl-11 text-sm text-white focus:ring-2 focus:ring-[#1B6FA8]/50 focus:border-[#1B6FA8] outline-none transition-all placeholder:text-slate-600"
+            className="w-full rounded-xl bg-slate-900 border border-slate-800 py-3 pr-4 pl-11 text-sm text-black focus:ring-2 focus:ring-[#1B6FA8]/50 focus:border-[#1B6FA8] outline-none transition-all placeholder:text-slate-600"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />

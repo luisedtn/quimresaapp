@@ -144,6 +144,17 @@ export default function ColorMatch() {
     const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [historyItems, setHistoryItems] = useState<any[]>([]);
 
+    // isSuper: read once from localStorage — true if client has issuper flag
+    const isSuper: boolean = (() => {
+        try {
+            const ud = localStorage.getItem('userData');
+            if (!ud) return false;
+            const parsed = JSON.parse(ud);
+            console.log('[ColorMatch] userData:', parsed, '| issuper:', parsed?.issuper);
+            return parsed?.issuper === true;
+        } catch { return false; }
+    })();
+
     const logTechnicalStep = useCallback(async (tipoPaso: string, datos: any, description?: string, explicitLote?: string) => {
         const loteToUse = explicitLote || currentLote;
         if (!selectedMatch || !loteToUse) return;
@@ -1369,6 +1380,12 @@ export default function ColorMatch() {
                                     <div className="flex items-center gap-3 py-4 justify-center">
                                         <div className="h-4 w-4 rounded-full border-2 border-[#CC5200] border-t-transparent animate-spin" />
                                         <span className="text-[10px] text-slate-500 uppercase tracking-widest">Cargando componentes...</span>
+                                    </div>
+                                ) : !isSuper ? (
+                                    <div className="p-6 text-center border border-dashed border-slate-300 dark:border-slate-800 rounded-xl flex flex-col items-center justify-center gap-1">
+                                        <Beaker className="h-6 w-6 opacity-20 mb-1 text-slate-400" />
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Fórmula Confidencial</p>
+                                        <p className="text-[9px] text-slate-500 max-w-xs mx-auto">Su cuenta no tiene privilegios para visualizar los componentes o pigmentos detallados de esta fórmula.</p>
                                     </div>
                                 ) : componentColors.length > 0 ? (
                                     <div className="space-y-2">

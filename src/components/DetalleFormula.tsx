@@ -131,7 +131,20 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
     const [pdfNumPages, setPdfNumPages] = useState<Record<string, number>>({});
     const [pdfContainerWidth, setPdfContainerWidth] = useState(600);
     const pdfContainerRef = useRef<HTMLDivElement>(null);
-    const [isSuper, setIsSuper] = useState<boolean | null>(null);
+    const [isSuper, setIsSuper] = useState<boolean | null>(() => {
+        try {
+            const userDataStr = localStorage.getItem('userData');
+            if (userDataStr) {
+                const userData = JSON.parse(userDataStr);
+                if (userData && typeof userData.issuper === 'boolean') {
+                    return userData.issuper;
+                }
+            }
+        } catch (e) {
+            console.error("Error reading userData for isSuper", e);
+        }
+        return null;
+    });
 
     useEffect(() => {
         if (!isOpen) return;

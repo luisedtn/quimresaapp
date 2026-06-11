@@ -6,26 +6,26 @@ import { API_BASE_URL } from '../config';
 import DetalleFormula from '../components/DetalleFormula';
 
 function labToHex(l: number, a: number, b: number): string {
-  const y = (l + 16) / 116;
-  const x = a / 500 + y;
-  const z = y - b / 200;
-  const x3 = x * x * x, y3 = y * y * y, z3 = z * z * z;
-  const xr = x3 > 0.008856 ? x3 : (x - 16 / 116) / 7.787;
-  const yr = y3 > 0.008856 ? y3 : (y - 16 / 116) / 7.787;
-  const zr = z3 > 0.008856 ? z3 : (z - 16 / 116) / 7.787;
-  const rl = xr * 3.2406 + yr * -1.5372 + zr * -0.4986;
-  const gl = xr * -0.9689 + yr * 1.8758 + zr * 0.0415;
-  const bl = xr * 0.0557 + yr * -0.2040 + zr * 1.0570;
-  const gamma = (c: number) => Math.round(Math.max(0, Math.min(255, ((c > 0.0031308 ? 1.055 * Math.pow(c, 1 / 2.4) - 0.055 : 12.92 * c)) * 255)));
-  return `#${gamma(rl).toString(16).padStart(2, '0')}${gamma(gl).toString(16).padStart(2, '0')}${gamma(bl).toString(16).padStart(2, '0')}`;
+    const y = (l + 16) / 116;
+    const x = a / 500 + y;
+    const z = y - b / 200;
+    const x3 = x * x * x, y3 = y * y * y, z3 = z * z * z;
+    const xr = x3 > 0.008856 ? x3 : (x - 16 / 116) / 7.787;
+    const yr = y3 > 0.008856 ? y3 : (y - 16 / 116) / 7.787;
+    const zr = z3 > 0.008856 ? z3 : (z - 16 / 116) / 7.787;
+    const rl = xr * 3.2406 + yr * -1.5372 + zr * -0.4986;
+    const gl = xr * -0.9689 + yr * 1.8758 + zr * 0.0415;
+    const bl = xr * 0.0557 + yr * -0.2040 + zr * 1.0570;
+    const gamma = (c: number) => Math.round(Math.max(0, Math.min(255, ((c > 0.0031308 ? 1.055 * Math.pow(c, 1 / 2.4) - 0.055 : 12.92 * c)) * 255)));
+    return `#${gamma(rl).toString(16).padStart(2, '0')}${gamma(gl).toString(16).padStart(2, '0')}${gamma(bl).toString(16).padStart(2, '0')}`;
 }
 
 const getFormulaColor = (f: any) => {
-  const l = f.L !== undefined && f.L !== null ? f.L : f.l;
-  const a = f.A !== undefined && f.A !== null ? f.A : f.a;
-  const b = f.B !== undefined && f.B !== null ? f.B : f.b;
-  if (l === undefined || l === null || l === '') return '#1e293b';
-  return labToHex(parseFloat(String(l)), parseFloat(String(a || '0')), parseFloat(String(b || '0')));
+    const l = f.L !== undefined && f.L !== null ? f.L : f.l;
+    const a = f.A !== undefined && f.A !== null ? f.A : f.a;
+    const b = f.B !== undefined && f.B !== null ? f.B : f.b;
+    if (l === undefined || l === null || l === '') return '#1e293b';
+    return labToHex(parseFloat(String(l)), parseFloat(String(a || '0')), parseFloat(String(b || '0')));
 };
 
 export default function StandardFormulas({ onLogout }: { onLogout: () => void }) {
@@ -201,7 +201,7 @@ export default function StandardFormulas({ onLogout }: { onLogout: () => void })
                     <input
                         type="text"
                         placeholder="Buscar por nombre de color..."
-                        className="w-full rounded-xl bg-slate-900 border border-slate-800 py-3 pr-4 pl-11 text-sm text-white focus:ring-2 focus:ring-[var(--accent-orange)]/30 focus:border-[var(--accent-orange)] outline-none transition-all"
+                        className="w-full rounded-xl bg-slate-900 border border-slate-800 py-3 pr-4 pl-11 text-sm text-black focus:ring-2 focus:ring-[var(--accent-orange)]/30 focus:border-[var(--accent-orange)] outline-none transition-all"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />

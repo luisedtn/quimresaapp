@@ -50,6 +50,7 @@ export default function Login({ onLogin }: LoginProps) {
         empresa: data.user.empresa,
         idcliente: data.user.idcliente,
         typeuser: data.user.typeuser,
+        issuper: data.user.issuper,
         autorizado: true,
         logoUrl: 'https://placehold.co/400x150/white/003366?text=Quimresa+S.A.'
       });

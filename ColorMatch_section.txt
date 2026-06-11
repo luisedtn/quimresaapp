@@ -1,0 +1,130 @@
+﻿                                    </h3>
+                                    <span className="text-[10px] font-bold text-[#a38105] uppercase">Litros (LT)</span>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={prepareAmount}
+                                        onChange={(e) => setPrepareAmount(e.target.value)}
+                                        onFocus={(e) => e.target.select()}
+                                        onBlur={() => {
+                                            const val = normalizeDecimal(prepareAmount);
+                                            if (val <= 0) setPrepareAmount(1.0);
+                                        }}
+                                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl py-4 px-4 text-center text-xl font-mono font-black text-slate-900 dark:text-white outline-none focus:border-[#CC5200]/50 transition-all"
+                                    />
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                        <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">LT</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Component Colors */}
+                            <div className="bg-slate-100 dark:bg-slate-900/60 rounded-2xl border border-slate-300 dark:border-slate-800/80 p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                        <Beaker className="h-3.5 w-3.5 text-[#a38105]" />
+                                        Componentes de la F├│rmula
+                                    </h3>
+                                    <button onClick={() => {
+                                        setSelectedMatch(null);
+                                        setComponentColors([]);
+                                        setPrepareAmount(1.0);
+                                    }} className="text-[10px] text-slate-500 hover:text-slate-900 dark:text-white transition-colors">
+                                        <span className="mr-1">ÔåÉ</span> Volver a resultados
+                                    </button>
+                                </div>
+                                {loadingComponents ? (
+                                    <div className="flex items-center gap-3 py-4 justify-center">
+                                        <div className="h-4 w-4 rounded-full border-2 border-[#CC5200] border-t-transparent animate-spin" />
+                                        <span className="text-[10px] text-slate-500 uppercase tracking-widest">Cargando componentes...</span>
+                                    </div>
+                                ) : componentColors.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {componentColors.map((cc, idx) => (
+                                            <div key={idx} className="flex items-center gap-3 bg-slate-100 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-300 dark:border-slate-800/40">
+                                                <div
+                                                    className="h-8 w-8 rounded-lg flex-shrink-0 shadow-inner border border-white/10"
+                                                    style={{
+                                                        backgroundColor: cc.baseType === 'white' ? '#ffffff' : cc.baseType === 'transparent' ? '#ffffff' : (cc.rgb || '#555'),
+                                                        backgroundImage: cc.baseType === 'transparent'
+                                                            ? 'linear-gradient(45deg, #aaa 25%, transparent 25%), linear-gradient(-45deg, #aaa 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #aaa 75%), linear-gradient(-45deg, transparent 75%, #aaa 75%)'
+                                                            : undefined,
+                                                        backgroundSize: cc.baseType === 'transparent' ? '8px 8px' : undefined,
+                                                        backgroundPosition: cc.baseType === 'transparent' ? '0 0, 0 4px, 4px -4px, -4px 0px' : undefined,
+                                                    }}
+                                                />
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-[10px] font-bold text-slate-900 dark:text-white truncate">{cc.code}</p>
+                                                    <p className="text-[8px] font-bold uppercase text-slate-500">
+                                                        {cc.isBase
+                                                            ? cc.baseType === 'white' ? 'Base Blanca'
+                                                                : cc.baseType === 'transparent' ? 'Base Transparente'
+                                                                    : 'Base'
+                                                            : 'Colorante'
+                                                        }
+                                                    </p>
+                                                </div>
+                                                <div className="text-[9px] font-bold text-[#d4af37] text-right">
+                                                    {cc.calculatedQuantity !== undefined
+                                                        ? cc.calculatedQuantity.toFixed(2)
+                                                        : (((cc.ml || 0) * (normalizeDecimal(prepareAmount) || 0)).toFixed(2))
+                                                    }g
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-[10px] text-slate-600 italic text-center py-2">Sin informaci├│n de color para los componentes.</p>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <motion.button
+                                    whileTap={{ scale: 0.97 }}
+                                    onClick={handleSaveTechnicalSession}
+                                    className="flex items-center justify-center gap-3 py-4 rounded-2xl bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs uppercase tracking-widest shadow-xl active:shadow-none transition-all hover:bg-slate-300 dark:hover:bg-slate-700 hover:text-slate-900 dark:text-white"
+                                >
+                                    <Check className="h-4 w-4 text-[#a38105]" />
+                                    Guardar Registro
+                                </motion.button>
+
+                                <motion.button
+                                    whileTap={{ scale: 0.97 }}
+                                    onClick={handleSendToQC}
+                                    className="flex items-center justify-center gap-3 py-4 rounded-2xl bg-[#CC5200] text-slate-900 dark:text-white font-bold text-xs uppercase tracking-widest shadow-xl shadow-[#CC5200]/30 active:shadow-none transition-all hover:bg-[#CC5200]/80"
+                                >
+                                    <Sparkles className="h-4 w-4" />
+                                    Enviar a QC
+                                </motion.button>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </main>
+
+            {/* Loading overlay */}
+            <AnimatePresence>
+                {isMeasuring && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0A0F14]/90 backdrop-blur-sm"
+                    >
+                        <div className="relative mb-6">
+                            <div className="h-20 w-20 rounded-full border-4 border-[#CC5200]/20" />
+                            <div className="absolute top-0 left-0 h-20 w-20 animate-spin rounded-full border-4 border-[#CC5200] border-t-transparent" />
+                        </div>
+                        <h3 className="text-xl font-bold text-white tracking-tight">Capturando Color...</h3>
+                        <p className="text-slate-600 dark:text-slate-400 text-sm mt-2 font-medium uppercase tracking-widest animate-pulse">Leyendo valores del sensor</p>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Modal de Nueva Lectura despu├®s de sugerencia IA */}
+            <AnimatePresence>
+                {showReadingModal && (
+                    <motion.div

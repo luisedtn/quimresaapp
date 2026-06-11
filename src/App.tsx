@@ -96,7 +96,7 @@ export default function App() {
         />
         <Route
           path="/color-match"
-          element={isAuthenticated ? <ColorMatch /> : <Navigate to="/login" />}
+          element={isAuthenticated ? <ColorMatch userData={userData} /> : <Navigate to="/login" />}
         />
         <Route
           path="/lista-qc"

@@ -8,9 +8,10 @@ interface AjustesProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenDeltaRango: () => void;
+  userData?: any;
 }
 
-export default function Ajustes({ isOpen, onClose, onOpenDeltaRango }: AjustesProps) {
+export default function Ajustes({ isOpen, onClose, onOpenDeltaRango, userData }: AjustesProps) {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     return document.documentElement.classList.contains('light') ? 'light' : 'dark';
   });
@@ -163,19 +164,21 @@ export default function Ajustes({ isOpen, onClose, onOpenDeltaRango }: AjustesPr
                     <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Abrir</span>
                   </button>
 
-                  <button
-                    onClick={() => {
-                      onClose();
-                      setShowFichasBases(true);
-                    }}
-                    className="w-full flex items-center justify-between bg-slate-900/50 p-3 rounded-xl border border-slate-800/80 hover:bg-slate-800/30 transition-all cursor-pointer mt-2"
-                  >
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-4 w-4 text-slate-400" />
-                      <span className="text-sm font-medium text-slate-300">Fichas técnicas</span>
-                    </div>
-                    <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Abrir</span>
-                  </button>
+                  {userData?.issuper && (
+                    <button
+                      onClick={() => {
+                        onClose();
+                        setShowFichasBases(true);
+                      }}
+                      className="w-full flex items-center justify-between bg-slate-900/50 p-3 rounded-xl border border-slate-800/80 hover:bg-slate-800/30 transition-all cursor-pointer mt-2"
+                    >
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-4 w-4 text-slate-400" />
+                        <span className="text-sm font-medium text-slate-300">Fichas técnicas</span>
+                      </div>
+                      <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Abrir</span>
+                    </button>
+                  )}
                 </section>
               </div>
 

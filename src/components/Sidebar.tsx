@@ -143,7 +143,7 @@ export default function Sidebar({ isOpen, onClose, onLogout, userData }: Sidebar
             </div>
           </motion.div>
 
-          <Ajustes isOpen={showAjustes} onClose={() => setShowAjustes(false)} onOpenDeltaRango={() => setShowDeltaRango(true)} />
+          <Ajustes isOpen={showAjustes} onClose={() => setShowAjustes(false)} onOpenDeltaRango={() => setShowDeltaRango(true)} userData={userData} />
           <DeltaRango isOpen={showDeltaRango} onClose={() => setShowDeltaRango(false)} />
         </>
       )}
