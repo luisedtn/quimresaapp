@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Beaker, User, Calendar, Droplets, MessageSquare, ClipboardList, Activity, Loader2, FileText, AlertTriangle } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -121,6 +122,8 @@ function PdfTabContent({
 }
 
 export default function DetalleFormula({ formula, isOpen, onClose }: DetalleFormulaProps) {
+    const navigate = useNavigate();
+    const [lotesPersonales, setLotesPersonales] = useState<any[]>([]);
     const [activeTab, setActiveTab] = useState<'mezcla' | 'lab' | 'procesos' | 'obs' | 'fichatecnica' | 'fichaseguridad'>('mezcla');
     const [densities, setDensities] = useState<Record<string, number>>({});
     const [calculating, setCalculating] = useState(false);
@@ -170,6 +173,27 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                 setIsSuper(false);
             });
     }, [isOpen]);
+
+    useEffect(() => {
+        if (!isOpen || !formula) return;
+        if (!formula.NOMBREFORMULA || !formula.ID) return;
+        
+        const fetchLotes = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${API_BASE_URL}/api/formpersonaleslote/${formula.ID}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setLotesPersonales(data);
+                }
+            } catch (err) {
+                console.error("Error fetching lotes:", err);
+            }
+        };
+        fetchLotes();
+    }, [isOpen, formula]);
 
     useEffect(() => {
         if (!isOpen || !formula) return;
@@ -671,6 +695,60 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                                 Calculando densidades y volumen...
                                             </p>
                                         </motion.div>
+                                    )}
+
+                                    {/* Lotes de Fórmula Personal */}
+                                    {formula.NOMBREFORMULA && lotesPersonales && lotesPersonales.length > 0 && (
+                                        <div className="mb-6 space-y-3">
+                                            <h3 className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Historial de Lotes</h3>
+                                            <div className="overflow-x-auto rounded-xl border" style={{ borderColor: 'var(--border-ingredient-card)', backgroundColor: 'var(--bg-ingredient-card)' }}>
+                                                <table className="w-full text-left text-xs">
+                                                    <thead className="bg-black/20" style={{ color: 'var(--text-muted)' }}>
+                                                        <tr>
+                                                            <th className="p-3 font-semibold">Lote</th>
+                                                            <th className="p-3 font-semibold">Fecha</th>
+                                                            <th className="p-3 font-semibold">ΔE</th>
+                                                            <th className="p-3 font-semibold">L*</th>
+                                                            <th className="p-3 font-semibold">a*</th>
+                                                            <th className="p-3 font-semibold">b*</th>
+                                                            <th className="p-3 text-center font-semibold">Acción</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {lotesPersonales.map((lote: any, idx: number) => (
+                                                            <tr key={idx} className="transition-colors hover:bg-white/5 border-b last:border-b-0" style={{ color: 'var(--text-secondary)', borderColor: 'var(--border-ingredient-card)' }}>
+                                                                <td className="p-3 font-medium">{lote.LOTE}</td>
+                                                                <td className="p-3">{formatDate(lote.FECHA)}</td>
+                                                                <td className="p-3 font-mono font-bold" style={{ color: parseFloat(lote.DELTA || '0') < 1 ? '#34d399' : '#f87171' }}>{parseFloat(lote.DELTA || '0').toFixed(2)}</td>
+                                                                <td className="p-3 font-mono">{parseFloat(lote.LO || '0').toFixed(2)}</td>
+                                                                <td className="p-3 font-mono">{parseFloat(lote.AO || '0').toFixed(2)}</td>
+                                                                <td className="p-3 font-mono">{parseFloat(lote.BO || '0').toFixed(2)}</td>
+                                                                <td className="p-3 text-center">
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            onClose();
+                                                                            navigate('/quality-control', {
+                                                                                state: {
+                                                                                    standardFromFormula: {
+                                                                                        l: parseFloat(lote.LO || '0'),
+                                                                                        a: parseFloat(lote.AO || '0'),
+                                                                                        b: parseFloat(lote.BO || '0'),
+                                                                                        name: `${formula.NOMBREFORMULA} - Lote ${lote.LOTE}`
+                                                                                    }
+                                                                                }
+                                                                            });
+                                                                        }}
+                                                                        className="bg-[#CC5200] hover:bg-[#b84a00] text-white px-3 py-1.5 rounded-lg font-bold text-[10px] tracking-wider transition-colors"
+                                                                    >
+                                                                        QC
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
                                     )}
 
                                     {isSuper === null ? (

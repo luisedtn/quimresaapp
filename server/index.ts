@@ -602,6 +602,20 @@ app.get('/api/formulas-standard', authenticateToken, async (req: Request, res: R
     }
 });
 
+app.get('/api/formpersonaleslote/:idformula', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { idformula } = req.params;
+        const lotes = await prisma.$queryRawUnsafe(
+            `SELECT * FROM "formpersonaleslote" WHERE "IDFORMULA" = $1 ORDER BY "FECHA" DESC`,
+            Number(idformula)
+        );
+        res.json(lotes);
+    } catch (error: any) {
+        console.error('[ERROR] /api/formpersonaleslote:', error.message);
+        res.status(500).json({ error: 'Error al obtener lotes', details: error.message });
+    }
+});
+
 app.post('/api/componentes/densidades', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
         const { codigos } = req.body;
