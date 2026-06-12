@@ -179,17 +179,24 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
         if (!formula.NOMBREFORMULA || !formula.ID) return;
         
         const fetchLotes = async () => {
+            console.log(`[DetalleFormula] Iniciando búsqueda de lotes para la fórmula ID: ${formula.ID}, Nombre: ${formula.NOMBREFORMULA}`);
             try {
                 const token = localStorage.getItem('token');
-                const res = await fetch(`${API_BASE_URL}/api/formpersonaleslote/${formula.ID}`, {
+                const url = `${API_BASE_URL}/api/formpersonaleslote/${formula.ID}`;
+                console.log(`[DetalleFormula] Haciendo petición a: ${url}`);
+                const res = await fetch(url, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
+                console.log(`[DetalleFormula] Respuesta HTTP recibida para lotes de la fórmula ${formula.ID}: status ${res.status}`);
                 if (res.ok) {
                     const data = await res.json();
+                    console.log(`[DetalleFormula] Datos de lotes recuperados exitosamente: ${data.length} registros encontrados para la fórmula ${formula.ID}`);
                     setLotesPersonales(data);
+                } else {
+                    console.warn(`[DetalleFormula] Respuesta no OK al obtener lotes para la fórmula ${formula.ID}: ${res.statusText}`);
                 }
             } catch (err) {
-                console.error("Error fetching lotes:", err);
+                console.error(`[DetalleFormula] Error al hacer el fetch de lotes para la fórmula ${formula.ID}:`, err);
             }
         };
         fetchLotes();

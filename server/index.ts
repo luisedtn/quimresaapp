@@ -605,13 +605,16 @@ app.get('/api/formulas-standard', authenticateToken, async (req: Request, res: R
 app.get('/api/formpersonaleslote/:idformula', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
         const { idformula } = req.params;
+        console.log(`[BACKEND API] Solicitud recibida en /api/formpersonaleslote/${idformula}`);
+        console.log(`[BACKEND API] Ejecutando consulta SQL en tabla "formpersonaleslote" para "IDFORMULA" = ${idformula}`);
         const lotes = await prisma.$queryRawUnsafe(
             `SELECT * FROM "formpersonaleslote" WHERE "IDFORMULA" = $1 ORDER BY "FECHA" DESC`,
             Number(idformula)
         );
+        console.log(`[BACKEND API] Consulta completada. Se encontraron ${Array.isArray(lotes) ? lotes.length : 0} registros de lotes para la fórmula ID: ${idformula}`);
         res.json(lotes);
     } catch (error: any) {
-        console.error('[ERROR] /api/formpersonaleslote:', error.message);
+        console.error(`[ERROR BACKEND] /api/formpersonaleslote/${req.params?.idformula}:`, error.message);
         res.status(500).json({ error: 'Error al obtener lotes', details: error.message });
     }
 });
