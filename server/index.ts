@@ -609,7 +609,7 @@ app.get('/api/formpersonaleslote/:idformula', authenticateToken, async (req: Req
         console.log(`[BACKEND API] Ejecutando consulta SQL en tabla "formpersonaleslote" para "IDFORMULA" = ${idformula}`);
         const lotes = await prisma.$queryRawUnsafe(
             `SELECT * FROM "formpersonaleslote" WHERE "IDFORMULA" = $1 ORDER BY "FECHA" DESC`,
-            Number(idformula)
+            String(idformula)
         );
         console.log(`[BACKEND API] Consulta completada. Se encontraron ${Array.isArray(lotes) ? lotes.length : 0} registros de lotes para la fórmula ID: ${idformula}`);
         res.json(lotes);
