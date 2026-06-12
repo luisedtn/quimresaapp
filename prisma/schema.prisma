@@ -189,6 +189,28 @@ model FormPersonales {
   @@map("formpersonales")
 }
 
+model FormPersonalesLote {
+  ID        Int      @id @default(autoincrement())
+  IDFORMULA String?
+  LOTE      String?  @db.VarChar(100)
+  FECHA     String?
+  DELTA     String?  @db.VarChar(50)
+  LO        String?  @db.VarChar(50)
+  AO        String?  @db.VarChar(50)
+  BO        String?  @db.VarChar(50)
+  RO        String?  @db.VarChar(50)
+  GO        String?  @db.VarChar(50)
+  RBO       String?  @db.VarChar(50)
+  C         String?  @db.VarChar(50)
+  H         String?  @db.VarChar(50)
+  D         String?  @db.VarChar(50)
+  CO        String?  @db.VarChar(50)
+  HO        String?  @db.VarChar(50)
+  DO        String?  @db.VarChar(50)
+
+  @@map("formpersonaleslote")
+}
+
 model Marca {
   ID         Int       @id @default(autoincrement())
   NOMBRE     String?   @db.VarChar(255)
