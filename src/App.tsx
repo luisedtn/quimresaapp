@@ -53,13 +53,6 @@ async function obtenerUbicacion(): Promise<{ latitud: number; longitud: number }
   if (plataforma === 'android' || plataforma === 'ios') {
     try {
       console.log('[ACCESO] Usando Capacitor Geolocation nativo...');
-      const perm = await Geolocation.checkPermissions();
-      console.log('[ACCESO] Permiso:', JSON.stringify(perm));
-      if (perm.location !== 'granted') {
-        const req = await Geolocation.requestPermissions({ permissions: ['location'] });
-        console.log('[ACCESO] Solicitud permiso:', JSON.stringify(req));
-        if (req.location !== 'granted') return null;
-      }
       const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
       console.log('[ACCESO] Ubicacion obtenida:', pos.coords.latitude, pos.coords.longitude);
       return { latitud: pos.coords.latitude, longitud: pos.coords.longitude };
@@ -67,17 +60,14 @@ async function obtenerUbicacion(): Promise<{ latitud: number; longitud: number }
       console.warn('[ACCESO] Capacitor fallo:', err?.message || err);
     }
   }
-  if (navigator.geolocation) {
-    console.log('[ACCESO] Fallback a navigator.geolocation...');
-    return new Promise(resolve => {
-      navigator.geolocation.getCurrentPosition(
-        pos => resolve({ latitud: pos.coords.latitude, longitud: pos.coords.longitude }),
-        () => resolve(null),
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
-    });
-  }
-  return null;
+  console.log('[ACCESO] Fallback a navigator.geolocation...');
+  return new Promise(resolve => {
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ latitud: pos.coords.latitude, longitud: pos.coords.longitude }),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  });
 }
 
 export default function App() {
