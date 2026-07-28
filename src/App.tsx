@@ -14,6 +14,7 @@ import ListaQC from './pages/ListaQC';
 import ColorAiChat from './components/ColorAiChat';
 import ScreenBrightness from './services/ScreenBrightness';
 import { API_BASE_URL } from './config';
+import { Geolocation } from '@capacitor/geolocation';
 
 function registrarAcceso(latitud: number | null, longitud: number | null) {
   const token = localStorage.getItem('token');
@@ -46,24 +47,35 @@ function registrarAcceso(latitud: number | null, longitud: number | null) {
 
 async function obtenerUbicacion(): Promise<{ latitud: number; longitud: number } | null> {
   console.log('[ACCESO] Intentando obtener ubicacion...');
-  console.log('[ACCESO] Capacitor disponible?:', !!(window as any).Capacitor, 'isNative?:', (window as any).Capacitor?.isNative);
+  const cap = (window as any).Capacitor;
+  console.log('[ACCESO] Capacitor disponible?:', !!cap, 'isNative?:', cap?.isNative);
+  if (cap?.isNative) {
+    try {
+      console.log('[ACCESO] Usando Capacitor Geolocation nativo...');
+      const perm = await Geolocation.checkPermissions();
+      console.log('[ACCESO] Permiso:', JSON.stringify(perm));
+      if (perm.location !== 'granted') {
+        const req = await Geolocation.requestPermissions({ permissions: ['location'] });
+        console.log('[ACCESO] Solicitud permiso:', JSON.stringify(req));
+        if (req.location !== 'granted') return null;
+      }
+      const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+      console.log('[ACCESO] Ubicacion obtenida:', pos.coords.latitude, pos.coords.longitude);
+      return { latitud: pos.coords.latitude, longitud: pos.coords.longitude };
+    } catch (err: any) {
+      console.warn('[ACCESO] Capacitor fallo:', err?.message || err);
+    }
+  }
   if (navigator.geolocation) {
-    console.log('[ACCESO] navigator.geolocation disponible, intentando...');
+    console.log('[ACCESO] Fallback a navigator.geolocation...');
     return new Promise(resolve => {
       navigator.geolocation.getCurrentPosition(
-        pos => {
-          console.log('[ACCESO] Ubicacion obtenida:', pos.coords.latitude, pos.coords.longitude);
-          resolve({ latitud: pos.coords.latitude, longitud: pos.coords.longitude });
-        },
-        err => {
-          console.warn('[ACCESO] Error en geolocation:', err.message);
-          resolve(null);
-        },
+        pos => resolve({ latitud: pos.coords.latitude, longitud: pos.coords.longitude }),
+        () => resolve(null),
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     });
   }
-  console.warn('[ACCESO] navigator.geolocation NO disponible');
   return null;
 }
 
