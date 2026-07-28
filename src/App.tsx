@@ -18,7 +18,11 @@ import { API_BASE_URL } from './config';
 function registrarAcceso(latitud: number | null, longitud: number | null) {
   const token = localStorage.getItem('token');
   const userDataStr = localStorage.getItem('userData');
-  if (!token || !userDataStr) return;
+  console.log('[ACCESO] registrarAcceso llamado', { latitud, longitud, tieneToken: !!token, tieneUserData: !!userDataStr });
+  if (!token || !userDataStr) {
+    console.warn('[ACCESO] Sin token o userData, saltando registro');
+    return;
+  }
 
   const userDataObj = JSON.parse(userDataStr);
   const headers: Record<string, string> = {
@@ -29,34 +33,55 @@ function registrarAcceso(latitud: number | null, longitud: number | null) {
     headers['x-client-id'] = userDataObj.idcliente.toString();
   }
 
+  console.log('[ACCESO] Enviando peticion POST a', `${API_BASE_URL}/api/registrar-acceso`);
   fetch(`${API_BASE_URL}/api/registrar-acceso`, {
     method: 'POST',
     headers,
     body: JSON.stringify({ latitud, longitud })
-  }).catch(err => console.error('[ACCESO] Error al registrar acceso:', err));
+  })
+    .then(res => res.json().then(data => ({ status: res.status, data })))
+    .then(({ status, data }) => console.log('[ACCESO] Respuesta del servidor:', { status, data }))
+    .catch(err => console.error('[ACCESO] Error al registrar acceso:', err));
 }
 
 async function obtenerUbicacion(): Promise<{ latitud: number; longitud: number } | null> {
+  console.log('[ACCESO] Intentando obtener ubicacion...');
   try {
+    console.log('[ACCESO] Probando con Capacitor Geolocation...');
     const { Geolocation } = await import('@capacitor/geolocation');
     const perm = await Geolocation.checkPermissions();
-    if (perm.location === 'denied') return null;
+    console.log('[ACCESO] Permiso Capacitor:', perm.location);
+    if (perm.location === 'denied') {
+      console.warn('[ACCESO] Permiso denegado');
+      return null;
+    }
     if (perm.location !== 'granted') {
       const req = await Geolocation.requestPermissions({ permissions: ['location'] });
+      console.log('[ACCESO] Resultado solicitud permiso:', req.location);
       if (req.location !== 'granted') return null;
     }
     const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+    console.log('[ACCESO] Ubicacion obtenida con Capacitor:', pos.coords.latitude, pos.coords.longitude);
     return { latitud: pos.coords.latitude, longitud: pos.coords.longitude };
-  } catch {
+  } catch (err: any) {
+    console.warn('[ACCESO] Capacitor fallo, usando fallback web:', err?.message || err);
     if (navigator.geolocation) {
+      console.log('[ACCESO] navigator.geolocation disponible, intentando...');
       return new Promise(resolve => {
         navigator.geolocation.getCurrentPosition(
-          pos => resolve({ latitud: pos.coords.latitude, longitud: pos.coords.longitude }),
-          () => resolve(null),
+          pos => {
+            console.log('[ACCESO] Ubicacion obtenida con web API:', pos.coords.latitude, pos.coords.longitude);
+            resolve({ latitud: pos.coords.latitude, longitud: pos.coords.longitude });
+          },
+          err => {
+            console.warn('[ACCESO] Error en web geolocation:', err.message);
+            resolve(null);
+          },
           { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
       });
     }
+    console.warn('[ACCESO] navigator.geolocation NO disponible');
     return null;
   }
 }

@@ -166,19 +166,20 @@ export const authenticateToken = (req: Request, res: Response, next: any) => {
 
 app.post('/api/registrar-acceso', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
-        const { idcliente } = (req as any).user;
+        const user = (req as any).user;
         const { latitud, longitud } = req.body;
+        console.log('[ACCESO] POST recibido:', { idcliente: user.idcliente, latitud, longitud, body: req.body });
 
         const acceso = await prisma.accesoUbicacion.create({
             data: {
-                idcliente,
+                idcliente: user.idcliente,
                 latitud: latitud?.toString() || null,
                 longitud: longitud?.toString() || null,
                 fecha: new Date()
             }
         });
 
-        console.log(`[ACCESO] Ubicacion registrada para cliente ${idcliente}: ${latitud}, ${longitud}`);
+        console.log(`[ACCESO] Registro INSERTADO exitosamente id=${acceso.id} para cliente ${user.idcliente}`);
         res.status(201).json({ message: 'Acceso registrado', id: acceso.id });
     } catch (error: any) {
         console.error('[ERROR] /api/registrar-acceso:', error.message);
