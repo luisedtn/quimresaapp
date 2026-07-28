@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -13,6 +13,53 @@ import ColorMatch from './pages/ColorMatch';
 import ListaQC from './pages/ListaQC';
 import ColorAiChat from './components/ColorAiChat';
 import ScreenBrightness from './services/ScreenBrightness';
+import { API_BASE_URL } from './config';
+
+function registrarAcceso(latitud: number | null, longitud: number | null) {
+  const token = localStorage.getItem('token');
+  const userDataStr = localStorage.getItem('userData');
+  if (!token || !userDataStr) return;
+
+  const userDataObj = JSON.parse(userDataStr);
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  };
+  if (userDataObj?.idcliente) {
+    headers['x-client-id'] = userDataObj.idcliente.toString();
+  }
+
+  fetch(`${API_BASE_URL}/api/registrar-acceso`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ latitud, longitud })
+  }).catch(err => console.error('[ACCESO] Error al registrar acceso:', err));
+}
+
+async function obtenerUbicacion(): Promise<{ latitud: number; longitud: number } | null> {
+  try {
+    const { Geolocation } = await import('@capacitor/geolocation');
+    const perm = await Geolocation.checkPermissions();
+    if (perm.location === 'denied') return null;
+    if (perm.location !== 'granted') {
+      const req = await Geolocation.requestPermissions({ permissions: ['location'] });
+      if (req.location !== 'granted') return null;
+    }
+    const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+    return { latitud: pos.coords.latitude, longitud: pos.coords.longitude };
+  } catch {
+    if (navigator.geolocation) {
+      return new Promise(resolve => {
+        navigator.geolocation.getCurrentPosition(
+          pos => resolve({ latitud: pos.coords.latitude, longitud: pos.coords.longitude }),
+          () => resolve(null),
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+      });
+    }
+    return null;
+  }
+}
 
 export default function App() {
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
@@ -38,6 +85,13 @@ export default function App() {
   });
   const [loading, setLoading] = useState(false);
   const isAuthenticated = !!userData;
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    obtenerUbicacion().then(coords => {
+      registrarAcceso(coords?.latitud ?? null, coords?.longitud ?? null);
+    });
+  }, [isAuthenticated]);
 
   const handleMockLogin = (data: any) => {
     localStorage.setItem('userData', JSON.stringify(data));

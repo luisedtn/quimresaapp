@@ -12,10 +12,12 @@ import com.getcapacitor.annotation.PermissionCallback;
 import com.getcapacitor.PermissionState;
 
 import com.nixsensor.universalsdk.DeviceScanner;
+import com.nixsensor.universalsdk.DeviceType;
 import com.nixsensor.universalsdk.IDeviceCompat;
 import com.nixsensor.universalsdk.IDeviceCompat.OnDeviceStateChangeListener;
 import com.nixsensor.universalsdk.IDeviceScanner;
 import com.nixsensor.universalsdk.IDeviceScanner.OnDeviceFoundListener;
+import com.nixsensor.universalsdk.IDeviceScanner.OnScannerStateChangeListener;
 import com.nixsensor.universalsdk.IDeviceScanner.DeviceScannerState;
 import com.nixsensor.universalsdk.IMeasurementData;
 import com.nixsensor.universalsdk.IColorData;
@@ -27,21 +29,30 @@ import com.nixsensor.universalsdk.CommandStatus;
 import com.nixsensor.universalsdk.ScanMode;
 import com.nixsensor.universalsdk.OnDeviceResultListener;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 @CapacitorPlugin(name = "NixSensorPlugin", permissions = {
         @Permission(alias = "bluetooth", strings = {
-                "android.permission.BLUETOOTH_SCAN",
-                "android.permission.BLUETOOTH_CONNECT"
+                Manifest.permission.BLUETOOTH_SCAN,
+                Manifest.permission.BLUETOOTH_CONNECT
+        }),
+        @Permission(alias = "location", strings = {
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
         })
 })
 public class NixSensorPlugin extends Plugin {
     private IDeviceScanner scanner;
-    private Map<String, IDeviceCompat> discoveredDevices = new HashMap<>();
+    private final Map<String, IDeviceCompat> discoveredDevices = new HashMap<>();
     private IDeviceCompat activeDevice;
 
     @Override
@@ -56,6 +67,20 @@ public class NixSensorPlugin extends Plugin {
 
             scanner = new DeviceScanner(getContext());
             android.util.Log.d("NixSensor", "NixSensorPlugin cargado exitosamente");
+
+            // Diagnosticar qué dispositivos permite la licencia
+            try {
+                java.util.Set<DeviceType> allowedTypes = LicenseManager.Shared.getAllowedDeviceTypes();
+                android.util.Log.d("NixSensor", "=== Tipos de dispositivo permitidos por licencia ===");
+                for (DeviceType dt : allowedTypes) {
+                    android.util.Log.d("NixSensor", "  - " + dt.name());
+                }
+                android.util.Log.d("NixSensor", "Mini 2 soportado? " + LicenseManager.Shared.isDeviceTypeSupported(DeviceType.MINI2));
+                android.util.Log.d("NixSensor", "Spectro 2 soportado? " + LicenseManager.Shared.isDeviceTypeSupported(DeviceType.SPECTRO2));
+                android.util.Log.d("NixSensor", "==========================================");
+            } catch (Exception e) {
+                android.util.Log.e("NixSensor", "Error al diagnosticar licencia: " + e.getMessage());
+            }
         } catch (Exception e) {
             android.util.Log.e("NixSensor", "Fallo al cargar NixSensorPlugin: " + e.getMessage());
         }
@@ -65,17 +90,27 @@ public class NixSensorPlugin extends Plugin {
     public void startScan(PluginCall call) {
         android.util.Log.d("NixSensor", "Solicitud de inicio de escaneo recibida");
 
-        // Verificar permisos en Android 12+
+        if (scanner == null) {
+            call.reject("El escáner no se ha inicializado. Verifique la carga del plugin.");
+            return;
+        }
+
+        // Verificar permisos según la versión de Android
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            if (getContext().checkSelfPermission(
-                    Manifest.permission.BLUETOOTH_SCAN) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                android.util.Log.w("NixSensor", "Permiso BLUETOOTH_SCAN no concedido. Solicitando...");
+            if (getPermissionState("bluetooth") != PermissionState.GRANTED) {
+                android.util.Log.w("NixSensor", "Permisos de Bluetooth no concedidos. Solicitando...");
                 requestPermissionForAlias("bluetooth", call, "checkPermissionsCallback");
+                return;
+            }
+        } else {
+            if (getPermissionState("location") != PermissionState.GRANTED) {
+                android.util.Log.w("NixSensor", "Permiso de ubicación no concedido (requerido para BLE en Android <12). Solicitando...");
+                requestPermissionForAlias("location", call, "checkPermissionsCallback");
                 return;
             }
         }
 
-        if (scanner.getState() == DeviceScannerState.SCANNING) {
+        if (scanner != null && scanner.getState() == DeviceScannerState.SCANNING) {
             android.util.Log.d("NixSensor", "El escáner ya estaba corriendo, reiniciando...");
             scanner.stop();
         }
@@ -83,15 +118,46 @@ public class NixSensorPlugin extends Plugin {
         discoveredDevices.clear();
         android.util.Log.d("NixSensor", "Llamando a scanner.start()...");
 
+        scanner.setOnScannerStateChangeListener(new OnScannerStateChangeListener() {
+            @Override
+            public void onScannerStarted(@NonNull IDeviceScanner sender) {
+                android.util.Log.d("NixSensor", "Escáner iniciado");
+                notifyListeners("scanStarted", new JSObject());
+            }
+
+            @Override
+            public void onScannerStopped(@NonNull IDeviceScanner sender) {
+                android.util.Log.d("NixSensor", "Escáner detenido. Dispositivos encontrados: " + discoveredDevices.size());
+                JSObject ret = new JSObject();
+                ret.put("deviceCount", discoveredDevices.size());
+                JSONArray devicesArray = new JSONArray();
+                for (Map.Entry<String, IDeviceCompat> entry : discoveredDevices.entrySet()) {
+                    IDeviceCompat d = entry.getValue();
+                    JSONObject devObj = new JSONObject();
+                    try {
+                        devObj.put("id", d.getId());
+                        devObj.put("name", d.getName());
+                        devObj.put("rssi", d.getRssi());
+                    } catch (JSONException e) {
+                        android.util.Log.e("NixSensor", "Error creando JSON de dispositivo: " + e.getMessage());
+                    }
+                    devicesArray.put(devObj);
+                }
+                ret.put("devices", devicesArray);
+                notifyListeners("scanComplete", ret);
+            }
+        });
+
         scanner.start(new OnDeviceFoundListener() {
             @Override
             public void onScanResult(@NonNull IDeviceScanner sender, @NonNull IDeviceCompat device) {
                 android.util.Log.i("NixSensor",
-                        "¡Dispositivo encontrado! ID: " + device.getId() + " Name: " + device.getName());
+                        "¡Dispositivo encontrado! ID: " + device.getId() + " Name: " + device.getName() + " RSSI: " + device.getRssi());
                 discoveredDevices.put(device.getId(), device);
                 JSObject ret = new JSObject();
                 ret.put("id", device.getId());
                 ret.put("name", device.getName());
+                ret.put("rssi", device.getRssi());
                 notifyListeners("deviceFound", ret);
             }
 
@@ -109,10 +175,10 @@ public class NixSensorPlugin extends Plugin {
 
     @PermissionCallback
     public void checkPermissionsCallback(PluginCall call) {
-        if (getPermissionState("bluetooth") == PermissionState.GRANTED) {
+        if (getPermissionState("bluetooth") == PermissionState.GRANTED || getPermissionState("location") == PermissionState.GRANTED) {
             startScan(call);
         } else {
-            call.reject("Permisos de Bluetooth denegados");
+            call.reject("Permisos necesarios denegados");
         }
     }
 
@@ -152,7 +218,7 @@ public class NixSensorPlugin extends Plugin {
 
                     // Enviar nivel de batería inicial
                     Integer batteryLevel = sender.getBatteryLevel();
-                    ret.put("batteryLevel", batteryLevel != null ? batteryLevel : -1);
+                    ret.put("batteryLevel", Objects.requireNonNullElse(batteryLevel, -1));
 
                     notifyListeners("deviceConnected", ret);
                 }
@@ -188,6 +254,16 @@ public class NixSensorPlugin extends Plugin {
             android.util.Log.d("NixSensor", "Desconectando dispositivo manualmente...");
             activeDevice.disconnect();
             activeDevice = null;
+        }
+        discoveredDevices.clear();
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void stopScan(PluginCall call) {
+        android.util.Log.d("NixSensor", "Deteniendo escáner por solicitud del usuario...");
+        if (scanner != null && scanner.getState() == DeviceScannerState.SCANNING) {
+            scanner.stop();
         }
         discoveredDevices.clear();
         call.resolve();
@@ -237,35 +313,22 @@ public class NixSensorPlugin extends Plugin {
 
     private ScanMode parseScanMode(String s) {
         if (s == null) return ScanMode.M0;
-        switch (s) {
-            case "M1": return ScanMode.M1;
-            case "M2": return ScanMode.M2;
-            default: return ScanMode.M0;
-        }
+        return switch (s) {
+            case "M1" -> ScanMode.M1;
+            case "M2" -> ScanMode.M2;
+            default -> ScanMode.M0;
+        };
     }
 
     private ReferenceWhite parseReferenceWhite(String s) {
         if (s == null) return ReferenceWhite.D50_2;
-        switch (s.replace("/", "_").replace("°", "")) {
-            case "A_2": return ReferenceWhite.A_2;
-            case "A_10": return ReferenceWhite.A_10;
-            case "C_2": return ReferenceWhite.C_2;
-            case "C_10": return ReferenceWhite.C_10;
-            case "D50_2": return ReferenceWhite.D50_2;
-            case "D50_10": return ReferenceWhite.D50_10;
-            case "D55_2": return ReferenceWhite.D55_2;
-            case "D55_10": return ReferenceWhite.D55_10;
-            case "D65_2": return ReferenceWhite.D65_2;
-            case "D65_10": return ReferenceWhite.D65_10;
-            case "D75_2": return ReferenceWhite.D75_2;
-            case "D75_10": return ReferenceWhite.D75_10;
-            case "F2_2": return ReferenceWhite.F2_2;
-            case "F2_10": return ReferenceWhite.F2_10;
-            case "F7_2": return ReferenceWhite.F7_2;
-            case "F7_10": return ReferenceWhite.F7_10;
-            case "F11_2": return ReferenceWhite.F11_2;
-            case "F11_10": return ReferenceWhite.F11_10;
-            default: return ReferenceWhite.D50_2;
+        try {
+            // Convierte D50/2° -> D50_2
+            String normalized = s.replace("/", "_").replace("°", "");
+            return ReferenceWhite.valueOf(normalized);
+        } catch (IllegalArgumentException e) {
+            android.util.Log.w("NixSensor", "Referencia blanca desconocida: " + s + ". Usando D50/2° por defecto.");
+            return ReferenceWhite.D50_2;
         }
     }
 }

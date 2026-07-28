@@ -21,9 +21,9 @@ function labToHex(l: number, a: number, b: number): string {
 }
 
 const getFormulaColor = (f: any) => {
-  const l = f.L !== undefined && f.L !== null ? f.L : f.l;
-  const a = f.A !== undefined && f.A !== null ? f.A : f.a;
-  const b = f.B !== undefined && f.B !== null ? f.B : f.b;
+  const l = f.LO !== undefined && f.LO !== null ? f.LO : f.L;
+  const a = f.AO !== undefined && f.AO !== null ? f.AO : f.A;
+  const b = f.BO !== undefined && f.BO !== null ? f.BO : f.B;
   if (l === undefined || l === null || l === '') return '#1e293b';
   return labToHex(parseFloat(String(l)), parseFloat(String(a || '0')), parseFloat(String(b || '0')));
 };
@@ -161,9 +161,9 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
     navigate('/quality-control', {
       state: {
         standardFromFormula: {
-          l: parseFloat(formula.L || '0'),
-          a: parseFloat(formula.A || '0'),
-          b: parseFloat(formula.B || '0'),
+          l: parseFloat(formula.LO || '0'),
+          a: parseFloat(formula.AO || '0'),
+          b: parseFloat(formula.BO || '0'),
           name: formula.NOMBREFORMULA || 'Patrón de Fórmula'
         }
       }
@@ -305,19 +305,19 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
                         {/* LAB values - compact inline */}
                         <div className="formula-card__lab-row">
                           <div className="formula-card__lab-item">
-                            <span className="formula-card__lab-label">L*</span>
-                            <span className="formula-card__lab-value">{parseFloat(formula.L || '0').toFixed(2)}</span>
-                          </div>
-                          <div className="formula-card__lab-divider" />
-                          <div className="formula-card__lab-item">
-                            <span className="formula-card__lab-label">a*</span>
-                            <span className="formula-card__lab-value">{parseFloat(formula.A || '0').toFixed(2)}</span>
-                          </div>
-                          <div className="formula-card__lab-divider" />
-                          <div className="formula-card__lab-item">
-                            <span className="formula-card__lab-label">b*</span>
-                            <span className="formula-card__lab-value">{parseFloat(formula.B || '0').toFixed(2)}</span>
-                          </div>
+                             <span className="formula-card__lab-label">L*</span>
+                             <span className="formula-card__lab-value">{parseFloat(formula.LO || '0').toFixed(2)}</span>
+                           </div>
+                           <div className="formula-card__lab-divider" />
+                           <div className="formula-card__lab-item">
+                             <span className="formula-card__lab-label">a*</span>
+                             <span className="formula-card__lab-value">{parseFloat(formula.AO || '0').toFixed(2)}</span>
+                           </div>
+                           <div className="formula-card__lab-divider" />
+                           <div className="formula-card__lab-item">
+                             <span className="formula-card__lab-label">b*</span>
+                             <span className="formula-card__lab-value">{parseFloat(formula.BO || '0').toFixed(2)}</span>
+                           </div>
                         </div>
 
                         {/* Quality control button */}

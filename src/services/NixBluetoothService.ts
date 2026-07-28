@@ -13,10 +13,17 @@ import { Capacitor, registerPlugin } from '@capacitor/core';
 // Definir el plugin personalizado para TypeScript
 interface NixSensorPlugin {
     startScan(): Promise<void>;
+    stopScan(): Promise<void>;
     connect(options: { id: string }): Promise<NixDeviceInfo>;
     disconnect(): Promise<void>;
     measure(options?: { mode?: string; referenceWhite?: string }): Promise<{ color: NixColorData }>;
     addListener(eventName: string, listenerFunc: (data: any) => void): any;
+}
+
+export interface DiscoveredDevice {
+    id: string;
+    name: string;
+    rssi: number;
 }
 
 const NixSensor = registerPlugin<NixSensorPlugin>('NixSensorPlugin');
@@ -74,6 +81,7 @@ export interface NixMeasurement {
 export type NixEventType =
     | 'scanning'
     | 'device-found'
+    | 'devices-found'
     | 'connecting'
     | 'connected'
     | 'disconnected'
@@ -212,13 +220,9 @@ export class NixBluetoothService {
 
     cancelScan(): void {
         this._isScanCancelled = true;
-        // En nativo, intentar detener el scan llamando disconnect
         if (isNativePlatform()) {
-            NixSensor.disconnect().catch(() => {});
+            NixSensor.stopScan().catch(() => {});
         }
-        // En web, el diálogo del navegador no puede cerrarse programáticamente,
-        // pero marcamos la bandera para ignorar cualquier resultado posterior.
-        // Emitimos el estado de regreso a idle.
         this.emit({ type: 'error', error: 'Escaneo cancelado' });
     }
 
@@ -312,54 +316,83 @@ export class NixBluetoothService {
         }
     }
 
+    private foundDevices: DiscoveredDevice[] = [];
+    private scanResolve: ((value: NixDeviceInfo) => void) | null = null;
+    private scanReject: ((reason: any) => void) | null = null;
+
     // ============================================================
     // NATIVE CAPACITOR PLUGIN (ANDROID SDK)
     // ============================================================
 
     private async scanAndConnectNative(): Promise<NixDeviceInfo> {
+        // Limpiar escaneo anterior si existía
+        if (this.scanReject) {
+            this.scanReject(new Error('Nuevo escaneo iniciado'));
+        }
+        this.scanResolve = null;
+        this.scanReject = null;
+        this.foundDevices = [];
         this.emit({ type: 'scanning' });
 
         return new Promise((resolve, reject) => {
-            // Escuchar cuando se encuentre un dispositivo
+            this.scanResolve = resolve;
+            this.scanReject = reject;
+
+            // Escuchar eventos de dispositivos encontrados durante el escaneo
             const deviceFoundHandler = NixSensor.addListener('deviceFound', (device: any) => {
-                console.log(`¡Dispositivo Nix encontrado!: ${device.name} [${device.id}]`);
-
-                // Detener el listener de búsqueda de inmediato para evitar múltiples intentos de conexión
-                deviceFoundHandler.remove();
-
-                this._deviceInfo.id = device.id;
-                this._deviceInfo.name = device.name;
-                this._deviceInfo.type = this.detectDeviceType(device.name);
-
-                this.emit({ type: 'device-found', data: this._deviceInfo });
-
-                // Conectar automáticamente al primero por ahora (o implementar selector en UI)
-                this.emit({ type: 'connecting', data: this._deviceInfo });
-
-                NixSensor.connect({ id: device.id }).then(() => {
-                    // Esperar al evento de conexión real para mayor seguridad
-                    const connectedHandler = NixSensor.addListener('deviceConnected', (data: any) => {
-                        this._deviceInfo.connected = true;
-                        if (data.batteryLevel !== undefined) {
-                            this._deviceInfo.batteryLevel = data.batteryLevel;
-                        }
-                        this.emit({ type: 'connected', data: this._deviceInfo });
-                        connectedHandler.remove();
-                        resolve(this._deviceInfo);
-                    });
-                }).catch(err => {
-                    this.emit({ type: 'error', error: err.message });
-                    reject(err);
+                console.log(`¡Dispositivo Nix encontrado!: ${device.name} [${device.id}] RSSI: ${device.rssi}`);
+                this.foundDevices.push({
+                    id: device.id,
+                    name: device.name,
+                    rssi: device.rssi ?? -100
                 });
+                this.emit({ type: 'device-found', data: { id: device.id, name: device.name, rssi: device.rssi } });
+            });
+
+            const scanCompleteHandler = NixSensor.addListener('scanComplete', (data: any) => {
+                deviceFoundHandler.remove();
+                scanCompleteHandler.remove();
+                scanFailedHandler.remove();
+
+                if (this._isScanCancelled) {
+                    reject(new Error('Escaneo cancelado'));
+                    return;
+                }
+
+                const count = data.deviceCount ?? this.foundDevices.length;
+                console.log(`Escaneo completado. ${count} dispositivo(s) encontrado(s).`);
+
+                if (this.foundDevices.length === 0) {
+                    this.emit({ type: 'error', error: 'No se encontraron dispositivos Nix' });
+                    reject(new Error('No se encontraron dispositivos Nix'));
+                    return;
+                }
+
+                // Ordenar por RSSI (mayor señal primero)
+                this.foundDevices.sort((a, b) => b.rssi - a.rssi);
+
+                // Emitir lista de dispositivos encontrados para que la UI muestre selector
+                this.emit({ type: 'devices-found', data: [...this.foundDevices] });
+            });
+
+            const scanFailedHandler = NixSensor.addListener('scanFailed', (data: any) => {
+                deviceFoundHandler.remove();
+                scanCompleteHandler.remove();
+                scanFailedHandler.remove();
+                this.emit({ type: 'error', error: `Error en escaneo nativo: ${data.error}` });
+                reject(new Error(`Error en escaneo nativo: ${data.error}`));
             });
 
             // Iniciar escaneo nativo
             NixSensor.startScan().catch(err => {
+                deviceFoundHandler.remove();
+                scanCompleteHandler.remove();
+                scanFailedHandler.remove();
                 this.emit({ type: 'error', error: err.message });
                 reject(err);
             });
 
-            // Configurar otros listeners
+            // Configurar otros listeners persistentes
             NixSensor.addListener('batteryChanged', (data: any) => {
                 this._deviceInfo.batteryLevel = data.level;
                 this.emit({ type: 'battery-changed', data: data.level });
@@ -370,6 +403,72 @@ export class NixBluetoothService {
                 this.emit({ type: 'disconnected' });
             });
         });
+    }
+
+    async selectDeviceAndConnect(id: string): Promise<NixDeviceInfo> {
+        const device = this.foundDevices.find(d => d.id === id);
+        if (!device) {
+            throw new Error(`Dispositivo ${id} no encontrado en la lista de escaneo`);
+        }
+
+        this._deviceInfo.id = device.id;
+        this._deviceInfo.name = device.name;
+        this._deviceInfo.type = this.detectDeviceType(device.name);
+
+        this.emit({ type: 'connecting', data: this._deviceInfo });
+
+        try {
+            await NixSensor.connect({ id: device.id });
+            return new Promise((resolve, reject) => {
+                let resolved = false;
+
+                const connectedHandler = NixSensor.addListener('deviceConnected', (data: any) => {
+                    if (resolved) return;
+                    resolved = true;
+                    this._deviceInfo.connected = true;
+                    if (data.batteryLevel !== undefined) {
+                        this._deviceInfo.batteryLevel = data.batteryLevel;
+                    }
+                    this.emit({ type: 'connected', data: this._deviceInfo });
+                    connectedHandler.remove();
+                    disconnectHandler.remove();
+                    if (this.scanResolve) {
+                        this.scanResolve(this._deviceInfo);
+                        this.scanResolve = null;
+                        this.scanReject = null;
+                    }
+                    resolve(this._deviceInfo);
+                });
+
+                const disconnectHandler = NixSensor.addListener('deviceDisconnected', () => {
+                    if (resolved) return;
+                    resolved = true;
+                    connectedHandler.remove();
+                    disconnectHandler.remove();
+                    this._deviceInfo.connected = false;
+                    this.emit({ type: 'disconnected' });
+                    const err = new Error('Conexión fallida');
+                    if (this.scanReject) {
+                        this.scanReject(err);
+                        this.scanResolve = null;
+                        this.scanReject = null;
+                    }
+                    reject(err);
+                });
+            });
+        } catch (err: any) {
+            this.emit({ type: 'error', error: err.message });
+            if (this.scanReject) {
+                this.scanReject(err);
+                this.scanResolve = null;
+                this.scanReject = null;
+            }
+            throw err;
+        }
+    }
+
+    getFoundDevices(): DiscoveredDevice[] {
+        return [...this.foundDevices];
     }
 
     private async measureNative(options?: MeasureOptions): Promise<NixMeasurement> {

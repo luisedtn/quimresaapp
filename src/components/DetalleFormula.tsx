@@ -70,7 +70,7 @@ function PdfTabContent({
         obs.observe(el);
         update();
         return () => obs.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     if (!hasPdf) return (
@@ -177,7 +177,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
     useEffect(() => {
         if (!isOpen || !formula) return;
         if (!formula.NOMBREFORMULA || !formula.ID) return;
-        
+
         const fetchLotes = async () => {
             console.log(`[DetalleFormula] Iniciando búsqueda de lotes para la fórmula ID: ${formula.ID}, Nombre: ${formula.NOMBREFORMULA}`);
             try {
@@ -339,7 +339,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
         if (!isOpen) return;
         const field = activeTab === 'fichatecnica' ? 'FICHATECNICA'
             : activeTab === 'fichaseguridad' ? 'FICHASEGURIDAD'
-            : null;
+                : null;
         if (!field) return;
         if (!basePdfData.ID) return;
         const hasPdf = field === 'FICHATECNICA' ? basePdfData.FICHATECNICA : basePdfData.FICHASEGURIDAD;
@@ -394,7 +394,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
         try {
             const d = new Date(dateStr);
             if (isNaN(d.getTime())) return dateStr;
-            return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
         } catch {
             return dateStr;
         }
@@ -713,8 +713,6 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                                     <thead className="bg-black/20" style={{ color: 'var(--text-muted)' }}>
                                                         <tr>
                                                             <th className="p-3 font-semibold">Lote</th>
-                                                            <th className="p-3 font-semibold">Fecha</th>
-                                                            <th className="p-3 font-semibold">ΔE</th>
                                                             <th className="p-3 font-semibold">L*</th>
                                                             <th className="p-3 font-semibold">a*</th>
                                                             <th className="p-3 font-semibold">b*</th>
@@ -724,9 +722,13 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                                     <tbody>
                                                         {lotesPersonales.map((lote: any, idx: number) => (
                                                             <tr key={idx} className="transition-colors hover:bg-white/5 border-b last:border-b-0" style={{ color: 'var(--text-secondary)', borderColor: 'var(--border-ingredient-card)' }}>
-                                                                <td className="p-3 font-medium">{lote.LOTE}</td>
-                                                                <td className="p-3">{formatDate(lote.FECHA)}</td>
-                                                                <td className="p-3 font-mono font-bold" style={{ color: parseFloat(lote.DELTA || '0') < 1 ? '#34d399' : '#f87171' }}>{parseFloat(lote.DELTA || '0').toFixed(2)}</td>
+                                                                <td className="p-3">
+                                                                    <div className="font-medium">{lote.LOTE}</div>
+                                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                                        <span className="text-[10px] opacity-60">{formatDate(lote.FECHA)}</span>
+                                                                        <span className="text-[10px] font-bold font-mono" style={{ color: parseFloat(lote.DELTA || '0') < 1 ? '#34d399' : '#f87171' }}>ΔE {parseFloat(lote.DELTA || '0').toFixed(2)}</span>
+                                                                    </div>
+                                                                </td>
                                                                 <td className="p-3 font-mono">{parseFloat(lote.LO || '0').toFixed(2)}</td>
                                                                 <td className="p-3 font-mono">{parseFloat(lote.AO || '0').toFixed(2)}</td>
                                                                 <td className="p-3 font-mono">{parseFloat(lote.BO || '0').toFixed(2)}</td>
@@ -762,24 +764,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                         <div className="flex justify-center py-10">
                                             <div className="formula-spinner formula-spinner--sm"></div>
                                         </div>
-                                    ) : isSuper === false ? (
-                                        <div
-                                            className="p-8 rounded-2xl text-center border border-dashed flex flex-col items-center justify-center gap-2"
-                                            style={{
-                                                backgroundColor: 'var(--bg-ingredient-card)',
-                                                borderColor: 'var(--border-ingredient-card)',
-                                                color: 'var(--text-muted)'
-                                            }}
-                                        >
-                                            <Droplets className="w-8 h-8 opacity-20 mb-1" />
-                                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                                                Fórmula Confidencial
-                                            </p>
-                                            <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
-                                                Su cuenta no tiene privilegios para visualizar los componentes o pigmentos detallados de esta fórmula.
-                                            </p>
-                                        </div>
-                                    ) : (
+                                    ) : isSuper === false ? null : (
                                         <>
                                             {/* Column headers */}
                                             <div
@@ -874,93 +859,65 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                     {/* ── Totales ── */}
                                     <div className="pt-1 space-y-3">
                                         {/* Totals card */}
-                                        <div
-                                            className="p-5 rounded-2xl space-y-3"
-                                            style={{
-                                                backgroundColor: 'var(--bg-ingredient-card)',
-                                                border: '1px solid var(--border-ingredient-card)'
-                                            }}
-                                        >
-                                            {/* Top accent line */}
+                                        {isSuper && (
                                             <div
-                                                className="h-0.5 w-full rounded-full -mt-1 mb-3"
-                                                style={{ background: 'linear-gradient(to right, var(--accent-orange), rgba(184,93,0,0.1))' }}
-                                            />
-                                            <div className="flex items-center justify-between">
-                                                <span
-                                                    className="text-[10px] font-bold uppercase tracking-widest"
-                                                    style={{ color: 'var(--text-muted)' }}
-                                                >
-                                                    Total Volumen
-                                                </span>
-                                                <span
-                                                    className="text-xl font-mono font-black"
-                                                    style={{ color: 'var(--text-primary)' }}
-                                                >
-                                                    1000.00
+                                                className="p-5 rounded-2xl space-y-3"
+                                                style={{
+                                                    backgroundColor: 'var(--bg-ingredient-card)',
+                                                    border: '1px solid var(--border-ingredient-card)'
+                                                }}
+                                            >
+                                                {/* Top accent line */}
+                                                <div
+                                                    className="h-0.5 w-full rounded-full -mt-1 mb-3"
+                                                    style={{ background: 'linear-gradient(to right, var(--accent-orange), rgba(184,93,0,0.1))' }}
+                                                />
+                                                <div className="flex items-center justify-between">
                                                     <span
-                                                        className="text-xs font-bold ml-1"
+                                                        className="text-[10px] font-bold uppercase tracking-widest"
                                                         style={{ color: 'var(--text-muted)' }}
                                                     >
-                                                        ml
+                                                        Total Volumen
                                                     </span>
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span
-                                                    className="text-[10px] font-bold uppercase tracking-widest"
-                                                    style={{ color: 'var(--text-muted)' }}
-                                                >
-                                                    Masa Total
-                                                </span>
-                                                <span
-                                                    className="text-lg font-mono font-bold"
-                                                    style={{ color: 'var(--text-secondary)' }}
-                                                >
-                                                    {finalMassSum.toFixed(1)}
                                                     <span
-                                                        className="text-xs font-bold ml-1"
-                                                        style={{ color: 'var(--text-muted)' }}
-                                                    >
-                                                        g
-                                                    </span>
-                                                </span>
-                                            </div>
-                                            <div
-                                                className="h-px w-full"
-                                                style={{ backgroundColor: 'var(--border-ingredient-card)' }}
-                                            />
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <p
-                                                        className="text-[9px] font-bold uppercase tracking-widest mb-1"
-                                                        style={{ color: 'var(--text-muted)' }}
-                                                    >
-                                                        Muestras
-                                                    </p>
-                                                    <p
-                                                        className="text-sm font-bold"
+                                                        className="text-xl font-mono font-black"
                                                         style={{ color: 'var(--text-primary)' }}
                                                     >
-                                                        {formula.NOMUESTRAS || '0'}
-                                                    </p>
+                                                        1000.00
+                                                        <span
+                                                            className="text-xs font-bold ml-1"
+                                                            style={{ color: 'var(--text-muted)' }}
+                                                        >
+                                                            ml
+                                                        </span>
+                                                    </span>
                                                 </div>
-                                                <div>
-                                                    <p
-                                                        className="text-[9px] font-bold uppercase tracking-widest mb-1"
+                                                <div className="flex items-center justify-between">
+                                                    <span
+                                                        className="text-[10px] font-bold uppercase tracking-widest"
                                                         style={{ color: 'var(--text-muted)' }}
                                                     >
-                                                        Preparación
-                                                    </p>
-                                                    <p
-                                                        className="text-sm font-bold"
-                                                        style={{ color: 'var(--text-primary)' }}
+                                                        Masa Total
+                                                    </span>
+                                                    <span
+                                                        className="text-lg font-mono font-bold"
+                                                        style={{ color: 'var(--text-secondary)' }}
                                                     >
-                                                        #{formula.VARIANTE || '1'}
-                                                    </p>
+                                                        {finalMassSum.toFixed(1)}
+                                                        <span
+                                                            className="text-xs font-bold ml-1"
+                                                            style={{ color: 'var(--text-muted)' }}
+                                                        >
+                                                            g
+                                                        </span>
+                                                    </span>
                                                 </div>
+                                                <div
+                                                    className="h-px w-full"
+                                                    style={{ backgroundColor: 'var(--border-ingredient-card)' }}
+                                                />
                                             </div>
-                                        </div>
+                                        )}
 
                                         {/* Producto / Sustrato */}
                                         <div className="grid grid-cols-2 gap-3">

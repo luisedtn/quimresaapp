@@ -9,7 +9,8 @@ import {
     NixBluetoothService,
     NixDeviceInfo,
     NixMeasurement,
-    NixEvent
+    NixEvent,
+    DiscoveredDevice
 } from '../services/NixBluetoothService';
 import { loadSettings, DeviceSettingsData } from '../components/DeviceSettings';
 
@@ -23,6 +24,7 @@ export interface UseNixDeviceReturn {
     deviceInfo: NixDeviceInfo | null;
     lastMeasurement: NixMeasurement | null;
     measurements: NixMeasurement[];
+    foundDevices: DiscoveredDevice[];
     error: string | null;
     status: string;
 
@@ -30,6 +32,7 @@ export interface UseNixDeviceReturn {
     scan: () => Promise<void>;
     cancelScan: () => void;
     disconnect: () => void;
+    selectDevice: (id: string) => Promise<void>;
     measure: () => Promise<NixMeasurement | null>;
     removeMeasurement: (timestamp: string) => void;
     clearMeasurements: () => void;
@@ -52,6 +55,7 @@ export function useNixDevice(): UseNixDeviceReturn {
     });
     const [lastMeasurement, setLastMeasurement] = useState<NixMeasurement | null>(null);
     const [measurements, setMeasurements] = useState<NixMeasurement[]>([]);
+    const [foundDevices, setFoundDevices] = useState<DiscoveredDevice[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [status, setStatus] = useState(() => nixService.getDeviceInfo().connected ? `Conectado a ${nixService.getDeviceInfo().name}` : 'Desconectado');
     const [settings, setSettings] = useState<DeviceSettingsData>(loadSettings());
@@ -68,11 +72,16 @@ export function useNixDevice(): UseNixDeviceReturn {
             switch (event.type) {
                 case 'scanning':
                     setIsScanning(true);
+                    setFoundDevices([]);
                     setStatus('Buscando dispositivos Nix...');
                     break;
                 case 'device-found':
-                    setIsScanning(false);
                     setStatus(`Dispositivo encontrado: ${event.data?.name}`);
+                    break;
+                case 'devices-found':
+                    setIsScanning(false);
+                    setFoundDevices(event.data ?? []);
+                    setStatus(`${event.data?.length ?? 0} dispositivo(s) encontrado(s). Selecciona uno.`);
                     break;
                 case 'connecting':
                     setIsConnecting(true);
@@ -139,6 +148,17 @@ export function useNixDevice(): UseNixDeviceReturn {
         nixService.cancelScan();
     }, []);
 
+    const selectDevice = useCallback(async (id: string) => {
+        setError(null);
+        setIsConnecting(true);
+        try {
+            await nixService.selectDeviceAndConnect(id);
+        } catch (err: any) {
+            setError(err.message);
+            setIsConnecting(false);
+        }
+    }, []);
+
     const disconnect = useCallback(() => {
         nixService.disconnect();
     }, []);
@@ -188,10 +208,12 @@ export function useNixDevice(): UseNixDeviceReturn {
         deviceInfo,
         lastMeasurement,
         measurements,
+        foundDevices,
         error,
         status,
         scan,
         cancelScan,
+        selectDevice,
         disconnect,
         measure,
         removeMeasurement,

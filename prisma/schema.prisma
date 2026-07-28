@@ -49,6 +49,7 @@ model Cliente {
   librerias  Libreria[]
   mediciones Medicion[]
   qualitycontrols QualityControl[]
+  accesos_ubicacion AccesoUbicacion[]
 
   @@map("CLIENTES")
 }
@@ -523,6 +524,17 @@ model QualityControl {
   cliente           Cliente? @relation(fields: [id_cliente], references: [CODIGO])
 
   @@map("qualitycontrol")
+}
+
+model AccesoUbicacion {
+  id         Int      @id @default(autoincrement())
+  idcliente  Int
+  fecha      DateTime @default(now())
+  latitud    String?
+  longitud   String?
+  cliente    Cliente  @relation(fields: [idcliente], references: [CODIGO])
+
+  @@map("accesos_ubicacion")
 }
 
 model DeltaRango {

@@ -64,10 +64,12 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
         deviceInfo,
         lastMeasurement,
         measurements,
+        foundDevices,
         error,
         status,
         scan,
         cancelScan,
+        selectDevice,
         disconnect,
         measure,
         removeMeasurement,
@@ -385,6 +387,46 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                             )}
                         </div>
                     </div>
+
+                    {/* Device Picker: se muestra cuando hay múltiples dispositivos encontrados */}
+                    <AnimatePresence>
+                        {foundDevices.length > 0 && !isConnected && !isConnecting && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                                className="lg:col-span-1 elegant-card p-6"
+                            >
+                                <h3 className="text-xs font-bold text-[#a38105] uppercase tracking-widest mb-4">Selecciona un dispositivo</h3>
+                                <div className="space-y-2">
+                                    {foundDevices.map((dev) => (
+                                        <button
+                                            key={dev.id}
+                                            onClick={() => selectDevice(dev.id)}
+                                            className="w-full flex items-center justify-between px-4 py-3 bg-slate-800/60 hover:bg-[#a38105]/20 border border-slate-700/50 hover:border-[#a38105]/50 rounded-lg transition-all text-left"
+                                        >
+                                            <div>
+                                                <p className="text-sm font-bold text-white">{dev.name}</p>
+                                                <p className="text-[10px] text-slate-500 font-mono mt-0.5">{dev.id}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-xs font-mono text-slate-400">{dev.rssi} dBm</p>
+                                                <p className={`text-[10px] font-bold uppercase tracking-wider ${dev.rssi > -60 ? 'text-green-400' : dev.rssi > -80 ? 'text-yellow-400' : 'text-red-400'}`}>
+                                                    {dev.rssi > -60 ? 'Señal fuerte' : dev.rssi > -80 ? 'Señal media' : 'Señal baja'}
+                                                </p>
+                                            </div>
+                                        </button>
+                                    ))}
+                                    <button
+                                        onClick={cancelScan}
+                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600/20 hover:bg-red-600/40 border border-red-600/30 text-red-400 hover:text-red-300 rounded-lg font-bold uppercase tracking-widest text-xs transition-all"
+                                    >
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
                     {/* Vista previa del color — Última Medición */}
                     <div className="lg:col-span-2 elegant-card p-6">
