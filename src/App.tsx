@@ -14,7 +14,6 @@ import ListaQC from './pages/ListaQC';
 import ColorAiChat from './components/ColorAiChat';
 import ScreenBrightness from './services/ScreenBrightness';
 import { API_BASE_URL } from './config';
-import { Geolocation } from '@capacitor/geolocation';
 
 function registrarAcceso(latitud: number | null, longitud: number | null) {
   const token = localStorage.getItem('token');
@@ -47,17 +46,24 @@ function registrarAcceso(latitud: number | null, longitud: number | null) {
 
 async function obtenerUbicacion(): Promise<{ latitud: number; longitud: number } | null> {
   console.log('[ACCESO] Intentando obtener ubicacion...');
-  const cap = (window as any).Capacitor;
-  const plataforma = cap?.getPlatform?.();
-  console.log('[ACCESO] Capacitor:', !!cap, 'plataforma:', plataforma);
-  if (plataforma === 'android' || plataforma === 'ios') {
+  const Geo = (window as any).Capacitor?.Plugins?.Geolocation;
+  if (Geo) {
     try {
-      console.log('[ACCESO] Usando Capacitor Geolocation nativo...');
-      const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+      console.log('[ACCESO] Usando Capacitor plugin nativo...');
+      const pos = await Geo.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
       console.log('[ACCESO] Ubicacion obtenida:', pos.coords.latitude, pos.coords.longitude);
       return { latitud: pos.coords.latitude, longitud: pos.coords.longitude };
     } catch (err: any) {
-      console.warn('[ACCESO] Capacitor fallo:', err?.message || err);
+      console.warn('[ACCESO] Capacitor getCurrentPosition fallo:', err?.message || err);
+      try {
+        console.log('[ACCESO] Solicitando permiso via Capacitor...');
+        await Geo.requestPermissions({ permissions: ['location'] });
+        const pos = await Geo.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+        console.log('[ACCESO] Ubicacion obtenida tras permiso:', pos.coords.latitude, pos.coords.longitude);
+        return { latitud: pos.coords.latitude, longitud: pos.coords.longitude };
+      } catch (err2: any) {
+        console.warn('[ACCESO] Capacitor con permiso tambien fallo:', err2?.message || err2);
+      }
     }
   }
   console.log('[ACCESO] Fallback a navigator.geolocation...');
