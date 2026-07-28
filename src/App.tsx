@@ -48,8 +48,9 @@ function registrarAcceso(latitud: number | null, longitud: number | null) {
 async function obtenerUbicacion(): Promise<{ latitud: number; longitud: number } | null> {
   console.log('[ACCESO] Intentando obtener ubicacion...');
   const cap = (window as any).Capacitor;
-  console.log('[ACCESO] Capacitor disponible?:', !!cap, 'isNative?:', cap?.isNative);
-  if (cap?.isNative) {
+  const plataforma = cap?.getPlatform?.();
+  console.log('[ACCESO] Capacitor:', !!cap, 'plataforma:', plataforma);
+  if (plataforma === 'android' || plataforma === 'ios') {
     try {
       console.log('[ACCESO] Usando Capacitor Geolocation nativo...');
       const perm = await Geolocation.checkPermissions();
@@ -87,12 +88,12 @@ export default function App() {
     if (maxBrightness) {
       ScreenBrightness.setBrightness({ brightness: 1 });
       if ('wakeLock' in navigator) {
-        navigator.wakeLock.request('screen').then(r => { wakeLockRef.current = r; }).catch(() => {});
+        navigator.wakeLock.request('screen').then(r => { wakeLockRef.current = r; }).catch(() => { });
       }
     }
     return () => {
       if (wakeLockRef.current) {
-        wakeLockRef.current.release().catch(() => {});
+        wakeLockRef.current.release().catch(() => { });
       }
     };
   }, []);
@@ -168,7 +169,7 @@ export default function App() {
         />
         <Route
           path="/color-match"
-          element={isAuthenticated ? <ColorMatch userData={userData} /> : <Navigate to="/login" />}
+          element={isAuthenticated ? <ColorMatch /> : <Navigate to="/login" />}
         />
         <Route
           path="/lista-qc"
