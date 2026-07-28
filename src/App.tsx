@@ -50,15 +50,13 @@ async function obtenerUbicacion(): Promise<{ latitud: number; longitud: number }
     console.log('[ACCESO] Probando con Capacitor Geolocation...');
     const { Geolocation } = await import('@capacitor/geolocation');
     const perm = await Geolocation.checkPermissions();
-    console.log('[ACCESO] Permiso Capacitor:', perm.location);
-    if (perm.location === 'denied') {
-      console.warn('[ACCESO] Permiso denegado');
-      return null;
-    }
+    console.log('[ACCESO] Permiso Capacitor:', JSON.stringify(perm));
     if (perm.location !== 'granted') {
       const req = await Geolocation.requestPermissions({ permissions: ['location'] });
-      console.log('[ACCESO] Resultado solicitud permiso:', req.location);
-      if (req.location !== 'granted') return null;
+      console.log('[ACCESO] Resultado solicitud permiso:', JSON.stringify(req));
+      if (req.location !== 'granted') {
+        throw new Error('Permiso no concedido por Capacitor');
+      }
     }
     const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
     console.log('[ACCESO] Ubicacion obtenida con Capacitor:', pos.coords.latitude, pos.coords.longitude);
