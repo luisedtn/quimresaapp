@@ -187,6 +187,53 @@ app.post('/api/registrar-acceso', authenticateToken, async (req: Request, res: R
     }
 });
 
+app.get('/api/ubicaciones', authenticateToken, async (req: Request, res: Response): Promise<any> => {
+    try {
+        const user = (req as any).user;
+        const { idcliente, fechaInicio, fechaFin } = req.query;
+
+        let whereClause = 'WHERE 1=1';
+        const params: any[] = [];
+        let paramIndex = 1;
+
+        if (idcliente && idcliente !== 'all') {
+            whereClause += ` AND au."IDCLIENTE" = $${paramIndex}`;
+            params.push(Number(idcliente));
+            paramIndex++;
+        } else if (user.typeuser !== 0 && user.typeuser !== '0') {
+            whereClause += ` AND au."IDCLIENTE" = $${paramIndex}`;
+            params.push(user.idcliente);
+            paramIndex++;
+        }
+
+        if (fechaInicio) {
+            whereClause += ` AND au."FECHA" >= $${paramIndex}::timestamp`;
+            params.push(fechaInicio);
+            paramIndex++;
+        }
+        if (fechaFin) {
+            whereClause += ` AND au."FECHA" <= ($${paramIndex}::timestamp + interval '1 day')`;
+            params.push(fechaFin);
+            paramIndex++;
+        }
+
+        const query = `
+            SELECT au."ID" as id, au."IDCLIENTE" as idcliente, c."NOMBRE" as "clienteNombre",
+                   au."FECHA" as fecha, au."LATITUD" as latitud, au."LONGITUD" as longitud
+            FROM "accesos_ubicacion" au
+            JOIN "CLIENTES" c ON c."CODIGO" = au."IDCLIENTE"
+            ${whereClause}
+            ORDER BY au."FECHA" DESC
+        `;
+
+        const resultados = await prisma.$queryRawUnsafe(query, ...params);
+        res.json(resultados);
+    } catch (error: any) {
+        console.error('[ERROR] /api/ubicaciones:', error.message);
+        res.status(500).json({ error: 'Error al obtener ubicaciones', details: error.message });
+    }
+});
+
 app.get('/api/usuarios', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
         const { idcliente } = (req as any).user;

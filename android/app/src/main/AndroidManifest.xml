@@ -1,13 +1,23 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Permissions -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.quimresa.colorapp">
+
+    <!-- Permisos generales -->
+    <uses-permission android:name="android.permission.INTERNET" />[cite: 2]
+
+    <!-- Permisos de Bluetooth -->
+    <uses-permission android:name="android.permission.BLUETOOTH" tools:node="replace" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" tools:node="replace" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" tools:node="replace" />[cite: 2]
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />[cite: 2]
+
+    <!-- Permisos de Localización FORZADOS (reemplaza cualquier regla externa) -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:node="replace" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" tools:node="replace" />
+
+    <!-- Características del hardware -->
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />[cite: 2]
 
     <application
         android:allowBackup="true"
@@ -15,7 +25,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme">[cite: 2]
+
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation"
             android:name=".MainActivity"
@@ -23,10 +34,10 @@
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
             android:screenOrientation="portrait"
-            android:exported="true">
+            android:exported="true">[cite: 2]
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN" />[cite: 2]
+                <category android:name="android.intent.category.LAUNCHER" />[cite: 2]
             </intent-filter>
         </activity>
 
@@ -34,8 +45,8 @@
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
             android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
+            android:grantUriPermissions="true">[cite: 2]
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />[cite: 2]
         </provider>
     </application>
 </manifest>

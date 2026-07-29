@@ -17,13 +17,15 @@ import {
   ChevronRight,
   Menu,
   Power,
-  Users
+  Users,
+  MapPin
 } from 'lucide-react';
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import Sidebar from '../components/Sidebar';
 import HistorialControl from '../components/HistorialControl';
 import CustomerSearch from '../components/CustomerSearch';
+import LocalizacionClientes from '../components/LocalizacionClientes';
 
 import IconoAjustes from '../assets/iconSpectro.svg';
 
@@ -38,6 +40,7 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showHistorialControl, setShowHistorialControl] = useState(false);
   const [showCustomerSearch, setShowCustomerSearch] = useState(false);
+  const [showLocalizacion, setShowLocalizacion] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -101,6 +104,7 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
     { id: 'qc', icon: Layers, title: 'Control de calidad', desc: 'Compara muestras contra un estándar e identifica si pasan o fallan.', path: '/quality-control' },
     { id: 'qc-history', icon: History, title: 'Historial de control', desc: 'Tu registro de sesiones de control de calidad.', path: '/lista-qc' },
     { id: 'favorites', icon: Heart, title: 'Colecciones', desc: 'Accede, descarga y edita tus colores favoritos.' },
+    { id: 'location', icon: MapPin, title: 'Ubicación Clientes', desc: 'Visualiza en mapa las ubicaciones de acceso de tus clientes.', path: '__localizacion__' },
     // { id: 'cloud', icon: Cloud, title: 'Panel en la nube', desc: 'Comparte colores, ve analíticas y gestiona usuarios.' },
   ];
 
@@ -223,7 +227,9 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
               whileHover={{ y: -2, scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               onClick={() => {
-                if (item.path) {
+                if (item.path === '__localizacion__') {
+                  setShowLocalizacion(true);
+                } else if (item.path) {
                   navigate(item.path);
                 }
               }}
@@ -269,6 +275,13 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
         onClose={() => setShowCustomerSearch(false)}
         onSelect={handleSelectClient}
       />
+
+      {showLocalizacion && (
+        <LocalizacionClientes
+          onClose={() => setShowLocalizacion(false)}
+          userData={userData}
+        />
+      )}
     </div>
   );
 }
