@@ -197,33 +197,33 @@ app.get('/api/ubicaciones', authenticateToken, async (req: Request, res: Respons
         let paramIndex = 1;
 
         if (idcliente && idcliente !== 'all') {
-            whereClause += ` AND au."IDCLIENTE" = $${paramIndex}`;
+            whereClause += ` AND au.idcliente = $${paramIndex}`;
             params.push(Number(idcliente));
             paramIndex++;
         } else if (user.typeuser !== 0 && user.typeuser !== '0') {
-            whereClause += ` AND au."IDCLIENTE" = $${paramIndex}`;
+            whereClause += ` AND au.idcliente = $${paramIndex}`;
             params.push(user.idcliente);
             paramIndex++;
         }
 
         if (fechaInicio) {
-            whereClause += ` AND au."FECHA" >= $${paramIndex}::timestamp`;
+            whereClause += ` AND au.fecha >= $${paramIndex}::timestamp`;
             params.push(fechaInicio);
             paramIndex++;
         }
         if (fechaFin) {
-            whereClause += ` AND au."FECHA" <= ($${paramIndex}::timestamp + interval '1 day')`;
+            whereClause += ` AND au.fecha <= ($${paramIndex}::timestamp + interval '1 day')`;
             params.push(fechaFin);
             paramIndex++;
         }
 
         const query = `
-            SELECT au."ID" as id, au."IDCLIENTE" as idcliente, c."NOMBRE" as "clienteNombre",
-                   au."FECHA" as fecha, au."LATITUD" as latitud, au."LONGITUD" as longitud
-            FROM "accesos_ubicacion" au
-            JOIN "CLIENTES" c ON c."CODIGO" = au."IDCLIENTE"
+            SELECT au.id as id, au.idcliente as idcliente, c."NOMBRE" as "clienteNombre",
+                   au.fecha as fecha, au.latitud as latitud, au.longitud as longitud
+            FROM accesos_ubicacion au
+            JOIN "CLIENTES" c ON c."CODIGO" = au.idcliente
             ${whereClause}
-            ORDER BY au."FECHA" DESC
+            ORDER BY au.fecha DESC
         `;
 
         const resultados = await prisma.$queryRawUnsafe(query, ...params);
