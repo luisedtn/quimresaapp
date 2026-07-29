@@ -328,7 +328,7 @@ export default function LocalizacionClientes({ onClose, userData }: Localizacion
                     {showSidebar && (
                         <motion.aside
                             initial={{ width: 0, opacity: 0 }}
-                            animate={{ width: 340, opacity: 1 }}
+                            animate={{ width: 238, opacity: 1 }}
                             exit={{ width: 0, opacity: 0 }}
                             transition={{ duration: 0.25, ease: 'easeInOut' }}
                             className="flex-shrink-0 border-r overflow-hidden flex flex-col"
