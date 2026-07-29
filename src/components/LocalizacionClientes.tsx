@@ -76,7 +76,7 @@ export default function LocalizacionClientes({ onClose, userData }: Localizacion
     const [filtroCliente, setFiltroCliente] = useState<string>('all');
     const [selectedPoint, setSelectedPoint] = useState<[number, number] | null>(null);
     const [selectedId, setSelectedId] = useState<number | null>(null);
-    const [showSidebar, setShowSidebar] = useState(true);
+    const [showSidebar, setShowSidebar] = useState(false);
     const [fechaInicio, setFechaInicio] = useState(() => {
         const now = new Date();
         return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
