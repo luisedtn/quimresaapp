@@ -192,6 +192,9 @@ app.get('/api/ubicaciones', authenticateToken, async (req: Request, res: Respons
         const user = (req as any).user;
         const { idcliente, fechaInicio, fechaFin } = req.query;
 
+        console.log('[UBICACIONES] Params recibidos:', { idcliente, fechaInicio, fechaFin });
+        console.log('[UBICACIONES] User:', { idcliente: user.idcliente, typeuser: user.typeuser });
+
         let whereClause = 'WHERE 1=1';
         const params: any[] = [];
         let paramIndex = 1;
@@ -226,10 +229,15 @@ app.get('/api/ubicaciones', authenticateToken, async (req: Request, res: Respons
             ORDER BY au.fecha DESC
         `;
 
+        console.log('[UBICACIONES] Query:', query);
+        console.log('[UBICACIONES] Params:', params);
+
         const resultados = await prisma.$queryRawUnsafe(query, ...params);
+        console.log('[UBICACIONES] Resultados:', resultados);
         res.json(resultados);
     } catch (error: any) {
         console.error('[ERROR] /api/ubicaciones:', error.message);
+        console.error('[ERROR] /api/ubicaciones stack:', error.stack);
         res.status(500).json({ error: 'Error al obtener ubicaciones', details: error.message });
     }
 });
