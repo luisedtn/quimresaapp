@@ -32,9 +32,10 @@ import IconoAjustes from '../assets/iconSpectro.svg';
 interface DashboardProps {
   userData: any;
   onLogout: () => void;
+  onUserDataChange: (data: any) => void;
 }
 
-export default function Dashboard({ userData, onLogout }: DashboardProps) {
+export default function Dashboard({ userData, onLogout, onUserDataChange }: DashboardProps) {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -90,9 +91,8 @@ export default function Dashboard({ userData, onLogout }: DashboardProps) {
       logoUrl: cliente.LOGO || userData.logoUrl
     };
     localStorage.setItem('userData', JSON.stringify(updatedUserData));
+    onUserDataChange(updatedUserData);
     setShowCustomerSearch(false);
-    // Reload to apply changes across the app
-    window.location.reload();
   };
 
   const menuItems = [

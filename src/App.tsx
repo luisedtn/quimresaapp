@@ -133,7 +133,7 @@ export default function App() {
         <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <Login onLogin={handleMockLogin} />} />
         <Route
           path="/"
-          element={isAuthenticated ? <Dashboard userData={userData} onLogout={handleLogout} /> : <Navigate to="/login" />}
+          element={isAuthenticated ? <Dashboard userData={userData} onLogout={handleLogout} onUserDataChange={setUserData} /> : <Navigate to="/login" />}
         />
         <Route
           path="/scan"

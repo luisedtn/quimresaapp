@@ -178,7 +178,7 @@ export default function LocalizacionClientes({ onClose, userData }: Localizacion
             {/* ── Header (naranja corporativo) ── */}
             <header className="flex-shrink-0 flex w-full items-center justify-between border-b border-black/10 shadow-lg px-6 py-4" style={{ background: 'var(--accent-orange)' }}>
                 <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-black/20 overflow-hidden rounded flex items-center justify-center">
+                    <div className="w-10 h-10 bg-transparent overflow-hidden rounded flex items-center justify-center">
                         <MapPin className="h-5 w-5 text-white" />
                     </div>
                     <div>
