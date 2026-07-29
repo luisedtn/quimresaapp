@@ -151,8 +151,6 @@ export default function LocalizacionClientes({ onClose, userData }: Localizacion
 
     const defaultCenter: [number, number] = [-0.180653, -78.467834];
 
-    const hasActiveFilters = filtroCliente !== 'all' || fechaInicio !== '' || fechaFin !== '';
-
     const clientesFiltrados = clientes.filter(c =>
         (c.NOMBRE || '').toLowerCase().includes(busquedaCliente.toLowerCase())
     );
@@ -292,37 +290,35 @@ export default function LocalizacionClientes({ onClose, userData }: Localizacion
                         )}
                     </div>
                 )}
-                <div className="flex items-center gap-2 w-full">
-                    <Calendar className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <Calendar className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
                     <input
                         type="date"
                         value={fechaInicio}
                         onChange={(e) => setFechaInicio(e.target.value)}
-                        className="rounded-xl px-3 py-2 text-xs outline-none transition-all font-medium"
+                        className="rounded-xl px-3 py-2 text-xs outline-none transition-all font-medium flex-1 min-w-0"
                         style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-card)' }}
                     />
-                    <span className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>→</span>
+                    <span className="text-xs font-bold flex-shrink-0" style={{ color: 'var(--text-muted)' }}>→</span>
                     <input
                         type="date"
                         value={fechaFin}
                         onChange={(e) => setFechaFin(e.target.value)}
-                        className="rounded-xl px-3 py-2 text-xs outline-none transition-all font-medium"
+                        className="rounded-xl px-3 py-2 text-xs outline-none transition-all font-medium flex-1 min-w-0"
                         style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-card)' }}
                     />
                 </div>
-                {hasActiveFilters && (
-                    <button
-                        onClick={clearFilters}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95"
-                        style={{ background: 'rgba(220,38,38,0.1)', color: '#f87171', border: '1px solid rgba(220,38,38,0.2)' }}
-                    >
-                        <RotateCcw className="h-3 w-3" />
-                        Limpiar
-                    </button>
-                )}
-                <div className="ml-auto text-[10px] font-bold uppercase tracking-widest sm:hidden" style={{ color: 'var(--text-muted)' }}>
-                    {ubicaciones.length} punto{ubicaciones.length !== 1 ? 's' : ''}
-                </div>
+                <button
+                    onClick={clearFilters}
+                    className="relative flex items-center justify-center p-2 rounded-xl transition-all active:scale-95 flex-shrink-0"
+                    style={{ background: 'rgba(220,38,38,0.1)', color: '#f87171', border: '1px solid rgba(220,38,38,0.2)' }}
+                    title="Reiniciar filtros"
+                >
+                    <RotateCcw className="h-4 w-4" />
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[8px] font-black text-white px-1" style={{ background: 'var(--accent-orange)' }}>
+                        {ubicaciones.length}
+                    </span>
+                </button>
             </div>
 
             {/* ── Contenido principal: Sidebar + Mapa ── */}
