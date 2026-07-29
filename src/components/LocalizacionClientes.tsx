@@ -219,11 +219,11 @@ export default function LocalizacionClientes({ onClose, userData }: Localizacion
             </header>
 
             {/* ── Filtros ── */}
-            <div className="flex-shrink-0 border-b px-6 py-3 flex flex-wrap items-center gap-4" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-card)' }}>
+            <div className="flex-shrink-0 border-b w-full px-6 py-3 flex flex-wrap items-center gap-4" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-card)' }}>
                 {isAdmin && (
-                    <div className="relative flex items-center gap-2" ref={dropdownRef}>
+                    <div className="relative flex w-full items-center gap-2" ref={dropdownRef}>
                         <Filter className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
-                        <div className="relative">
+                        <div className="relative w-full">
                             <input
                                 type="text"
                                 value={showDropdown ? busquedaCliente : (selectedClientName || busquedaCliente)}
@@ -237,7 +237,7 @@ export default function LocalizacionClientes({ onClose, userData }: Localizacion
                                     setShowDropdown(true);
                                 }}
                                 placeholder="Buscar cliente..."
-                                className="rounded-xl pl-4 pr-8 py-2 text-xs outline-none transition-all font-medium w-52"
+                                className="rounded-xl w-full pl-4 pr-8 py-2 text-xs outline-none transition-all font-medium w-52"
                                 style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-card)' }}
                             />
                             {filtroCliente !== 'all' && (
@@ -255,7 +255,7 @@ export default function LocalizacionClientes({ onClose, userData }: Localizacion
                         </div>
                         {showDropdown && (
                             <div
-                                className="absolute top-full left-6 mt-1 w-64 max-h-52 overflow-y-auto rounded-xl shadow-2xl z-[600]"
+                                className="absolute top-full left-6 mt-1 w-full max-h-52 overflow-y-auto rounded-xl shadow-2xl z-[600]"
                                 style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)' }}
                             >
                                 <button
@@ -292,7 +292,7 @@ export default function LocalizacionClientes({ onClose, userData }: Localizacion
                         )}
                     </div>
                 )}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full">
                     <Calendar className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />
                     <input
                         type="date"
