@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, MapPin, Calendar, Filter, Loader2, ChevronRight, Crosshair, RotateCcw, List, MapIcon } from 'lucide-react';
 import { API_BASE_URL } from '../config';
@@ -74,9 +74,12 @@ export default function LocalizacionClientes({ onClose, userData }: Localizacion
     const [clientes, setClientes] = useState<Cliente[]>([]);
     const [loading, setLoading] = useState(true);
     const [filtroCliente, setFiltroCliente] = useState<string>('all');
+    const [busquedaCliente, setBusquedaCliente] = useState('');
+    const [showDropdown, setShowDropdown] = useState(false);
     const [selectedPoint, setSelectedPoint] = useState<[number, number] | null>(null);
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [showSidebar, setShowSidebar] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
     const [fechaInicio, setFechaInicio] = useState(() => {
         const now = new Date();
         return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
@@ -130,6 +133,7 @@ export default function LocalizacionClientes({ onClose, userData }: Localizacion
 
     const clearFilters = () => {
         setFiltroCliente('all');
+        setBusquedaCliente('');
         const now = new Date();
         setFechaInicio(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`);
         setFechaFin(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`);
@@ -148,6 +152,28 @@ export default function LocalizacionClientes({ onClose, userData }: Localizacion
     const defaultCenter: [number, number] = [-0.180653, -78.467834];
 
     const hasActiveFilters = filtroCliente !== 'all' || fechaInicio !== '' || fechaFin !== '';
+
+    const clientesFiltrados = clientes.filter(c =>
+        (c.NOMBRE || '').toLowerCase().includes(busquedaCliente.toLowerCase())
+    );
+
+    const selectedClientName = clientes.find(c => c.CODIGO.toString() === filtroCliente)?.NOMBRE || '';
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setShowDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const selectCliente = (codigo: string, nombre: string) => {
+        setFiltroCliente(codigo);
+        setBusquedaCliente(codigo === 'all' ? '' : nombre);
+        setShowDropdown(false);
+    };
 
     return (
         <div className="fixed inset-0 z-[300] flex flex-col w-full" style={{ background: 'var(--bg-app)' }}>
@@ -195,19 +221,75 @@ export default function LocalizacionClientes({ onClose, userData }: Localizacion
             {/* ── Filtros ── */}
             <div className="flex-shrink-0 border-b px-6 py-3 flex flex-wrap items-center gap-4" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-card)' }}>
                 {isAdmin && (
-                    <div className="flex items-center gap-2">
-                        <Filter className="h-4 w-4" style={{ color: 'var(--text-muted)' }} />
-                        <select
-                            value={filtroCliente}
-                            onChange={(e) => setFiltroCliente(e.target.value)}
-                            className="rounded-xl px-4 py-2 text-xs outline-none transition-all font-medium cursor-pointer"
-                            style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-card)' }}
-                        >
-                            <option value="all">Todos los clientes</option>
-                            {clientes.map(c => (
-                                <option key={c.CODIGO} value={c.CODIGO}>{c.NOMBRE}</option>
-                            ))}
-                        </select>
+                    <div className="relative flex items-center gap-2" ref={dropdownRef}>
+                        <Filter className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={showDropdown ? busquedaCliente : (selectedClientName || busquedaCliente)}
+                                onChange={(e) => {
+                                    setBusquedaCliente(e.target.value);
+                                    setFiltroCliente('all');
+                                    setShowDropdown(true);
+                                }}
+                                onFocus={() => {
+                                    setBusquedaCliente(filtroCliente === 'all' ? '' : selectedClientName);
+                                    setShowDropdown(true);
+                                }}
+                                placeholder="Buscar cliente..."
+                                className="rounded-xl pl-4 pr-8 py-2 text-xs outline-none transition-all font-medium w-52"
+                                style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-card)' }}
+                            />
+                            {filtroCliente !== 'all' && (
+                                <button
+                                    onClick={() => {
+                                        setFiltroCliente('all');
+                                        setBusquedaCliente('');
+                                    }}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded transition-colors"
+                                    style={{ color: 'var(--text-muted)' }}
+                                >
+                                    <X className="h-3 w-3" />
+                                </button>
+                            )}
+                        </div>
+                        {showDropdown && (
+                            <div
+                                className="absolute top-full left-6 mt-1 w-64 max-h-52 overflow-y-auto rounded-xl shadow-2xl z-[600]"
+                                style={{ background: 'var(--bg-card)', border: '1px solid var(--border-card)' }}
+                            >
+                                <button
+                                    onClick={() => selectCliente('all', '')}
+                                    className="w-full text-left px-4 py-2.5 text-xs font-medium transition-colors border-b"
+                                    style={{
+                                        color: filtroCliente === 'all' ? 'var(--accent-orange)' : 'var(--text-secondary)',
+                                        background: filtroCliente === 'all' ? 'rgba(217,119,6,0.08)' : 'transparent',
+                                        borderColor: 'var(--border-card)'
+                                    }}
+                                >
+                                    Todos los clientes
+                                </button>
+                                {clientesFiltrados.length === 0 ? (
+                                    <div className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-center" style={{ color: 'var(--text-muted)' }}>
+                                        Sin resultados
+                                    </div>
+                                ) : (
+                                    clientesFiltrados.map(c => (
+                                        <button
+                                            key={c.CODIGO}
+                                            onClick={() => selectCliente(c.CODIGO.toString(), c.NOMBRE)}
+                                            className="w-full text-left px-4 py-2.5 text-xs font-medium transition-colors"
+                                            style={{
+                                                color: filtroCliente === c.CODIGO.toString() ? 'var(--accent-orange)' : 'var(--text-secondary)',
+                                                background: filtroCliente === c.CODIGO.toString() ? 'rgba(217,119,6,0.08)' : 'transparent'
+                                            }}
+                                        >
+                                            {c.NOMBRE}
+                                        </button>
+                                    ))
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
                 <div className="flex items-center gap-2">
