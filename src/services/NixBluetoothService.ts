@@ -24,6 +24,7 @@ export interface DiscoveredDevice {
     id: string;
     name: string;
     rssi: number;
+    type?: string;
 }
 
 const NixSensor = registerPlugin<NixSensorPlugin>('NixSensorPlugin');
@@ -88,7 +89,8 @@ export type NixEventType =
     | 'measuring'
     | 'measurement-complete'
     | 'error'
-    | 'battery-changed';
+    | 'battery-changed'
+    | 'status';
 
 export interface NixEvent {
     type: NixEventType;
@@ -317,8 +319,21 @@ export class NixBluetoothService {
     }
 
     private foundDevices: DiscoveredDevice[] = [];
+    private foundDeviceIds: Set<string> = new Set();
     private scanResolve: ((value: NixDeviceInfo) => void) | null = null;
     private scanReject: ((reason: any) => void) | null = null;
+    private persistentListeners: { remove: () => void }[] = [];
+
+    /**
+     * Verifica si un dispositivo BLE es un Nix conocido por nombre o tipo.
+     */
+    private isNixDevice(name: string, type?: string): boolean {
+        // Si el plugin nativo ya identificó el tipo, aceptarlo directamente
+        if (type && type !== 'UNKNOWN') return true;
+        // Fallback: verificar por nombre (Nix usa prefijos como "Nix Mini", "Nix Spectro", etc.)
+        const n = (name ?? '').toLowerCase();
+        return n.includes('nix');
+    }
 
     // ============================================================
     // NATIVE CAPACITOR PLUGIN (ANDROID SDK)
@@ -332,6 +347,7 @@ export class NixBluetoothService {
         this.scanResolve = null;
         this.scanReject = null;
         this.foundDevices = [];
+        this.foundDeviceIds = new Set();
         this.emit({ type: 'scanning' });
 
         return new Promise((resolve, reject) => {
@@ -340,11 +356,30 @@ export class NixBluetoothService {
 
             // Escuchar eventos de dispositivos encontrados durante el escaneo
             const deviceFoundHandler = NixSensor.addListener('deviceFound', (device: any) => {
+                const deviceType = device.type as string | undefined;
+
+                // Filtrar: solo aceptar dispositivos Nix
+                if (!this.isNixDevice(device.name, deviceType)) {
+                    console.log(`Dispositivo ignorado (no es Nix): ${device.name} [${device.id}]`);
+                    return;
+                }
+
+                // Deduplicar por MAC address (id): si ya existe, solo actualizar RSSI
+                if (this.foundDeviceIds.has(device.id)) {
+                    const existing = this.foundDevices.find(d => d.id === device.id);
+                    if (existing) {
+                        existing.rssi = device.rssi ?? existing.rssi;
+                    }
+                    return;
+                }
+
                 console.log(`¡Dispositivo Nix encontrado!: ${device.name} [${device.id}] RSSI: ${device.rssi}`);
+                this.foundDeviceIds.add(device.id);
                 this.foundDevices.push({
                     id: device.id,
                     name: device.name,
-                    rssi: device.rssi ?? -100
+                    rssi: device.rssi ?? -100,
+                    type: deviceType
                 });
                 this.emit({ type: 'device-found', data: { id: device.id, name: device.name, rssi: device.rssi } });
             });
@@ -359,8 +394,8 @@ export class NixBluetoothService {
                     return;
                 }
 
-                const count = data.deviceCount ?? this.foundDevices.length;
-                console.log(`Escaneo completado. ${count} dispositivo(s) encontrado(s).`);
+                const count = this.foundDevices.length;
+                console.log(`Escaneo completado. ${count} dispositivo(s) Nix encontrado(s).`);
 
                 if (this.foundDevices.length === 0) {
                     this.emit({ type: 'error', error: 'No se encontraron dispositivos Nix' });
@@ -392,16 +427,23 @@ export class NixBluetoothService {
                 reject(err);
             });
 
-            // Configurar otros listeners persistentes
-            NixSensor.addListener('batteryChanged', (data: any) => {
-                this._deviceInfo.batteryLevel = data.level;
-                this.emit({ type: 'battery-changed', data: data.level });
-            });
+            // Configurar otros listeners persistentes (limpiar anteriores si existen)
+            this.persistentListeners.forEach(l => l.remove());
+            this.persistentListeners = [];
 
-            NixSensor.addListener('deviceDisconnected', () => {
-                this._deviceInfo.connected = false;
-                this.emit({ type: 'disconnected' });
-            });
+            this.persistentListeners.push(
+                NixSensor.addListener('batteryChanged', (data: any) => {
+                    this._deviceInfo.batteryLevel = data.level;
+                    this.emit({ type: 'battery-changed', data: data.level });
+                })
+            );
+
+            this.persistentListeners.push(
+                NixSensor.addListener('deviceDisconnected', () => {
+                    this._deviceInfo.connected = false;
+                    this.emit({ type: 'disconnected' });
+                })
+            );
         });
     }
 
@@ -411,60 +453,76 @@ export class NixBluetoothService {
             throw new Error(`Dispositivo ${id} no encontrado en la lista de escaneo`);
         }
 
-        this._deviceInfo.id = device.id;
-        this._deviceInfo.name = device.name;
-        this._deviceInfo.type = this.detectDeviceType(device.name);
+        // Desconectar dispositivo anterior si hay uno conectado
+        if (this._deviceInfo.connected) {
+            this.emit({ type: 'status', data: 'Desconectando dispositivo anterior...' });
+            this.disconnect();
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        this._deviceInfo = {
+            ...this._deviceInfo,
+            id: device.id,
+            name: device.name,
+            type: this.detectDeviceType(device.name),
+        };
 
         this.emit({ type: 'connecting', data: this._deviceInfo });
 
-        try {
-            await NixSensor.connect({ id: device.id });
-            return new Promise((resolve, reject) => {
-                let resolved = false;
+        // Registrar listeners ANTES de llamar a connect (evita race condition)
+        return new Promise((resolve, reject) => {
+            let resolved = false;
 
-                const connectedHandler = NixSensor.addListener('deviceConnected', (data: any) => {
-                    if (resolved) return;
+            const connectedHandler = NixSensor.addListener('deviceConnected', (data: any) => {
+                if (resolved) return;
+                resolved = true;
+                this._deviceInfo = { ...this._deviceInfo, connected: true };
+                if (data.batteryLevel !== undefined) {
+                    this._deviceInfo.batteryLevel = data.batteryLevel;
+                }
+                this.emit({ type: 'connected', data: this._deviceInfo });
+                connectedHandler.remove();
+                disconnectHandler.remove();
+                if (this.scanResolve) {
+                    this.scanResolve(this._deviceInfo);
+                    this.scanResolve = null;
+                    this.scanReject = null;
+                }
+                resolve(this._deviceInfo);
+            });
+
+            const disconnectHandler = NixSensor.addListener('deviceDisconnected', () => {
+                if (resolved) return;
+                resolved = true;
+                connectedHandler.remove();
+                disconnectHandler.remove();
+                this._deviceInfo = { ...this._deviceInfo, connected: false };
+                this.emit({ type: 'disconnected' });
+                const err = new Error('Conexión fallida');
+                if (this.scanReject) {
+                    this.scanReject(err);
+                    this.scanResolve = null;
+                    this.scanReject = null;
+                }
+                reject(err);
+            });
+
+            // Llamar a connect DESPUÉS de registrar los listeners
+            NixSensor.connect({ id: device.id }).catch(err => {
+                if (!resolved) {
                     resolved = true;
-                    this._deviceInfo.connected = true;
-                    if (data.batteryLevel !== undefined) {
-                        this._deviceInfo.batteryLevel = data.batteryLevel;
-                    }
-                    this.emit({ type: 'connected', data: this._deviceInfo });
                     connectedHandler.remove();
                     disconnectHandler.remove();
-                    if (this.scanResolve) {
-                        this.scanResolve(this._deviceInfo);
-                        this.scanResolve = null;
-                        this.scanReject = null;
-                    }
-                    resolve(this._deviceInfo);
-                });
-
-                const disconnectHandler = NixSensor.addListener('deviceDisconnected', () => {
-                    if (resolved) return;
-                    resolved = true;
-                    connectedHandler.remove();
-                    disconnectHandler.remove();
-                    this._deviceInfo.connected = false;
-                    this.emit({ type: 'disconnected' });
-                    const err = new Error('Conexión fallida');
+                    this.emit({ type: 'error', error: err.message });
                     if (this.scanReject) {
                         this.scanReject(err);
                         this.scanResolve = null;
                         this.scanReject = null;
                     }
                     reject(err);
-                });
+                }
             });
-        } catch (err: any) {
-            this.emit({ type: 'error', error: err.message });
-            if (this.scanReject) {
-                this.scanReject(err);
-                this.scanResolve = null;
-                this.scanReject = null;
-            }
-            throw err;
-        }
+        });
     }
 
     getFoundDevices(): DiscoveredDevice[] {

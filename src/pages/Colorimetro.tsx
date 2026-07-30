@@ -230,7 +230,7 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
             <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onLogout={onLogout} userData={userData} />
 
             {/* Header */}
-            <header className="fixed top-0 z-10 flex w-full items-center border-b border-black/10 bg-[#CC5200] shadow-lg px-6 py-4">
+            <header className="fixed top-0 z-10 flex w-full items-center border-b border-black/10 shadow-lg px-6 py-4" style={{ backgroundColor: 'var(--accent-orange)' }}>
                 <button onClick={() => navigate(returnTo || '/', { state: location.state })} className="p-2 text-black hover:text-white transition-colors hover:bg-black/10 rounded-lg mr-2">
                     <ArrowLeft className="h-5 w-5 text-white" />
                 </button>
@@ -239,6 +239,14 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                         <Palette className="h-5 w-5 text-white" /> Colorímetro
                     </h1>
                     <p className="text-[10px] text-white/70 uppercase tracking-widest mt-1">Escaneo de Color Bluetooth · Nix Sensor</p>
+                    {isConnected && deviceInfo && (
+                        <div className="flex items-center gap-1.5 mt-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                            <p className="text-[9px] text-white/60 truncate max-w-[180px]" title={deviceInfo.name}>
+                                {deviceInfo.name}
+                            </p>
+                        </div>
+                    )}
                 </div>
                 {/* Settings button */}
                 <button
@@ -325,13 +333,13 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                                     <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-700/20 pt-3 text-[11px] w-full">
                                         {deviceInfo.firmwareVersion && (
                                             <div className="text-center">
-                                                <p className="font-bold uppercase tracking-wider text-[8px] text-[#a38105] mb-0.5">FW</p>
+                                                <p className="font-bold uppercase tracking-wider text-[8px] mb-0.5" style={{ color: 'var(--accent-orange)' }}>FW</p>
                                                 <p className="text-slate-600 dark:text-slate-300 font-medium truncate">{deviceInfo.firmwareVersion}</p>
                                             </div>
                                         )}
                                         {deviceInfo.serialNumber && (
                                             <div className="text-center border-l border-slate-700/10">
-                                                <p className="font-bold uppercase tracking-wider text-[8px] text-[#a38105] mb-0.5">S/N</p>
+                                                <p className="font-bold uppercase tracking-wider text-[8px] mb-0.5" style={{ color: 'var(--accent-orange)' }}>S/N</p>
                                                 <p className="text-slate-600 dark:text-slate-300 font-medium truncate">{deviceInfo.serialNumber}</p>
                                             </div>
                                         )}
@@ -347,7 +355,10 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                                     <button
                                         onClick={scan}
                                         disabled={!isSupported || isScanning || isConnecting}
-                                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#a38105] hover:bg-[#c49f0a] text-white rounded-lg font-bold uppercase tracking-widest text-xs transition-all disabled:bg-slate-700 disabled:text-slate-500"
+                                        className="w-full flex items-center justify-center gap-2 px-6 py-3 text-white rounded-lg font-bold uppercase tracking-widest text-xs transition-all disabled:bg-slate-700 disabled:text-slate-500"
+                                        style={{ backgroundColor: 'var(--accent-orange)' }}
+                                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--accent-orange-hover)')}
+                                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--accent-orange)')}
                                     >
                                         {isScanning || isConnecting ? (
                                             <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Buscando...</>
@@ -369,7 +380,10 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                                     <button
                                         onClick={measure}
                                         disabled={isMeasuring}
-                                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#a38105] hover:bg-[#c49f0a] text-white rounded-lg font-bold uppercase tracking-widest text-xs transition-all disabled:bg-slate-700 disabled:text-slate-500"
+                                        className="w-full flex items-center justify-center gap-2 px-6 py-3 text-white rounded-lg font-bold uppercase tracking-widest text-xs transition-all disabled:bg-slate-700 disabled:text-slate-500"
+                                        style={{ backgroundColor: 'var(--accent-orange)' }}
+                                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--accent-orange-hover)')}
+                                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--accent-orange)')}
                                     >
                                         {isMeasuring ? (
                                             <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Escaneando...</>
@@ -397,29 +411,46 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                                 exit={{ opacity: 0, y: -20 }}
                                 className="lg:col-span-1 elegant-card p-6"
                             >
-                                <h3 className="text-xs font-bold text-[#a38105] uppercase tracking-widest mb-4">Selecciona un dispositivo</h3>
+                                <h3 className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: 'var(--accent-orange)' }}>Selecciona un dispositivo</h3>
                                 <div className="space-y-2">
                                     {foundDevices.map((dev) => (
-                                        <button
+                                        <motion.button
                                             key={dev.id}
+                                            whileHover={{ y: -1, scale: 1.01 }}
+                                            whileTap={{ scale: 0.98 }}
                                             onClick={() => selectDevice(dev.id)}
-                                            className="w-full flex items-center justify-between px-4 py-3 bg-slate-800/60 hover:bg-[#a38105]/20 border border-slate-700/50 hover:border-[#a38105]/50 rounded-lg transition-all text-left"
+                                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300 text-left"
+                                            style={{
+                                                background: 'var(--bg-app)',
+                                                borderColor: 'var(--accent-orange)',
+                                            }}
                                         >
-                                            <div>
-                                                <p className="text-sm font-bold text-white">{dev.name}</p>
-                                                <p className="text-[10px] text-slate-500 font-mono mt-0.5">{dev.id}</p>
+                                            <div
+                                                className="rounded-xl p-2.5 flex-shrink-0 flex items-center justify-center"
+                                                style={{
+                                                    background: `linear-gradient(135deg, var(--accent-orange), var(--accent-orange-hover))`,
+                                                }}
+                                            >
+                                                <Bluetooth className="w-4 h-4 text-white" />
                                             </div>
-                                            <div className="text-right">
-                                                <p className="text-xs font-mono text-slate-400">{dev.rssi} dBm</p>
-                                                <p className={`text-[10px] font-bold uppercase tracking-wider ${dev.rssi > -60 ? 'text-green-400' : dev.rssi > -80 ? 'text-yellow-400' : 'text-red-400'}`}>
-                                                    {dev.rssi > -60 ? 'Señal fuerte' : dev.rssi > -80 ? 'Señal media' : 'Señal baja'}
-                                                </p>
+                                            <div className="flex-grow min-w-0">
+                                                <p className="text-sm font-bold truncate" style={{ color: 'var(--text-primary)' }}>{dev.name}</p>
+                                                <p className="text-[9px] font-mono mt-0.5 truncate" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>{dev.id}</p>
                                             </div>
-                                        </button>
+                                            <div className="flex-shrink-0 text-right">
+                                                <p className="text-xs font-mono" style={{ color: 'var(--text-secondary)' }}>{dev.rssi} dBm</p>
+                                                <div className="flex items-center justify-end gap-1 mt-0.5">
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${dev.rssi > -60 ? 'bg-green-400' : dev.rssi > -80 ? 'bg-yellow-400' : 'bg-red-400'}`}></span>
+                                                    <p className={`text-[9px] font-bold uppercase tracking-wider ${dev.rssi > -60 ? 'text-green-400' : dev.rssi > -80 ? 'text-yellow-400' : 'text-red-400'}`}>
+                                                        {dev.rssi > -60 ? 'Fuerte' : dev.rssi > -80 ? 'Media' : 'Baja'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </motion.button>
                                     ))}
                                     <button
                                         onClick={cancelScan}
-                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600/20 hover:bg-red-600/40 border border-red-600/30 text-red-400 hover:text-red-300 rounded-lg font-bold uppercase tracking-widest text-xs transition-all"
+                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600/20 hover:bg-red-600/40 border border-red-600/30 text-red-400 hover:text-red-300 rounded-xl font-bold uppercase tracking-widest text-xs transition-all"
                                     >
                                         Cancelar
                                     </button>
@@ -430,7 +461,7 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
 
                     {/* Vista previa del color — Última Medición */}
                     <div className="lg:col-span-2 elegant-card p-6">
-                        <h3 className="text-xs font-bold text-[#a38105] uppercase tracking-widest mb-4">Última Medición</h3>
+                        <h3 className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: 'var(--accent-orange)' }}>Última Medición</h3>
 
                         {displayLastMeasurement ? (
                             <div className="flex flex-col md:flex-row gap-5">
@@ -580,7 +611,7 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                 {averages && (
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                         className="elegant-card p-6">
-                        <h3 className="text-xs font-bold text-[#a38105] uppercase tracking-widest mb-4">
+                        <h3 className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: 'var(--accent-orange)' }}>
                             Promedio de Mediciones ({displayMeasurements.length})
                         </h3>
                         <div className="flex flex-col md:flex-row gap-5">
@@ -710,7 +741,7 @@ export default function Colorimetro({ userData, onLogout }: { userData: any; onL
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                         className="elegant-card p-6">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xs font-bold text-[#a38105] uppercase tracking-widest">
+                            <h3 className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--accent-orange)' }}>
                                 Historial de Mediciones ({displayMeasurements.length})
                             </h3>
                             <button onClick={() => setShowClearConfirm(true)}

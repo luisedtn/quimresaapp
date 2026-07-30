@@ -114,6 +114,9 @@ export function useNixDevice(): UseNixDeviceReturn {
                 case 'battery-changed':
                     setDeviceInfo(prev => prev ? { ...prev, batteryLevel: event.data } : null);
                     break;
+                case 'status':
+                    setStatus(event.data ?? '');
+                    break;
                 case 'error':
                     setIsScanning(false);
                     setIsConnecting(false);

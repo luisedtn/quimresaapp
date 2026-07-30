@@ -23,6 +23,7 @@ import {
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import Sidebar from '../components/Sidebar';
+import { useNixDevice } from '../hooks/useNixDevice';
 import HistorialControl from '../components/HistorialControl';
 import CustomerSearch from '../components/CustomerSearch';
 import LocalizacionClientes from '../components/LocalizacionClientes';
@@ -37,6 +38,7 @@ interface DashboardProps {
 
 export default function Dashboard({ userData, onLogout, onUserDataChange }: DashboardProps) {
   const navigate = useNavigate();
+  const { isConnected, deviceInfo } = useNixDevice();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showHistorialControl, setShowHistorialControl] = useState(false);
@@ -182,6 +184,11 @@ export default function Dashboard({ userData, onLogout, onUserDataChange }: Dash
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
               <p className="text-[10px] text-white/70"><span className="text-white/90 uppercase tracking-wider">Quimresa Color Lab</span></p>
             </div>
+            {isConnected && deviceInfo && (
+              <p className="text-[9px] text-white/60 mt-0.5 truncate max-w-[180px]" title={deviceInfo.name}>
+                {deviceInfo.name}
+              </p>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-4">

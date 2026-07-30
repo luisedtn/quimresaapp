@@ -151,13 +151,26 @@ public class NixSensorPlugin extends Plugin {
         scanner.start(new OnDeviceFoundListener() {
             @Override
             public void onScanResult(@NonNull IDeviceScanner sender, @NonNull IDeviceCompat device) {
+                // Filtrar: solo aceptar dispositivos con tipo Nix reconocido (no UNKNOWN)
+                DeviceType deviceType = device.getType();
+                if (deviceType == DeviceType.UNKNOWN) {
+                    android.util.Log.d("NixSensor",
+                            "Dispositivo ignorado (no es Nix): ID: " + device.getId()
+                                    + " Name: " + device.getName() + " Type: " + deviceType);
+                    return;
+                }
+
                 android.util.Log.i("NixSensor",
-                        "¡Dispositivo encontrado! ID: " + device.getId() + " Name: " + device.getName() + " RSSI: " + device.getRssi());
+                        "¡Dispositivo Nix encontrado! ID: " + device.getId()
+                                + " Name: " + device.getName()
+                                + " RSSI: " + device.getRssi()
+                                + " Type: " + deviceType.name());
                 discoveredDevices.put(device.getId(), device);
                 JSObject ret = new JSObject();
                 ret.put("id", device.getId());
                 ret.put("name", device.getName());
                 ret.put("rssi", device.getRssi());
+                ret.put("type", deviceType.name());
                 notifyListeners("deviceFound", ret);
             }
 
@@ -196,14 +209,31 @@ public class NixSensorPlugin extends Plugin {
             scanner.stop();
         }
 
-        activeDevice = discoveredDevices.get(id);
-
+        // Desconectar dispositivo anterior si hay uno activo y es diferente al nuevo
         if (activeDevice != null) {
-            // IDLE significa que ya está conectado y listo.
-            // Si no está DISCONNECTED, asumimos que está en proceso de conexión o ya listo.
+            String currentId = activeDevice.getId();
+            if (!currentId.equals(id)) {
+                android.util.Log.d("NixSensor", "Desconectando dispositivo anterior: " + currentId);
+                activeDevice.disconnect();
+                activeDevice = null;
+            }
+        }
+
+        IDeviceCompat newDevice = discoveredDevices.get(id);
+
+        if (newDevice != null) {
+            activeDevice = newDevice;
+
+            // Si el dispositivo ya está conectado (estado != DISCONNECTED),
+            // emitir evento deviceConnected y resolver inmediatamente
             if (activeDevice.getState() != DeviceState.DISCONNECTED) {
                 android.util.Log.w("NixSensor",
                         "El dispositivo ya está conectado o en proceso. Estado: " + activeDevice.getState().name());
+                JSObject ret = new JSObject();
+                ret.put("connected", true);
+                Integer batteryLevel = activeDevice.getBatteryLevel();
+                ret.put("batteryLevel", Objects.requireNonNullElse(batteryLevel, -1));
+                notifyListeners("deviceConnected", ret);
                 call.resolve();
                 return;
             }
@@ -212,7 +242,7 @@ public class NixSensorPlugin extends Plugin {
             activeDevice.connect(new OnDeviceStateChangeListener() {
                 @Override
                 public void onConnected(@NonNull IDeviceCompat sender) {
-                    android.util.Log.i("NixSensor", "¡Conexión exitosa con el dispositivo!");
+                    android.util.Log.i("NixSensor", "¡Conexión exitosa con el dispositivo! ID: " + sender.getId());
                     JSObject ret = new JSObject();
                     ret.put("connected", true);
 
@@ -225,7 +255,7 @@ public class NixSensorPlugin extends Plugin {
 
                 @Override
                 public void onDisconnected(@NonNull IDeviceCompat sender, @NonNull DeviceStatus status) {
-                    android.util.Log.w("NixSensor", "Dispositivo desconectado. Razón: " + status.name());
+                    android.util.Log.w("NixSensor", "Dispositivo desconectado: " + sender.getId() + " Razón: " + status.name());
                     notifyListeners("deviceDisconnected", new JSObject());
                 }
 
@@ -243,7 +273,7 @@ public class NixSensorPlugin extends Plugin {
             });
             call.resolve();
         } else {
-            android.util.Log.e("NixSensor", "Error: Dispositivo no encontrado en la caché de escaneo");
+            android.util.Log.e("NixSensor", "Error: Dispositivo no encontrado en la caché de escaneo: " + id);
             call.reject("Dispositivo no encontrado o no escaneado previamente");
         }
     }
@@ -251,11 +281,12 @@ public class NixSensorPlugin extends Plugin {
     @PluginMethod
     public void disconnect(PluginCall call) {
         if (activeDevice != null) {
-            android.util.Log.d("NixSensor", "Desconectando dispositivo manualmente...");
+            android.util.Log.d("NixSensor", "Desconectando dispositivo: " + activeDevice.getId());
             activeDevice.disconnect();
             activeDevice = null;
         }
-        discoveredDevices.clear();
+        // NO limpiar discoveredDevices aquí para permitir reconexión a otro dispositivo
+        // sin necesidad de un nuevo escaneo. El caché se limpia al iniciar un nuevo scan.
         call.resolve();
     }
 
