@@ -47,6 +47,7 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [selectedFormula, setSelectedFormula] = useState<any>(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
 
   // Debounce search term
   useEffect(() => {
@@ -138,7 +139,7 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
 
     fetchFormulas();
     return () => abortController.abort();
-  }, [page, debouncedSearchTerm, sortBy]);
+  }, [page, debouncedSearchTerm, sortBy, reloadTrigger]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -171,11 +172,12 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
 
     const handleRefresh = (payload: any) => {
       console.log('[Socket] Evento refresh-formulas recibido:', payload);
-      // Recargar lista si coincide con el cliente o si no hay idCliente específico
+      console.log("socket refresco", payload?.idCliente, idCliente);
       if (!payload?.idCliente || !idCliente || String(payload.idCliente) === String(idCliente)) {
-        setPage(1);
         setFormulas([]);
         setHasMore(true);
+        setPage(1);
+        setReloadTrigger(prev => prev + 1);
       }
     };
 
@@ -340,19 +342,19 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
                         {/* LAB values - compact inline */}
                         <div className="formula-card__lab-row">
                           <div className="formula-card__lab-item">
-                             <span className="formula-card__lab-label">L*</span>
-                             <span className="formula-card__lab-value">{parseFloat(formula.LO || '0').toFixed(2)}</span>
-                           </div>
-                           <div className="formula-card__lab-divider" />
-                           <div className="formula-card__lab-item">
-                             <span className="formula-card__lab-label">a*</span>
-                             <span className="formula-card__lab-value">{parseFloat(formula.AO || '0').toFixed(2)}</span>
-                           </div>
-                           <div className="formula-card__lab-divider" />
-                           <div className="formula-card__lab-item">
-                             <span className="formula-card__lab-label">b*</span>
-                             <span className="formula-card__lab-value">{parseFloat(formula.BO || '0').toFixed(2)}</span>
-                           </div>
+                            <span className="formula-card__lab-label">L*</span>
+                            <span className="formula-card__lab-value">{parseFloat(formula.LO || '0').toFixed(2)}</span>
+                          </div>
+                          <div className="formula-card__lab-divider" />
+                          <div className="formula-card__lab-item">
+                            <span className="formula-card__lab-label">a*</span>
+                            <span className="formula-card__lab-value">{parseFloat(formula.AO || '0').toFixed(2)}</span>
+                          </div>
+                          <div className="formula-card__lab-divider" />
+                          <div className="formula-card__lab-item">
+                            <span className="formula-card__lab-label">b*</span>
+                            <span className="formula-card__lab-value">{parseFloat(formula.BO || '0').toFixed(2)}</span>
+                          </div>
                         </div>
 
                         {/* Quality control button */}
