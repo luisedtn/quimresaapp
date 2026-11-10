@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icono transparente para la splash del sistema Android 12+.
+     Sin este atributo, el sistema muestra el icono de la app (el logo)
+     antes de que inicie el video de introduccion. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <size
+        android:width="1dp"
+        android:height="1dp" />
+    <solid android:color="#00000000" />
+</shape>

@@ -4,6 +4,7 @@ import { ArrowLeft, Search, Beaker, Calendar, User, Tag, ChevronUp, ClipboardChe
 import { motion } from 'motion/react';
 import { API_BASE_URL } from '../config';
 import DetalleFormula from '../components/DetalleFormula';
+import { getSocket, joinClientRoom } from '../services/socket';
 
 function labToHex(l: number, a: number, b: number): string {
   const y = (l + 16) / 116;
@@ -150,6 +151,40 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Escuchar notificaciones de actualización en tiempo real vía Socket.io
+  useEffect(() => {
+    const socket = getSocket();
+    const userDataStr = localStorage.getItem('userData');
+    let idCliente: any = null;
+    if (userDataStr) {
+      try {
+        const u = JSON.parse(userDataStr);
+        idCliente = u?.idcliente;
+        if (idCliente) {
+          joinClientRoom(idCliente);
+        }
+      } catch (err) {
+        console.error('[Socket] Error al leer idcliente:', err);
+      }
+    }
+
+    const handleRefresh = (payload: any) => {
+      console.log('[Socket] Evento refresh-formulas recibido:', payload);
+      // Recargar lista si coincide con el cliente o si no hay idCliente específico
+      if (!payload?.idCliente || !idCliente || String(payload.idCliente) === String(idCliente)) {
+        setPage(1);
+        setFormulas([]);
+        setHasMore(true);
+      }
+    };
+
+    socket.on('refresh-formulas', handleRefresh);
+
+    return () => {
+      socket.off('refresh-formulas', handleRefresh);
+    };
+  }, []);
 
   const handleFormulaClick = (formula: any) => {
     setSelectedFormula(formula);

@@ -21,6 +21,15 @@
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:statusBarColor">#ffffff</item>
+
+        <!-- Splash del sistema Android 12+ (mostraría el icono de la app por
+             defecto antes del video). Se deja en el gris del fondo del video
+             y sin icono para que el video de introduccion sea el primer
+             contenido de marca. -->
+        <item name="windowSplashScreenBackground">#ffffff</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_empty_icon</item>
+        <item name="android:windowSplashScreenBackground">#ffffff</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_empty_icon</item>
     </style>
 
 </resources>

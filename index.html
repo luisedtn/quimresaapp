@@ -3,11 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
     <title>My Google AI Studio App</title>
+    <style>
+      /* Fondo neutro (gris del video) mientras carga la intro de arranque */
+      html.intro-loading,
+      html.intro-loading body {
+        background-color: #ffffff !important;
+      }
+    </style>
+    <script>
+      document.documentElement.classList.add('intro-loading');
+      /* Red de seguridad: si la app no llegara a ocultar el splash nativo */
+      setTimeout(function () {
+        try {
+          var splash = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.SplashScreen;
+          if (splash && splash.hide) {
+            var hiding = splash.hide();
+            if (hiding && typeof hiding.catch === 'function') hiding.catch(function () {});
+          }
+        } catch (e) {}
+      }, 6000);
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

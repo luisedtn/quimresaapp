@@ -1,4 +1,6 @@
 import express, { Request, Response } from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -30,7 +32,37 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const httpServer = createServer(app);
 const prisma = new PrismaClient();
+
+// Montar Socket.io con CORS permitido para Capacitor y Web
+export const io = new Server(httpServer, {
+    cors: {
+        origin: (origin, callback) => {
+            // Permitir orígenes de app, Capacitor y dev/web
+            callback(null, true);
+        },
+        methods: ['GET', 'POST'],
+        credentials: true
+    }
+});
+
+// Manejo de conexiones y salas de socket
+io.on('connection', (socket) => {
+    console.log(`[Socket] Conectado: ${socket.id}`);
+
+    socket.on('join-client-room', (idCliente) => {
+        if (idCliente) {
+            const room = `client_${idCliente}`;
+            socket.join(room);
+            console.log(`[Socket] Dispositivo ${socket.id} se unió a la sala: ${room}`);
+        }
+    });
+
+    socket.on('disconnect', () => {
+        console.log(`[Socket] Desconectado: ${socket.id}`);
+    });
+});
 
 // Global Logging Middleware
 app.use((req, res, next) => {
@@ -78,6 +110,36 @@ app.options('*', cors(corsOptions));
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// ENDPOINT: Notificación desde Quimresadesk Windows
+app.post('/api/formulas/notify-update', async (req: Request, res: Response) => {
+    try {
+        const { idCliente, idFormula, nombreFormula, operacion, timestamp } = req.body;
+        if (!idCliente) {
+            return res.status(400).json({ success: false, error: 'Falta el parámetro idCliente' });
+        }
+        console.log(`[NOTIFY-UPDATE] Cliente: ${idCliente} | Fórmula: "${nombreFormula}" | Operación: ${operacion}`);
+
+        // Emitir en tiempo real a los dispositivos móviles de ese cliente
+        const payload = {
+            idCliente,
+            idFormula,
+            nombreFormula,
+            operacion, // 'insert' o 'update'
+            timestamp: timestamp || Date.now()
+        };
+        io.to(`client_${idCliente}`).emit('refresh-formulas', payload);
+
+        return res.json({ 
+            success: true, 
+            message: `Notificación enviada a la sala client_${idCliente}`,
+            delivered: true 
+        });
+    } catch (error) {
+        console.error('Error en /api/formulas/notify-update:', error);
+        return res.status(500).json({ success: false, error: 'Error interno en el servidor' });
+    }
+});
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-quimresa-lab-2026';
 
@@ -1838,4 +1900,4 @@ app.use((req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+httpServer.listen(PORT, () => console.log(`Servidor con Socket.io escuchando en el puerto ${PORT}`));

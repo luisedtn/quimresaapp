@@ -12,7 +12,9 @@ import StandardFormulas from './pages/StandardFormulas';
 import ColorMatch from './pages/ColorMatch';
 import ListaQC from './pages/ListaQC';
 import ColorAiChat from './components/ColorAiChat';
+import AppIntro from './components/AppIntro';
 import ScreenBrightness from './services/ScreenBrightness';
+import LocationConsentModal from './components/LocationConsentModal';
 import { API_BASE_URL } from './config';
 
 function registrarAcceso(latitud: number | null, longitud: number | null) {
@@ -99,19 +101,51 @@ export default function App() {
     return saved ? JSON.parse(saved) : null;
   });
   const [loading, setLoading] = useState(false);
+  const [introComplete, setIntroComplete] = useState(false);
   const isAuthenticated = !!userData;
+  const [showLocationConsent, setShowLocationConsent] = useState(false);
+  const [pendingLocationRequest, setPendingLocationRequest] = useState(false);
+  const [locationConsentGiven, setLocationConsentGiven] = useState(() => {
+    const consent = localStorage.getItem('locationConsent');
+    return consent === 'accepted';
+  });
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    obtenerUbicacion().then(coords => {
-      registrarAcceso(coords?.latitud ?? null, coords?.longitud ?? null);
-    });
+    
+    const storedConsent = localStorage.getItem('locationConsent');
+    
+    if (storedConsent === 'accepted') {
+      obtenerUbicacion().then(coords => {
+        registrarAcceso(coords?.latitud ?? null, coords?.longitud ?? null);
+      });
+    } else if (!storedConsent) {
+      setShowLocationConsent(true);
+    }
   }, [isAuthenticated]);
 
   const handleMockLogin = (data: any) => {
     localStorage.setItem('userData', JSON.stringify(data));
     setUserData(data);
   };
+
+  const handleIntroDone = useCallback(() => setIntroComplete(true), []);
+
+  const handleLocationAccept = () => {
+    localStorage.setItem('locationConsent', 'accepted');
+    setLocationConsentGiven(true);
+    setShowLocationConsent(false);
+    setPendingLocationRequest(true);
+  };
+
+  useEffect(() => {
+    if (pendingLocationRequest && isAuthenticated) {
+      obtenerUbicacion().then(coords => {
+        registrarAcceso(coords?.latitud ?? null, coords?.longitud ?? null);
+      });
+      setPendingLocationRequest(false);
+    }
+  }, [pendingLocationRequest, isAuthenticated]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -128,51 +162,58 @@ export default function App() {
   }
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <Login onLogin={handleMockLogin} />} />
-        <Route
-          path="/"
-          element={isAuthenticated ? <Dashboard userData={userData} onLogout={handleLogout} onUserDataChange={setUserData} /> : <Navigate to="/login" />}
+    <>
+      {!introComplete && <AppIntro onDone={handleIntroDone} />}
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <Login onLogin={handleMockLogin} />} />
+          <Route
+            path="/"
+            element={isAuthenticated ? <Dashboard userData={userData} onLogout={handleLogout} onUserDataChange={setUserData} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/scan"
+            element={isAuthenticated ? <Scan userData={userData} onLogout={handleLogout} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/quality-control"
+            element={isAuthenticated ? <QualityControl /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/formulas"
+            element={isAuthenticated ? <Formulas email={userData?.email} onLogout={handleLogout} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/usuarios"
+            element={isAuthenticated ? <Usuarios userData={userData} onLogout={handleLogout} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/cuenta"
+            element={isAuthenticated ? <Cuenta userData={userData} onLogout={handleLogout} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/colorimetro"
+            element={isAuthenticated ? <Colorimetro userData={userData} onLogout={handleLogout} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/libraries"
+            element={isAuthenticated ? <StandardFormulas onLogout={handleLogout} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/color-match"
+            element={isAuthenticated ? <ColorMatch /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/lista-qc"
+            element={isAuthenticated ? <ListaQC /> : <Navigate to="/login" />}
+          />
+        </Routes>
+        {isAuthenticated && <ColorAiChat />}
+        <LocationConsentModal
+          isOpen={showLocationConsent}
+          onAccept={handleLocationAccept}
         />
-        <Route
-          path="/scan"
-          element={isAuthenticated ? <Scan userData={userData} onLogout={handleLogout} /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/quality-control"
-          element={isAuthenticated ? <QualityControl /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/formulas"
-          element={isAuthenticated ? <Formulas email={userData?.email} onLogout={handleLogout} /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/usuarios"
-          element={isAuthenticated ? <Usuarios userData={userData} onLogout={handleLogout} /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/cuenta"
-          element={isAuthenticated ? <Cuenta userData={userData} onLogout={handleLogout} /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/colorimetro"
-          element={isAuthenticated ? <Colorimetro userData={userData} onLogout={handleLogout} /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/libraries"
-          element={isAuthenticated ? <StandardFormulas onLogout={handleLogout} /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/color-match"
-          element={isAuthenticated ? <ColorMatch /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/lista-qc"
-          element={isAuthenticated ? <ListaQC /> : <Navigate to="/login" />}
-        />
-      </Routes>
-      {isAuthenticated && <ColorAiChat />}
-    </BrowserRouter>
+      </BrowserRouter>
+    </>
   );
 }

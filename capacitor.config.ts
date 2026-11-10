@@ -17,10 +17,12 @@ const config: CapacitorConfig = {
             }
         },
         SplashScreen: {
-            launchShowDuration: 2000,
-            launchAutoHide: true,
+            // El splash nativo se oculta desde la app (AppIntro) en el instante
+            // en que el video de intro esta listo, evitando cortar su arranque.
+            launchShowDuration: 0,
+            launchAutoHide: false,
             backgroundColor: "#ffffff",
-            androidSplashResourceName: "splash",
+            androidSplashResourceName: "splash_screen",
             androidScaleType: "FIT_CENTER",
             showSpinner: false,
             androidSpinnerStyle: "large",
