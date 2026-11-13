@@ -384,7 +384,7 @@ export default function QualityControl() {
   // ─────────────────────────────────────────────────────────
 
   const saveQCRecordToServer = async (name: string, desc: string, std: any, smp: any, pdfUrl?: string, libId?: number, colId?: number) => {
-    console.log("iDFORMULA Y LOTE", qcIdFormula, qcLote);
+    console.log("iDFORMULA Y LOTE saveQCRecordToServer", qcIdFormula, qcLote);
     const finalIdFormula = qcIdFormula || qcIdFormulaRef.current || qcContextData?.idFormula || null;
     const finalLote = qcLote || qcLoteRef.current || qcContextData?.lote || null;
 
@@ -579,7 +579,10 @@ export default function QualityControl() {
       }
 
       if (state.idFormula) {
+        console.log("STATE.IDFORMULA", state.idFormula);
+
         setQcIdFormula(state.idFormula);
+        console.log("qcIdFormula", qcIdFormula);
         qcIdFormulaRef.current = state.idFormula;
       }
       if (state.lote) {
@@ -720,6 +723,7 @@ export default function QualityControl() {
                         idFormula: qcIdFormula,
                         lote: qcLote
                       };
+                      console.log("guardandovalores", newCtx);
                       setQcSessionName(name);
                       setQcContextData(newCtx);
                       localStorage.setItem('qc_context', JSON.stringify(newCtx));
