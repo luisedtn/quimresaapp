@@ -64,7 +64,7 @@ const ColorDeltaChart = ({ standard, sample }: { standard: any, sample: any }) =
           const data: DeltaRangoRow[] = await res.json();
           setDeltaRangos(data);
         }
-      } catch {}
+      } catch { }
     };
     fetchRangos();
   }, []);
@@ -141,15 +141,15 @@ const ColorDeltaChart = ({ standard, sample }: { standard: any, sample: any }) =
   return (
     <div className="w-full bg-white dark:bg-slate-900/40 text-slate-800 dark:text-slate-200 font-sans shadow-2xl rounded-xl overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800 mx-auto mt-4">
       {/* Top Bar */}
-        <div
-          className={`w-full py-2 text-center text-lg font-bold border-b border-slate-200 dark:border-slate-800 ${statusColors} uppercase tracking-tighter shadow-sm dark:shadow-[0_0_15px_rgba(0,0,0,0.5)]`}
-          style={hasData && matchedRange ? {
-            backgroundColor: bgrToHex(matchedRange.COLOR),
-            color: bgrToHex(matchedRange.COLORTEXTO),
-          } : undefined}
-        >
-          {statusText}
-        </div>
+      <div
+        className={`w-full py-2 text-center text-lg font-bold border-b border-slate-200 dark:border-slate-800 ${statusColors} uppercase tracking-tighter shadow-sm dark:shadow-[0_0_15px_rgba(0,0,0,0.5)]`}
+        style={hasData && matchedRange ? {
+          backgroundColor: bgrToHex(matchedRange.COLOR),
+          color: bgrToHex(matchedRange.COLORTEXTO),
+        } : undefined}
+      >
+        {statusText}
+      </div>
 
       {/* Main Chart Area */}
       <div className="relative w-full aspect-square bg-slate-100 dark:bg-slate-900 overflow-hidden">
@@ -356,6 +356,23 @@ export default function QualityControl() {
   const nameInputRef = useRef<HTMLInputElement>(null);
   const manualLInputRef = useRef<HTMLInputElement>(null);
 
+  const navStateInitial = location.state as {
+    standardFromFormula?: { l: number; a: number; b: number; name?: string };
+    standardFromQC?: { l: number; a: number; b: number; hex: string; name?: string };
+    sampleFromQC?: { l: number; a: number; b: number; hex: string; name?: string };
+    idFormula?: string;
+    lote?: string;
+    formulaName?: string;
+    returnTo?: string;
+  } | null;
+
+  const [returnPath, setReturnPath] = useState<string | null>(navStateInitial?.returnTo || null);
+  const initialSnapshotRef = useRef<string | null>(null);
+  const [qcIdFormula, setQcIdFormula] = useState<string | null>(navStateInitial?.idFormula || null);
+  const [qcLote, setQcLote] = useState<string | null>(navStateInitial?.lote || null);
+  const qcIdFormulaRef = useRef<string | null>(navStateInitial?.idFormula || null);
+  const qcLoteRef = useRef<string | null>(navStateInitial?.lote || null);
+
   // ── Snackbar ─────────────────────────────────────────────
   const [snack, setSnack] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const snackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -367,6 +384,17 @@ export default function QualityControl() {
   // ─────────────────────────────────────────────────────────
 
   const saveQCRecordToServer = async (name: string, desc: string, std: any, smp: any, pdfUrl?: string, libId?: number, colId?: number) => {
+    console.log("iDFORMULA Y LOTE", qcIdFormula, qcLote);
+    const finalIdFormula = qcIdFormula || qcIdFormulaRef.current || qcContextData?.idFormula || null;
+    const finalLote = qcLote || qcLoteRef.current || qcContextData?.lote || null;
+
+    console.log('[QC -> SERVER] Ejecutando saveQCRecordToServer con datos de fórmula:', {
+      nombreGuardado: name,
+      IDFORMULA: finalIdFormula,
+      LOTE: finalLote,
+      std,
+      smp
+    });
     if (!std || !smp) return null;
     try {
       const token = localStorage.getItem('token');
@@ -386,7 +414,7 @@ export default function QualityControl() {
       const dA = (smp.a - std.a).toFixed(2);
       const dB = (smp.b - std.b).toFixed(2);
       let de = deltaE2000(std.l, std.a, std.b, smp.l, smp.a, smp.b).toFixed(2);
-      if (dA === "8.87" && dB === "4.94" && dL === "-3.11") de = "4.72"; // Mocked DeltaE
+      //if (dA === "8.87" && dB === "4.94" && dL === "-3.11") de = "4.72"; // Mocked DeltaE
 
       // Capturar la fecha/hora local del dispositivo (no la del servidor)
       const ahora = new Date();
@@ -416,10 +444,14 @@ export default function QualityControl() {
         pdf_url: pdfUrl || qcContextData?.pdf_url || null,
         fecha_registro: fechaLocal,
         id_libreria: libId,
-        id_coleccion: colId
+        id_coleccion: colId,
+        IDFORMULA: finalIdFormula,
+        LOTE: finalLote
       };
+      console.log('[QC -> SERVER] Payload final enviado a /api/qualitycontrol:', payload);
 
       const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      console.log("APIBASEURL", API_BASE_URL)
       const response = await fetch(`${API_BASE_URL}/api/qualitycontrol`, {
         method: 'POST',
         headers,
@@ -469,21 +501,48 @@ export default function QualityControl() {
     setIsSessionActive(true);
   };
 
-  // Load context first
+  // Load context: prioriza datos enviados por navegación (location.state),
+  // solo usa localStorage como fallback si no llegan datos externos.
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('qc_context');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setQcContextData(parsed);
+      const navState = location.state as {
+        standardFromFormula?: { l: number; a: number; b: number; name?: string };
+        standardFromQC?: { l: number; a: number; b: number; hex: string; name?: string };
+        sampleFromQC?: { l: number; a: number; b: number; hex: string; name?: string };
+        idFormula?: string;
+        lote?: string;
+      } | null;
 
-        if (parsed.standard) setStandard(parsed.standard);
-        if (parsed.sample) setSample(parsed.sample);
-        if (parsed.sessionName) setQcSessionName(parsed.sessionName);
-        if (parsed.sessionDesc) setQcSessionDesc(parsed.sessionDesc);
+      const hasNavData = !!(navState?.standardFromFormula || navState?.standardFromQC || navState?.sampleFromQC || navState?.idFormula);
+      console.log("datosrecibidos:", navState?.standardFromFormula, navState?.standardFromQC, navState?.sampleFromQC, navState?.idFormula)
+      if (!hasNavData) {
+        // Sin datos de navegación: intentar restaurar sesión previa desde localStorage
+        const stored = localStorage.getItem('qc_context');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setQcContextData(parsed);
 
-        if (parsed.standard || parsed.sample || parsed.formulaName || parsed.timestamp) {
-          setIsSessionActive(true);
+          if (parsed.standard) setStandard(parsed.standard);
+          if (parsed.sample) setSample(parsed.sample);
+          if (parsed.sessionName) setQcSessionName(parsed.sessionName);
+          if (parsed.sessionDesc) setQcSessionDesc(parsed.sessionDesc);
+          if (parsed.idFormula) {
+            setQcIdFormula(parsed.idFormula);
+            qcIdFormulaRef.current = parsed.idFormula;
+          }
+          if (parsed.lote) {
+            setQcLote(parsed.lote);
+            qcLoteRef.current = parsed.lote;
+          }
+
+          if (parsed.standard || parsed.sample || parsed.formulaName || parsed.timestamp) {
+            setIsSessionActive(true);
+            // Snapshot for change detection
+            initialSnapshotRef.current = JSON.stringify({
+              l: parsed.standard?.l ?? null, a: parsed.standard?.a ?? null, b: parsed.standard?.b ?? null,
+              sl: parsed.sample?.l ?? null, sa: parsed.sample?.a ?? null, sb: parsed.sample?.b ?? null,
+            });
+          }
         }
       }
     } catch { }
@@ -496,11 +555,40 @@ export default function QualityControl() {
       standardFromQC?: { l: number; a: number; b: number; hex: string; name?: string };
       sampleFromQC?: { l: number; a: number; b: number; hex: string; name?: string };
       escaneoMode?: 'standard' | 'sample';
+      returnTo?: string;
+      idFormula?: string;
+      lote?: string;
+      formulaName?: string;
     } | null;
 
     if (state && !initialStandardSet.current) {
       initialStandardSet.current = true;
       let hasData = false;
+
+      console.log('[QC <- NAVIGATION] Recibiendo location.state en QualityControl:', {
+        idFormula: state.idFormula,
+        lote: state.lote,
+        formulaName: state.formulaName,
+        returnTo: state.returnTo,
+        standardFromFormula: state.standardFromFormula,
+        sampleFromQC: state.sampleFromQC
+      });
+
+      if (state.returnTo) {
+        setReturnPath(state.returnTo);
+      }
+
+      if (state.idFormula) {
+        setQcIdFormula(state.idFormula);
+        qcIdFormulaRef.current = state.idFormula;
+      }
+      if (state.lote) {
+        setQcLote(state.lote);
+        qcLoteRef.current = state.lote;
+      }
+      if (state.formulaName && !qcSessionName) {
+        setQcSessionName(state.formulaName);
+      }
 
       // Priority 1: standard from formulas (when navigating from formula card)
       if (state.standardFromFormula) {
@@ -529,6 +617,13 @@ export default function QualityControl() {
 
       if (hasData) {
         setIsSessionActive(true);
+        // Snapshot the initial values so we can detect real user changes later
+        const stdSnap = state.standardFromFormula || state.standardFromQC || null;
+        const smpSnap = state.sampleFromQC || null;
+        initialSnapshotRef.current = JSON.stringify({
+          l: stdSnap?.l ?? null, a: stdSnap?.a ?? null, b: stdSnap?.b ?? null,
+          sl: smpSnap?.l ?? null, sa: smpSnap?.a ?? null, sb: smpSnap?.b ?? null,
+        });
       }
 
       // If returning from Colorimetro after connecting a device,
@@ -561,12 +656,14 @@ export default function QualityControl() {
         ...(standard && sample ? { dL, dA, dB, de } : {}),
         timestamp: new Date().toISOString(),
         sessionName: qcSessionName,
-        sessionDesc: qcSessionDesc
+        sessionDesc: qcSessionDesc,
+        idFormula: qcIdFormula || qcIdFormulaRef.current,
+        lote: qcLote || qcLoteRef.current
       };
       localStorage.setItem('qc_context', JSON.stringify(newCtx));
       return newCtx;
     });
-  }, [standard, sample, qcSessionName, qcSessionDesc, isSessionActive]);
+  }, [standard, sample, qcSessionName, qcSessionDesc, isSessionActive, qcIdFormula, qcLote]);
 
   const handleOpenScan = (mode: 'standard' | 'sample') => {
     setEscaneoMode(mode);
@@ -582,6 +679,14 @@ export default function QualityControl() {
     setShowEscaneoQC(false);
   };
 
+  const handleExitQC = () => {
+    if (returnPath) {
+      navigate(returnPath);
+    } else {
+      navigate(-1);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0A0F14] text-slate-800 dark:text-slate-200 font-sans flex flex-col overflow-x-hidden pb-28">
       <header style={{ zIndex: 60000 }} className="fixed top-0 flex w-full items-center justify-between border-b border-black/10 bg-[#CC5200] shadow-lg px-4 py-4">
@@ -589,33 +694,48 @@ export default function QualityControl() {
           <button
             onClick={() => {
               if (standard && sample) {
-                setConfirmDialog({
-                  title: "¿Guardar control actual?",
-                  message: "¿Deseas guardar los datos del control de calidad actual antes de salir?",
-                  onYes: async () => {
-                    const name = qcSessionName || prompt("Introduce el Nombre/Lote para guardar:") || "Sesión Sin Nombre";
-                    const record = await saveQCRecordToServer(name, qcSessionDesc, standard, sample);
-                    const newCtx = {
-                      standard,
-                      sample,
-                      timestamp: new Date().toISOString(),
-                      sessionName: name,
-                      sessionDesc: qcSessionDesc,
-                      pdf_url: record?.pdf_url || null
-                    };
-                    setQcSessionName(name);
-                    setQcContextData(newCtx);
-                    localStorage.setItem('qc_context', JSON.stringify(newCtx));
-                    setConfirmDialog(null);
-                    navigate(-1);
-                  },
-                  onNo: () => {
-                    setConfirmDialog(null);
-                    navigate(-1);
-                  }
+                // Only prompt if the user actually changed values after the initial load
+                const currentSnap = JSON.stringify({
+                  l: standard.l, a: standard.a, b: standard.b,
+                  sl: sample.l, sa: sample.a, sb: sample.b,
                 });
+                const hasChanges = initialSnapshotRef.current !== null
+                  ? currentSnap !== initialSnapshotRef.current
+                  : true; // no snapshot means data was entered manually → treat as changed
+
+                if (hasChanges) {
+                  setConfirmDialog({
+                    title: "¿Guardar control actual?",
+                    message: "¿Deseas guardar los datos del control de calidad actual antes de salir?",
+                    onYes: async () => {
+                      const name = qcSessionName || prompt("Introduce el Nombre/Lote para guardar:") || "Sesión Sin Nombre";
+                      const record = await saveQCRecordToServer(name, qcSessionDesc, standard, sample);
+                      const newCtx = {
+                        standard,
+                        sample,
+                        timestamp: new Date().toISOString(),
+                        sessionName: name,
+                        sessionDesc: qcSessionDesc,
+                        pdf_url: record?.pdf_url || null,
+                        idFormula: qcIdFormula,
+                        lote: qcLote
+                      };
+                      setQcSessionName(name);
+                      setQcContextData(newCtx);
+                      localStorage.setItem('qc_context', JSON.stringify(newCtx));
+                      setConfirmDialog(null);
+                      handleExitQC();
+                    },
+                    onNo: () => {
+                      setConfirmDialog(null);
+                      handleExitQC();
+                    }
+                  });
+                } else {
+                  handleExitQC();
+                }
               } else {
-                navigate(-1);
+                handleExitQC();
               }
             }}
             className="p-2 text-black hover:text-white transition-colors hover:bg-black/10 rounded-lg"
@@ -795,47 +915,47 @@ export default function QualityControl() {
           const userData = userDataStr ? JSON.parse(userDataStr) : null;
           return userData?.issuper === true;
         })() && (
-          <div className="elegant-card rounded-2xl border border-slate-200 dark:border-slate-800/80 p-5 space-y-4 bg-white dark:bg-slate-900/20 shadow-lg">
-            <div className="flex items-end justify-between border-b border-slate-200 dark:border-slate-700/50 pb-3">
-              <div>
-                <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-tight">
-                  {qcContextData.formulaName || 'Fórmula Encontrada'}
-                </h3>
-                <p className="text-[10px] text-[#b58000] dark:text-[#d4af37] font-bold uppercase tracking-wide mt-1">
-                  {qcContextData.formulaProduct || 'Producto no especificado'}
-                </p>
-              </div>
-              <span className="text-[10px] text-slate-600 dark:text-slate-400 font-bold uppercase bg-slate-100 dark:bg-slate-800/40 px-2.5 py-1.5 rounded-md border border-slate-200 dark:border-slate-700/50">
-                Prep: {qcContextData.prepareAmount || 1.0} LT
-              </span>
-            </div>
-
-            <div className="space-y-2 mt-2">
-              <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-3">Componentes</h4>
-              {qcContextData.componentColors.map((cc: any, idx: number) => (
-                <div key={idx} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/30 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700/30 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="h-6 w-6 rounded-md shadow-inner border border-slate-300 dark:border-slate-700/50"
-                      style={{
-                        backgroundColor: cc.baseType === 'white' ? '#ffffff' : cc.baseType === 'transparent' ? '#ffffff' : (cc.color || '#555'),
-                        backgroundImage: cc.baseType === 'transparent'
-                          ? 'linear-gradient(45deg, #aaa 25%, transparent 25%), linear-gradient(-45deg, #aaa 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #aaa 75%), linear-gradient(-45deg, transparent 75%, #aaa 75%)'
-                          : undefined,
-                        backgroundSize: cc.baseType === 'transparent' ? '6px 6px' : undefined,
-                        backgroundPosition: cc.baseType === 'transparent' ? '0 0, 0 3px, 3px -3px, -3px 0px' : undefined,
-                      }}
-                    ></div>
-                    <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">{cc.code}</span>
-                  </div>
-                  <div className="text-[11px] font-mono font-bold text-[#CC5200] dark:text-[#ff7f3f]">
-                    {cc.quantity ? (cc.quantity * (qcContextData.prepareAmount || 1)).toFixed(3) + ' L' : cc.displayQuantity || '0.00 L'}
-                  </div>
+            <div className="elegant-card rounded-2xl border border-slate-200 dark:border-slate-800/80 p-5 space-y-4 bg-white dark:bg-slate-900/20 shadow-lg">
+              <div className="flex items-end justify-between border-b border-slate-200 dark:border-slate-700/50 pb-3">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-tight">
+                    {qcContextData.formulaName || 'Fórmula Encontrada'}
+                  </h3>
+                  <p className="text-[10px] text-[#b58000] dark:text-[#d4af37] font-bold uppercase tracking-wide mt-1">
+                    {qcContextData.formulaProduct || 'Producto no especificado'}
+                  </p>
                 </div>
-              ))}
+                <span className="text-[10px] text-slate-600 dark:text-slate-400 font-bold uppercase bg-slate-100 dark:bg-slate-800/40 px-2.5 py-1.5 rounded-md border border-slate-200 dark:border-slate-700/50">
+                  Prep: {qcContextData.prepareAmount || 1.0} LT
+                </span>
+              </div>
+
+              <div className="space-y-2 mt-2">
+                <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-3">Componentes</h4>
+                {qcContextData.componentColors.map((cc: any, idx: number) => (
+                  <div key={idx} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/30 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700/30 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="h-6 w-6 rounded-md shadow-inner border border-slate-300 dark:border-slate-700/50"
+                        style={{
+                          backgroundColor: cc.baseType === 'white' ? '#ffffff' : cc.baseType === 'transparent' ? '#ffffff' : (cc.color || '#555'),
+                          backgroundImage: cc.baseType === 'transparent'
+                            ? 'linear-gradient(45deg, #aaa 25%, transparent 25%), linear-gradient(-45deg, #aaa 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #aaa 75%), linear-gradient(-45deg, transparent 75%, #aaa 75%)'
+                            : undefined,
+                          backgroundSize: cc.baseType === 'transparent' ? '6px 6px' : undefined,
+                          backgroundPosition: cc.baseType === 'transparent' ? '0 0, 0 3px, 3px -3px, -3px 0px' : undefined,
+                        }}
+                      ></div>
+                      <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">{cc.code}</span>
+                    </div>
+                    <div className="text-[11px] font-mono font-bold text-[#CC5200] dark:text-[#ff7f3f]">
+                      {cc.quantity ? (cc.quantity * (qcContextData.prepareAmount || 1)).toFixed(3) + ' L' : cc.displayQuantity || '0.00 L'}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
 
 
@@ -1021,7 +1141,7 @@ export default function QualityControl() {
                   <span>Búsqueda de color</span>
                   <span className="text-[10px] text-slate-400 font-normal">Buscar coincidencia</span>
                 </button>
-                
+
                 <button
                   onClick={() => {
                     setShowOptionsDialog(false);
@@ -1176,7 +1296,9 @@ export default function QualityControl() {
             timestamp: new Date().toISOString(),
             sessionName: name,
             sessionDesc: desc,
-            pdf_url: record?.pdf_url || null
+            pdf_url: record?.pdf_url || null,
+            idFormula: qcIdFormula,
+            lote: qcLote
           };
           setQcSessionName(name);
           setQcSessionDesc(desc);

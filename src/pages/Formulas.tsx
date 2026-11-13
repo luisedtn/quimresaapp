@@ -29,6 +29,17 @@ const getFormulaColor = (f: any) => {
   return labToHex(parseFloat(String(l)), parseFloat(String(a || '0')), parseFloat(String(b || '0')));
 };
 
+const isPatternValid = (formula: any): boolean => {
+  if (formula.LO == null || formula.LO === '') return false;
+  const lo = parseFloat(formula.LO);
+  const ao = formula.AO != null && formula.AO !== '' ? parseFloat(formula.AO) : 0;
+  const bo = formula.BO != null && formula.BO !== '' ? parseFloat(formula.BO) : 0;
+  if (isNaN(lo)) return false;
+  // Excluir si todos los parámetros son 0 (LO=0, AO=0, BO=0)
+  if (lo === 0 && ao === 0 && bo === 0) return false;
+  return true;
+};
+
 interface FormulasProps {
   email: string | null | undefined;
   onLogout: () => void;
@@ -115,14 +126,15 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
         }
 
         const data = await response.json();
+        const validData = Array.isArray(data) ? data.filter(isPatternValid) : [];
 
         const sortLabel = sortBy === 'FECHA' ? 'fecha (más reciente)' : 'nombre (alfabético)';
-        console.log(`[FORMULAS] Recibidos ${data.length} registros | sortBy=${sortBy} (${sortLabel}) | page=${page}`, JSON.stringify(data, null, 2));
+        console.log(`[FORMULAS] Recibidos ${data.length} registros (${validData.length} válidos con patrón) | sortBy=${sortBy} (${sortLabel}) | page=${page}`);
 
         if (page === 1) {
-          setFormulas(data);
+          setFormulas(validData);
         } else {
-          setFormulas(prev => [...prev, ...data]);
+          setFormulas(prev => [...prev, ...validData]);
         }
 
         setHasMore(data.length === 25);
@@ -195,15 +207,98 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
 
   const handleQualityControl = (e: React.MouseEvent, formula: any) => {
     e.stopPropagation();
+
+    // Patrón: valores de referencia originales de la fórmula (LO, AO, BO)
+    let stdL = formula.LO != null && formula.LO !== '' ? parseFloat(formula.LO) : NaN;
+    let stdA = formula.AO != null && formula.AO !== '' ? parseFloat(formula.AO) : NaN;
+    let stdB = formula.BO != null && formula.BO !== '' ? parseFloat(formula.BO) : NaN;
+
+    // Muestra (Fórmula medida): valores de la medición (L, A, B)
+    let smpL = formula.L != null && formula.L !== '' ? parseFloat(formula.L) : NaN;
+    let smpA = formula.A != null && formula.A !== '' ? parseFloat(formula.A) : NaN;
+    let smpB = formula.B != null && formula.B !== '' ? parseFloat(formula.B) : NaN;
+
+    // Deltas de la fórmula (Fórmula - Patrón = L - LO)
+    const hasDeltaL = formula.DELTAL != null && formula.DELTAL !== '';
+    const hasDeltaA = formula.DELTAA != null && formula.DELTAA !== '';
+    const hasDeltaB = formula.DELTAB != null && formula.DELTAB !== '';
+
+    const dL = hasDeltaL
+      ? parseFloat(formula.DELTAL)
+      : (!isNaN(smpL) && !isNaN(stdL) ? smpL - stdL : 0);
+    const dA = hasDeltaA
+      ? parseFloat(formula.DELTAA)
+      : (!isNaN(smpA) && !isNaN(stdA) ? smpA - stdA : 0);
+    const dB = hasDeltaB
+      ? parseFloat(formula.DELTAB)
+      : (!isNaN(smpB) && !isNaN(stdB) ? smpB - stdB : 0);
+
+    // Si falta el patrón pero tenemos la muestra y los deltas: Patrón = Muestra - Delta
+    if (isNaN(stdL)) {
+      if (!isNaN(smpL) && hasDeltaL) stdL = smpL - dL;
+      else if (!isNaN(smpL)) stdL = smpL;
+      else stdL = 0;
+    }
+    if (isNaN(stdA)) {
+      if (!isNaN(smpA) && hasDeltaA) stdA = smpA - dA;
+      else if (!isNaN(smpA)) stdA = smpA;
+      else stdA = 0;
+    }
+    if (isNaN(stdB)) {
+      if (!isNaN(smpB) && hasDeltaB) stdB = smpB - dB;
+      else if (!isNaN(smpB)) stdB = smpB;
+      else stdB = 0;
+    }
+
+    // Si falta la muestra pero tenemos el patrón y los deltas: Muestra = Patrón + Delta
+    if (isNaN(smpL)) smpL = stdL + dL;
+    if (isNaN(smpA)) smpA = stdA + dA;
+    if (isNaN(smpB)) smpB = stdB + dB;
+
+    const payloadNav = {
+      standardFromFormula: {
+        l: stdL,
+        a: stdA,
+        b: stdB,
+        name: formula.NOMBREFORMULA || 'Patrón de Fórmula'
+      },
+      sampleFromQC: {
+        l: smpL,
+        a: smpA,
+        b: smpB,
+        hex: labToHex(smpL, smpA, smpB),
+        name: formula.LOTE
+          ? `${formula.NOMBREFORMULA} - Lote ${formula.LOTE}`
+          : (formula.NOMBREFORMULA ? `${formula.NOMBREFORMULA} (Muestra)` : 'Muestra')
+      },
+      idFormula: formula.IDFORMULA || formula.ID ? String(formula.IDFORMULA || formula.ID) : undefined,
+      lote: formula.LOTE ? String(formula.LOTE) : undefined,
+      formulaName: formula.NOMBREFORMULA || undefined,
+      returnTo: '/formulas'
+    };
+
+    console.log('[FORMULAS -> QC] Enviando datos a Control de Calidad:', {
+      formulaOriginal: {
+        id: formula.ID,
+        nombre: formula.NOMBREFORMULA,
+        lote: formula.LOTE,
+        LO: formula.LO,
+        AO: formula.AO,
+        BO: formula.BO,
+        L: formula.L,
+        A: formula.A,
+        B: formula.B,
+        DELTAL: formula.DELTAL,
+        DELTAA: formula.DELTAA,
+        DELTAB: formula.DELTAB,
+        DELTA: formula.DELTA
+      },
+      deltasCalculados: { dL, dA, dB },
+      payloadEnviado: payloadNav
+    });
+
     navigate('/quality-control', {
-      state: {
-        standardFromFormula: {
-          l: parseFloat(formula.LO || '0'),
-          a: parseFloat(formula.AO || '0'),
-          b: parseFloat(formula.BO || '0'),
-          name: formula.NOMBREFORMULA || 'Patrón de Fórmula'
-        }
-      }
+      state: payloadNav
     });
   };
 
@@ -337,24 +432,54 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
                         </div>
                       )}
 
-                      {/* Row 3: LAB Values + Quality Control */}
+                      {/* Row 3: Delta Values + Quality Control */}
                       <div className="flex items-center gap-3 mt-3">
-                        {/* LAB values - compact inline */}
+                        {/* Delta LAB values + Delta E - compact inline */}
                         <div className="formula-card__lab-row">
-                          <div className="formula-card__lab-item">
-                            <span className="formula-card__lab-label">L*</span>
-                            <span className="formula-card__lab-value">{parseFloat(formula.LO || '0').toFixed(2)}</span>
-                          </div>
-                          <div className="formula-card__lab-divider" />
-                          <div className="formula-card__lab-item">
-                            <span className="formula-card__lab-label">a*</span>
-                            <span className="formula-card__lab-value">{parseFloat(formula.AO || '0').toFixed(2)}</span>
-                          </div>
-                          <div className="formula-card__lab-divider" />
-                          <div className="formula-card__lab-item">
-                            <span className="formula-card__lab-label">b*</span>
-                            <span className="formula-card__lab-value">{parseFloat(formula.BO || '0').toFixed(2)}</span>
-                          </div>
+                          {(() => {
+                            const dL = formula.DELTAL != null && formula.DELTAL !== ''
+                              ? parseFloat(formula.DELTAL)
+                              : (parseFloat(formula.L || '0') - parseFloat(formula.LO || '0'));
+                            const dA = formula.DELTAA != null && formula.DELTAA !== ''
+                              ? parseFloat(formula.DELTAA)
+                              : (parseFloat(formula.A || '0') - parseFloat(formula.AO || '0'));
+                            const dB = formula.DELTAB != null && formula.DELTAB !== ''
+                              ? parseFloat(formula.DELTAB)
+                              : (parseFloat(formula.B || '0') - parseFloat(formula.BO || '0'));
+                            const dE = formula.DELTA != null && formula.DELTA !== ''
+                              ? parseFloat(formula.DELTA)
+                              : null;
+                            const fmtDelta = (v: number) => (v >= 0 ? '+' : '') + v.toFixed(2);
+                            const deltaColor = (v: number) =>
+                              Math.abs(v) < 0.5 ? 'text-emerald-400' : Math.abs(v) < 1.5 ? 'text-yellow-400' : 'text-red-400';
+                            return (
+                              <>
+                                <div className="formula-card__lab-item">
+                                  <span className="formula-card__lab-label">ΔL</span>
+                                  <span className={`formula-card__lab-value font-mono ${deltaColor(dL)}`}>{fmtDelta(dL)}</span>
+                                </div>
+                                <div className="formula-card__lab-divider" />
+                                <div className="formula-card__lab-item">
+                                  <span className="formula-card__lab-label">Δa</span>
+                                  <span className={`formula-card__lab-value font-mono ${deltaColor(dA)}`}>{fmtDelta(dA)}</span>
+                                </div>
+                                <div className="formula-card__lab-divider" />
+                                <div className="formula-card__lab-item">
+                                  <span className="formula-card__lab-label">Δb</span>
+                                  <span className={`formula-card__lab-value font-mono ${deltaColor(dB)}`}>{fmtDelta(dB)}</span>
+                                </div>
+                                {dE !== null && (
+                                  <>
+                                    <div className="formula-card__lab-divider" />
+                                    <div className="formula-card__lab-item">
+                                      <span className="formula-card__lab-label">ΔE</span>
+                                      <span className={`formula-card__lab-value font-mono ${deltaColor(dE)}`}>{dE.toFixed(2)}</span>
+                                    </div>
+                                  </>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
 
                         {/* Quality control button */}

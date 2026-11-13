@@ -85,12 +85,15 @@ export default function Dashboard({ userData, onLogout, onUserDataChange }: Dash
     }
   };
 
+  const isSuperUser = Boolean(userData?.issuper || userData?.isSuper);
+
   const handleSelectClient = (cliente: any) => {
     const updatedUserData = {
       ...userData,
       idcliente: cliente.CODIGO,
       empresa: cliente.NOMBRE,
-      logoUrl: cliente.LOGO || userData.logoUrl
+      logoUrl: cliente.LOGO || userData.logoUrl,
+      issuper: cliente.issuper !== undefined ? cliente.issuper : userData?.issuper
     };
     localStorage.setItem('userData', JSON.stringify(updatedUserData));
     onUserDataChange(updatedUserData);
@@ -106,7 +109,7 @@ export default function Dashboard({ userData, onLogout, onUserDataChange }: Dash
     { id: 'qc', icon: Layers, title: 'Control de calidad', desc: 'Compara muestras contra un estándar e identifica si pasan o fallan.', path: '/quality-control' },
     { id: 'qc-history', icon: History, title: 'Historial de control', desc: 'Tu registro de sesiones de control de calidad.', path: '/lista-qc' },
     { id: 'favorites', icon: Heart, title: 'Colecciones', desc: 'Accede, descarga y edita tus colores favoritos.' },
-    { id: 'location', icon: MapPin, title: 'Ubicación Clientes', desc: 'Visualiza en mapa las ubicaciones de acceso de tus clientes.', path: '__localizacion__' },
+    ...(isSuperUser ? [{ id: 'location', icon: MapPin, title: 'Ubicación Clientes', desc: 'Visualiza en mapa las ubicaciones de acceso de tus clientes.', path: '__localizacion__' }] : []),
     // { id: 'cloud', icon: Cloud, title: 'Panel en la nube', desc: 'Comparte colores, ve analíticas y gestiona usuarios.' },
   ];
 

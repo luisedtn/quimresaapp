@@ -159,6 +159,7 @@ export default function StandardFormulas({ onLogout }: { onLogout: () => void })
             DELTA: f.DELTA,
             PRODUCTO: f.producto?.PRODUCTO || f.PRODUCTO,
             CBASE: f.BASE,
+            CARTA: f.carta?.CARTA || f.CARTA,
             // Map other fields as needed
         };
         setSelectedFormula(mapped);
@@ -174,7 +175,11 @@ export default function StandardFormulas({ onLogout }: { onLogout: () => void })
                     a: parseFloat(formula.A || '0'),
                     b: parseFloat(formula.B || '0'),
                     name: formula.NOMBRE || 'Estándar'
-                }
+                },
+                idFormula: formula.id ? String(formula.id) : undefined,
+                lote: formula.LOTE ? String(formula.LOTE) : undefined,
+                formulaName: formula.NOMBRE || undefined,
+                returnTo: '/standard-formulas'
             }
         });
     };

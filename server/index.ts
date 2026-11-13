@@ -622,6 +622,17 @@ app.get('/api/formulas', authenticateToken, async (req: Request, res: Response):
             NOMBREFORMULA: { not: '' },
             FECHA: { not: '' },
             CODIGO: { not: '' },
+            NOT: [
+                { LO: null },
+                { LO: '' },
+                {
+                    AND: [
+                        { LO: { in: ['0', '0.0', '0.00', '0.000'] } },
+                        { AO: { in: ['0', '0.0', '0.00', '0.000'] } },
+                        { BO: { in: ['0', '0.0', '0.00', '0.000'] } }
+                    ]
+                }
+            ]
         };
         if (idcliente) {
             where.IDCLIENTE = idcliente;
@@ -653,6 +664,7 @@ app.get('/api/formulas', authenticateToken, async (req: Request, res: Response):
             conds.push(`"NOMBREFORMULA" != ''`);
             conds.push(`"FECHA" != ''`);
             conds.push(`"CODIGO" != ''`);
+            conds.push(`"LO" IS NOT NULL AND "LO" != '' AND NOT (CAST(NULLIF("LO", '') AS DOUBLE PRECISION) = 0 AND CAST(NULLIF("AO", '') AS DOUBLE PRECISION) = 0 AND CAST(NULLIF("BO", '') AS DOUBLE PRECISION) = 0)`);
 
             if (idcliente) {
                 conds.push(`"IDCLIENTE" = $${idx++}`);
@@ -745,13 +757,62 @@ app.get('/api/formulas-standard', authenticateToken, async (req: Request, res: R
 app.get('/api/formpersonaleslote/:idformula', authenticateToken, async (req: Request, res: Response): Promise<any> => {
     try {
         const { idformula } = req.params;
-        console.log(`[BACKEND API] Solicitud recibida en /api/formpersonaleslote/${idformula}`);
-        console.log(`[BACKEND API] Ejecutando consulta SQL en tabla "formpersonaleslote" para "IDFORMULA" = ${idformula}`);
-        const lotes = await prisma.$queryRawUnsafe(
-            `SELECT * FROM "formpersonaleslote" WHERE "IDFORMULA" = $1 ORDER BY "FECHA" DESC`,
-            String(idformula)
-        );
-        console.log(`[BACKEND API] Consulta completada. Se encontraron ${Array.isArray(lotes) ? lotes.length : 0} registros de lotes para la fórmula ID: ${idformula}`);
+        const loteParam = req.query.lote as string;
+        const codigoParam = req.query.codigo as string;
+
+        console.log(`[BACKEND API] Solicitud recibida en /api/formpersonaleslote/${idformula}`, { loteParam, codigoParam });
+
+        // Intentar obtener la fórmula en formpersonales para conocer sus identificadores relacionados
+        let fpRecord: any = null;
+        if (!isNaN(Number(idformula))) {
+            fpRecord = await prisma.formPersonales.findUnique({
+                where: { ID: Number(idformula) },
+                select: { ID: true, IDFORMULA: true, CODIGO: true, LOTE: true }
+            });
+        }
+
+        const idsToMatch = new Set<string>();
+        if (idformula) idsToMatch.add(String(idformula));
+        if (fpRecord?.ID) idsToMatch.add(String(fpRecord.ID));
+        if (fpRecord?.IDFORMULA && fpRecord.IDFORMULA !== '0') idsToMatch.add(String(fpRecord.IDFORMULA));
+        if (fpRecord?.CODIGO) idsToMatch.add(String(fpRecord.CODIGO));
+        if (codigoParam) idsToMatch.add(String(codigoParam));
+
+        const lotesNames = new Set<string>();
+        if (fpRecord?.LOTE) lotesNames.add(String(fpRecord.LOTE));
+        if (loteParam) lotesNames.add(String(loteParam));
+
+        const idsArray = Array.from(idsToMatch);
+        const lotesArray = Array.from(lotesNames);
+
+        console.log(`[BACKEND API] Buscando en formpersonaleslote con idsArray:`, idsArray, `y lotesArray:`, lotesArray);
+
+        let lotes: any[] = [];
+        if (idsArray.length > 0 && lotesArray.length > 0) {
+            lotes = await prisma.$queryRawUnsafe(
+                `SELECT * FROM "formpersonaleslote" 
+                 WHERE "IDFORMULA" = ANY($1) OR "LOTE" = ANY($2)
+                 ORDER BY "FECHA" DESC`,
+                idsArray,
+                lotesArray
+            );
+        } else if (idsArray.length > 0) {
+            lotes = await prisma.$queryRawUnsafe(
+                `SELECT * FROM "formpersonaleslote" 
+                 WHERE "IDFORMULA" = ANY($1)
+                 ORDER BY "FECHA" DESC`,
+                idsArray
+            );
+        } else if (lotesArray.length > 0) {
+            lotes = await prisma.$queryRawUnsafe(
+                `SELECT * FROM "formpersonaleslote" 
+                 WHERE "LOTE" = ANY($1)
+                 ORDER BY "FECHA" DESC`,
+                lotesArray
+            );
+        }
+
+        console.log(`[BACKEND API] Consulta completada. Se encontraron ${Array.isArray(lotes) ? lotes.length : 0} registros de lotes.`);
         res.json(lotes);
     } catch (error: any) {
         console.error(`[ERROR BACKEND] /api/formpersonaleslote/${req.params?.idformula}:`, error.message);
@@ -1339,8 +1400,26 @@ app.post('/api/qualitycontrol', authenticateToken, async (req: Request, res: Res
             modo_medicion,
             densidad,
             pdf_url,
-            fecha_registro
+            fecha_registro,
+            IDFORMULA,
+            idformula,
+            LOTE,
+            lote
         } = req.body;
+
+        const resolvedIdFormula = IDFORMULA !== undefined ? String(IDFORMULA) : (idformula !== undefined ? String(idformula) : undefined);
+        const resolvedLote = LOTE !== undefined ? String(LOTE) : (lote !== undefined ? String(lote) : undefined);
+
+        console.log('[SERVER POST /api/qualitycontrol] Recibiendo datos de control de calidad:', {
+            nombre,
+            idcliente,
+            IDFORMULA_recibido: IDFORMULA,
+            idformula_recibido: idformula,
+            resolvedIdFormula,
+            LOTE_recibido: LOTE,
+            lote_recibido: lote,
+            resolvedLote
+        });
 
         // Usar la fecha/hora local enviada por el cliente; si no viene, usar la hora actual del servidor
         const creadoEn: Date = fecha_registro ? new Date(fecha_registro) : new Date();
@@ -1376,8 +1455,10 @@ app.post('/api/qualitycontrol', authenticateToken, async (req: Request, res: Res
                     modo_medicion: modo_medicion !== undefined ? modo_medicion : existing.modo_medicion,
                     densidad: densidad !== undefined ? densidad : existing.densidad,
                     pdf_url: pdf_url !== undefined ? pdf_url : existing.pdf_url,
-                    creado_en: creadoEn
-                }
+                    creado_en: creadoEn,
+                    IDFORMULA: resolvedIdFormula !== undefined ? resolvedIdFormula : (existing as any).IDFORMULA,
+                    LOTE: resolvedLote !== undefined ? resolvedLote : (existing as any).LOTE
+                } as any
             });
             console.log(`[QUALITY-CONTROL] Registro actualizado ID: ${qcRecord.id}`);
         } else {
@@ -1404,8 +1485,10 @@ app.post('/api/qualitycontrol', authenticateToken, async (req: Request, res: Res
                     modo_medicion,
                     densidad,
                     pdf_url,
-                    creado_en: creadoEn
-                }
+                    creado_en: creadoEn,
+                    IDFORMULA: resolvedIdFormula || null,
+                    LOTE: resolvedLote || null
+                } as any
             });
             console.log(`[QUALITY-CONTROL] Registro creado ID: ${qcRecord.id}`);
         }
@@ -1624,8 +1707,24 @@ app.post('/api/qualitycontrol', async (req: Request, res: Response) => {
             delta_e, delta_l, delta_a, delta_b,
             blanco_referencia, modo_medicion, densidad,
             pdf_url,
-            fecha_registro
+            fecha_registro,
+            IDFORMULA, idformula,
+            LOTE, lote
         } = req.body;
+
+        const resolvedIdFormula = IDFORMULA !== undefined ? String(IDFORMULA) : (idformula !== undefined ? String(idformula) : undefined);
+        const resolvedLote = LOTE !== undefined ? String(LOTE) : (lote !== undefined ? String(lote) : undefined);
+
+        console.log('[SERVER POST /api/qualitycontrol] Recibiendo datos de control de calidad:', {
+            nombre,
+            idcliente,
+            IDFORMULA_recibido: IDFORMULA,
+            idformula_recibido: idformula,
+            resolvedIdFormula,
+            LOTE_recibido: LOTE,
+            lote_recibido: lote,
+            resolvedLote
+        });
 
         // Usar la fecha/hora local enviada por el cliente; si no viene, usar la hora actual del servidor
         const creadoEn: Date = fecha_registro ? new Date(fecha_registro) : new Date();
@@ -1639,8 +1738,10 @@ app.post('/api/qualitycontrol', async (req: Request, res: Response) => {
                 blanco_referencia, modo_medicion, densidad,
                 pdf_url,
                 id_cliente: idcliente,
-                creado_en: creadoEn
-            }
+                creado_en: creadoEn,
+                IDFORMULA: resolvedIdFormula || null,
+                LOTE: resolvedLote || null
+            } as any
         });
 
         return res.status(201).json(record);

@@ -520,6 +520,8 @@ model QualityControl {
   pdf_url           String?
   creado_en         DateTime @default(now())
   id_cliente        Int?
+  IDFORMULA         String?
+  LOTE              String?  @db.VarChar(100)
 
   cliente           Cliente? @relation(fields: [id_cliente], references: [CODIGO])
 

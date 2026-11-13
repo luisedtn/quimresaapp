@@ -155,7 +155,9 @@ export default function GenerarPDF({ onClose, qcContextData }: GenerarPDFProps) 
                     modo_medicion: deviceSettings.measurementMode || null,
                     densidad: deviceSettings.densityStatus || null,
                     pdf_url: relativePdfUrl,
-                    fecha_registro: fechaLocal
+                    fecha_registro: fechaLocal,
+                    IDFORMULA: qcContextData?.idFormula || null,
+                    LOTE: qcContextData?.lote || null
                 };
 
                 await fetch(`${API_BASE_URL}/api/qualitycontrol`, {

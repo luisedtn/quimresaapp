@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Beaker, User, Calendar, Droplets, MessageSquare, ClipboardList, Activity, Loader2, FileText, AlertTriangle } from 'lucide-react';
+import { X, Beaker, User, Calendar, Droplets, MessageSquare, ClipboardList, Activity, Loader2, FileText, AlertTriangle, Layers } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
@@ -124,6 +124,7 @@ function PdfTabContent({
 export default function DetalleFormula({ formula, isOpen, onClose }: DetalleFormulaProps) {
     const navigate = useNavigate();
     const [lotesPersonales, setLotesPersonales] = useState<any[]>([]);
+    const [selectedLoteIndex, setSelectedLoteIndex] = useState<number>(0);
     const [activeTab, setActiveTab] = useState<'mezcla' | 'lab' | 'procesos' | 'obs' | 'fichatecnica' | 'fichaseguridad'>('mezcla');
     const [densities, setDensities] = useState<Record<string, number>>({});
     const [calculating, setCalculating] = useState(false);
@@ -176,27 +177,34 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
 
     useEffect(() => {
         if (!isOpen || !formula) return;
-        if (!formula.NOMBREFORMULA || !formula.ID) return;
+        const formulaId = formula.ID || formula.id;
+        if (!formulaId) return;
 
         const fetchLotes = async () => {
-            console.log(`[DetalleFormula] Iniciando búsqueda de lotes para la fórmula ID: ${formula.ID}, Nombre: ${formula.NOMBREFORMULA}`);
+            console.log(`[DetalleFormula] Iniciando búsqueda de lotes para la fórmula ID: ${formulaId}, Nombre: ${formula.NOMBREFORMULA || formula.NOMBRE}`);
             try {
                 const token = localStorage.getItem('token');
-                const url = `${API_BASE_URL}/api/formpersonaleslote/${formula.ID}`;
+                const params = new URLSearchParams();
+                if (formula.LOTE) params.append('lote', formula.LOTE);
+                if (formula.CODIGO) params.append('codigo', formula.CODIGO);
+                const queryStr = params.toString() ? `?${params.toString()}` : '';
+
+                const url = `${API_BASE_URL}/api/formpersonaleslote/${formulaId}${queryStr}`;
                 console.log(`[DetalleFormula] Haciendo petición a: ${url}`);
                 const res = await fetch(url, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                console.log(`[DetalleFormula] Respuesta HTTP recibida para lotes de la fórmula ${formula.ID}: status ${res.status}`);
+                console.log(`[DetalleFormula] Respuesta HTTP recibida para lotes de la fórmula ${formulaId}: status ${res.status}`);
                 if (res.ok) {
                     const data = await res.json();
-                    console.log(`[DetalleFormula] Datos de lotes recuperados exitosamente: ${data.length} registros encontrados para la fórmula ${formula.ID}`);
+                    console.log(`[DetalleFormula] Datos de lotes recuperados exitosamente: ${data.length} registros encontrados para la fórmula ${formulaId}`);
                     setLotesPersonales(data);
+                    setSelectedLoteIndex(0);
                 } else {
-                    console.warn(`[DetalleFormula] Respuesta no OK al obtener lotes para la fórmula ${formula.ID}: ${res.statusText}`);
+                    console.warn(`[DetalleFormula] Respuesta no OK al obtener lotes para la fórmula ${formulaId}: ${res.statusText}`);
                 }
             } catch (err) {
-                console.error(`[DetalleFormula] Error al hacer el fetch de lotes para la fórmula ${formula.ID}:`, err);
+                console.error(`[DetalleFormula] Error al hacer el fetch de lotes para la fórmula ${formulaId}:`, err);
             }
         };
         fetchLotes();
@@ -477,6 +485,45 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
 
     const mixtureDensityDisplay = totalRawVolume > 0 ? (finalMassSum / 1000) : calculatedMixtureDensity;
 
+    // Lista efectiva de lotes: lotes desde la tabla formpersonaleslote o lote propio de la fórmula si existe
+    const effectiveLotes = (lotesPersonales && lotesPersonales.length > 0)
+        ? lotesPersonales
+        : (formula.LOTE ? [{
+            LOTE: formula.LOTE,
+            FECHA: formula.FECHA || formula.FECHACREADA || null,
+            LO: formula.LO,
+            AO: formula.AO,
+            BO: formula.BO,
+            DELTA: formula.DELTA
+        }] : []);
+
+    const latestLote = effectiveLotes.length > 0 ? effectiveLotes[0]?.LOTE : null;
+
+    // Colorimetría: lote seleccionado o datos base de la fórmula
+    const activeLote = effectiveLotes.length > 0
+        ? effectiveLotes[selectedLoteIndex] || effectiveLotes[0]
+        : null;
+
+    const currentLO = activeLote?.LO ?? formula.LO ?? '0';
+    const currentAO = activeLote?.AO ?? formula.AO ?? '0';
+    const currentBO = activeLote?.BO ?? formula.BO ?? '0';
+
+    const currentL = formula.L ?? '0';
+    const currentA = formula.A ?? '0';
+    const currentB = formula.B ?? '0';
+
+    // Diferenciales CIELAB (Fórmula - Patrón)
+    const diffL = (parseFloat(currentL) - parseFloat(currentLO));
+    const diffA = (parseFloat(currentA) - parseFloat(currentAO));
+    const diffB = (parseFloat(currentB) - parseFloat(currentBO));
+
+    // Variación Delta E del lote seleccionado o cálculo euclídeo
+    const currentDelta = activeLote?.DELTA !== undefined && activeLote?.DELTA !== null && activeLote?.DELTA !== ''
+        ? parseFloat(activeLote.DELTA)
+        : (formula.DELTA !== undefined && formula.DELTA !== null && formula.DELTA !== ''
+            ? parseFloat(formula.DELTA)
+            : Math.sqrt(diffL * diffL + diffA * diffA + diffB * diffB));
+
     const processes = [
         { id: 1, text: formula.PROCESOS },
         { id: 2, text: formula.PROCESOS2 },
@@ -491,7 +538,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
         { id: 'mezcla', label: 'Fórmula', icon: Droplets },
         { id: 'lab', label: 'Colorimetría', icon: Activity },
         { id: 'procesos', label: 'Procesos', icon: ClipboardList },
-        { id: 'obs', label: 'Notas', icon: MessageSquare },
+        ...(isSuper ? [{ id: 'obs', label: 'Notas', icon: MessageSquare }] : []),
         { id: 'fichatecnica', label: 'F. Técnica', icon: FileText },
         { id: 'fichaseguridad', label: 'F. Seguridad', icon: AlertTriangle },
     ];
@@ -743,7 +790,11 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                                                                         a: parseFloat(lote.AO || '0'),
                                                                                         b: parseFloat(lote.BO || '0'),
                                                                                         name: `${formula.NOMBREFORMULA} - Lote ${lote.LOTE}`
-                                                                                    }
+                                                                                    },
+                                                                                    idFormula: lote.IDFORMULA || formula.IDFORMULA || formula.ID ? String(lote.IDFORMULA || formula.IDFORMULA || formula.ID) : undefined,
+                                                                                    lote: lote.LOTE || formula.LOTE ? String(lote.LOTE || formula.LOTE) : undefined,
+                                                                                    formulaName: formula.NOMBREFORMULA || undefined,
+                                                                                    returnTo: '/formulas'
                                                                                 }
                                                                             });
                                                                         }}
@@ -919,34 +970,40 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                             </div>
                                         )}
 
-                                        {/* Producto / Sustrato */}
+                                        {/* Metadatos de la Fórmula: Producto, Carta, Sustrato, Viscosidad, Proyecto, Último Lote */}
                                         <div className="grid grid-cols-2 gap-3">
                                             {[
-                                                { label: 'Producto', value: formula.PRODUCTO },
-                                                { label: 'Sustrato', value: formula.SUSTRATO }
-                                            ].map(({ label, value }) => (
-                                                <div
-                                                    key={label}
-                                                    className="p-4 rounded-xl"
-                                                    style={{
-                                                        backgroundColor: 'var(--bg-ingredient-card)',
-                                                        border: '1px solid var(--border-ingredient-card)'
-                                                    }}
-                                                >
-                                                    <p
-                                                        className="text-[9px] font-bold uppercase tracking-widest mb-1"
-                                                        style={{ color: 'var(--text-muted)' }}
+                                                { label: 'Producto', value: formula.PRODUCTO, showAlways: true },
+                                                { label: 'Carta', value: formula.carta?.CARTA || formula.CARTA, showAlways: true },
+                                                { label: 'Sustrato', value: formula.SUSTRATO, showAlways: true },
+                                                { label: 'Último Lote', value: latestLote, showAlways: false },
+                                                { label: 'Viscosidad', value: formula.VISCOSIDAD, showAlways: false },
+                                                { label: 'Proyecto', value: formula.PROYECTO, showAlways: false }
+                                            ]
+                                                .filter(item => item.showAlways || (item.value !== undefined && item.value !== null && String(item.value).trim() !== ''))
+                                                .map(({ label, value }) => (
+                                                    <div
+                                                        key={label}
+                                                        className="p-4 rounded-xl"
+                                                        style={{
+                                                            backgroundColor: 'var(--bg-ingredient-card)',
+                                                            border: '1px solid var(--border-ingredient-card)'
+                                                        }}
                                                     >
-                                                        {label}
-                                                    </p>
-                                                    <p
-                                                        className="text-xs font-medium truncate"
-                                                        style={{ color: 'var(--text-secondary)' }}
-                                                    >
-                                                        {value || 'N/A'}
-                                                    </p>
-                                                </div>
-                                            ))}
+                                                        <p
+                                                            className="text-[9px] font-bold uppercase tracking-widest mb-1"
+                                                            style={{ color: 'var(--text-muted)' }}
+                                                        >
+                                                            {label}
+                                                        </p>
+                                                        <p
+                                                            className="text-xs font-medium truncate"
+                                                            style={{ color: 'var(--text-secondary)' }}
+                                                        >
+                                                            {value || 'N/A'}
+                                                        </p>
+                                                    </div>
+                                                ))}
                                         </div>
                                     </div>
                                 </div>
@@ -955,6 +1012,67 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                             {/* ══ TAB: COLORIMETRÍA ══ */}
                             {activeTab === 'lab' && (
                                 <div className="p-4 sm:p-6 space-y-5">
+
+                                    {/* Selector de Lote para Colorimetría */}
+                                    <div
+                                        className="p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                                        style={{
+                                            backgroundColor: 'var(--bg-ingredient-card)',
+                                            borderColor: 'var(--border-ingredient-card)'
+                                        }}
+                                    >
+                                        <div className="flex items-center gap-2.5">
+                                            <div
+                                                className="h-8 w-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                                                style={{ backgroundColor: 'rgba(184,93,0,0.15)', color: 'var(--accent-orange)' }}
+                                            >
+                                                <Layers className="h-4 w-4" />
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
+                                                    Lote Analizado
+                                                </p>
+                                                <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
+                                                    {activeLote ? `Lote: ${activeLote.LOTE}` : (formula.LOTE ? `Lote: ${formula.LOTE}` : 'Datos Base de Fórmula')}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            {effectiveLotes.length > 0 ? (
+                                                <div className="flex items-center gap-2 w-full sm:w-auto">
+                                                    <select
+                                                        value={selectedLoteIndex}
+                                                        onChange={(e) => setSelectedLoteIndex(Number(e.target.value))}
+                                                        className="w-full sm:w-auto px-3 py-2 rounded-xl text-xs font-bold border focus:outline-none transition-colors cursor-pointer"
+                                                        style={{
+                                                            backgroundColor: 'var(--bg-app)',
+                                                            borderColor: 'var(--border-ingredient-card)',
+                                                            color: 'var(--text-primary)'
+                                                        }}
+                                                    >
+                                                        {effectiveLotes.map((lote: any, idx: number) => (
+                                                            <option key={idx} value={idx}>
+                                                                {lote.LOTE} {lote.FECHA ? `(${formatDate(lote.FECHA)})` : ''} {idx === 0 ? '★ Último' : ''}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            ) : (
+                                                <span className="text-[10px] font-medium italic" style={{ color: 'var(--text-muted)' }}>
+                                                    Sin historial de lotes registrado
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Fecha del lote seleccionado (si existe) */}
+                                    {activeLote?.FECHA && (
+                                        <div className="flex items-center gap-2 px-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+                                            <Calendar className="h-3.5 w-3.5" style={{ color: 'var(--accent-orange)' }} />
+                                            <span>Fecha de medición del lote: <strong style={{ color: 'var(--text-secondary)' }}>{formatDate(activeLote.FECHA)}</strong></span>
+                                        </div>
+                                    )}
 
                                     {/* LAB Comparison table */}
                                     <div className="space-y-2">
@@ -1004,9 +1122,9 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
 
                                             {/* Rows */}
                                             {[
-                                                { label: 'L*', p: formula.LO, f: formula.L, color: 'var(--text-primary)' },
-                                                { label: 'a*', p: formula.AO, f: formula.A, color: '#34d399' },
-                                                { label: 'b*', p: formula.BO, f: formula.B, color: '#fbbf24' },
+                                                { label: 'L*', p: currentLO, f: currentL, color: 'var(--text-primary)' },
+                                                { label: 'a*', p: currentAO, f: currentA, color: '#34d399' },
+                                                { label: 'b*', p: currentBO, f: currentB, color: '#fbbf24' },
                                             ].map((row, idx) => (
                                                 <div
                                                     key={idx}
@@ -1055,11 +1173,10 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                         </h4>
                                         <div className="grid grid-cols-3 gap-2">
                                             {[
-                                                { key: 'DELTAL', label: 'ΔL' },
-                                                { key: 'DELTAA', label: 'Δa' },
-                                                { key: 'DELTAB', label: 'Δb' }
-                                            ].map(({ key, label }) => {
-                                                const val = parseFloat(formula[key] || '0');
+                                                { key: 'DELTAL', label: 'ΔL', val: diffL },
+                                                { key: 'DELTAA', label: 'Δa', val: diffA },
+                                                { key: 'DELTAB', label: 'Δb', val: diffB }
+                                            ].map(({ key, label, val }) => {
                                                 const positive = val >= 0;
                                                 return (
                                                     <div
@@ -1129,7 +1246,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                                 className="relative font-mono text-5xl sm:text-6xl font-black tracking-tighter z-10 drop-shadow-lg"
                                                 style={{ color: 'var(--text-primary)' }}
                                             >
-                                                {formula.DELTA || '0.00'}
+                                                {currentDelta.toFixed(2)}
                                             </span>
                                         </div>
                                     </div>
@@ -1223,7 +1340,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                             )}
 
                             {/* ══ TAB: NOTAS ══ */}
-                            {activeTab === 'obs' && (
+                            {activeTab === 'obs' && isSuper && (
                                 <div className="p-4 sm:p-6">
                                     {formula.OBSERVACIONES ? (
                                         <div
