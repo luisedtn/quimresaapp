@@ -383,10 +383,19 @@ export default function QualityControl() {
   };
   // ─────────────────────────────────────────────────────────
 
-  const saveQCRecordToServer = async (name: string, desc: string, std: any, smp: any, pdfUrl?: string, libId?: number, colId?: number) => {
-    console.log("iDFORMULA Y LOTE saveQCRecordToServer", qcIdFormula, qcLote);
-    const finalIdFormula = qcIdFormula || qcIdFormulaRef.current || qcContextData?.idFormula || null;
-    const finalLote = qcLote || qcLoteRef.current || qcContextData?.lote || null;
+  const saveQCRecordToServer = async (
+    name: string,
+    desc: string,
+    std: any,
+    smp: any,
+    pdfUrl?: string,
+    libId?: number,
+    colId?: number,
+    overrideIdFormula?: string | null,
+    overrideLote?: string | null
+  ) => {
+    const finalIdFormula = overrideIdFormula !== undefined ? overrideIdFormula : (qcIdFormula || qcIdFormulaRef.current || qcContextData?.idFormula || null);
+    const finalLote = overrideLote !== undefined ? overrideLote : (qcLote || qcLoteRef.current || qcContextData?.lote || null);
 
     console.log('[QC -> SERVER] Ejecutando saveQCRecordToServer con datos de fórmula:', {
       nombreGuardado: name,
@@ -714,7 +723,9 @@ export default function QualityControl() {
                     message: "¿Deseas guardar los datos del control de calidad actual antes de salir?",
                     onYes: async () => {
                       const name = qcSessionName || prompt("Introduce el Nombre/Lote para guardar:") || "Sesión Sin Nombre";
-                      const record = await saveQCRecordToServer(name, qcSessionDesc, standard, sample);
+                      const currentIdFormula = qcIdFormula || qcIdFormulaRef.current || qcContextData?.idFormula || null;
+                      const currentLote = qcLote || qcLoteRef.current || qcContextData?.lote || null;
+                      const record = await saveQCRecordToServer(name, qcSessionDesc, standard, sample, undefined, undefined, undefined, currentIdFormula, currentLote);
                       const newCtx = {
                         standard,
                         sample,
@@ -722,8 +733,8 @@ export default function QualityControl() {
                         sessionName: name,
                         sessionDesc: qcSessionDesc,
                         pdf_url: record?.pdf_url || null,
-                        idFormula: qcIdFormula || qcIdFormulaRef.current,
-                        lote: qcLote || qcLoteRef.current
+                        idFormula: currentIdFormula,
+                        lote: currentLote
                       };
                       console.log("guardandovalores", newCtx);
                       setQcSessionName(name);
@@ -820,7 +831,9 @@ export default function QualityControl() {
                     message: "¿Deseas guardar los datos del control de calidad actual antes de iniciar uno nuevo?",
                     onYes: async () => {
                       const name = qcSessionName || prompt("Introduce el Nombre/Lote para guardar:") || "Sesión Sin Nombre";
-                      await saveQCRecordToServer(name, qcSessionDesc, standard, sample);
+                      const currentIdFormula = qcIdFormula || qcIdFormulaRef.current || qcContextData?.idFormula || null;
+                      const currentLote = qcLote || qcLoteRef.current || qcContextData?.lote || null;
+                      await saveQCRecordToServer(name, qcSessionDesc, standard, sample, undefined, undefined, undefined, currentIdFormula, currentLote);
                       setConfirmDialog(null);
                       setQcSessionName('');
                       setQcSessionDesc('');
@@ -868,7 +881,9 @@ export default function QualityControl() {
                   message: "¿Deseas guardar los datos del control de calidad actual antes de limpiar?",
                   onYes: async () => {
                     const name = qcSessionName || prompt("Introduce el Nombre/Lote para guardar:") || "Sesión Sin Nombre";
-                    await saveQCRecordToServer(name, qcSessionDesc, standard, sample);
+                    const currentIdFormula = qcIdFormula || qcIdFormulaRef.current || qcContextData?.idFormula || null;
+                    const currentLote = qcLote || qcLoteRef.current || qcContextData?.lote || null;
+                    await saveQCRecordToServer(name, qcSessionDesc, standard, sample, undefined, undefined, undefined, currentIdFormula, currentLote);
                     setConfirmDialog(null);
                     setStandard(null);
                     setSample(null);
@@ -1297,7 +1312,9 @@ export default function QualityControl() {
         initialName={qcSessionName}
         initialDesc={qcSessionDesc}
         onSaveSuccess={async (name, desc, libId, colId) => {
-          const record = await saveQCRecordToServer(name, desc, standard, sample, undefined, libId, colId);
+          const currentIdFormula = qcIdFormula || qcIdFormulaRef.current || qcContextData?.idFormula || null;
+          const currentLote = qcLote || qcLoteRef.current || qcContextData?.lote || null;
+          const record = await saveQCRecordToServer(name, desc, standard, sample, undefined, libId, colId, currentIdFormula, currentLote);
           const newCtx = {
             standard,
             sample,
@@ -1305,8 +1322,8 @@ export default function QualityControl() {
             sessionName: name,
             sessionDesc: desc,
             pdf_url: record?.pdf_url || null,
-            idFormula: qcIdFormula || qcIdFormulaRef.current,
-            lote: qcLote || qcLoteRef.current
+            idFormula: currentIdFormula,
+            lote: currentLote
           };
           setQcSessionName(name);
           setQcSessionDesc(desc);
