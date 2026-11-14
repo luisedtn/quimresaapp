@@ -492,7 +492,9 @@ export default function QualityControl() {
     const newCtx = {
       timestamp: new Date().toISOString(),
       sessionName: qcSessionName,
-      sessionDesc: qcSessionDesc
+      sessionDesc: qcSessionDesc,
+      idFormula: qcIdFormula || qcIdFormulaRef.current,
+      lote: qcLote || qcLoteRef.current
     };
     setQcContextData(newCtx);
     localStorage.setItem('qc_context', JSON.stringify(newCtx));
@@ -720,8 +722,8 @@ export default function QualityControl() {
                         sessionName: name,
                         sessionDesc: qcSessionDesc,
                         pdf_url: record?.pdf_url || null,
-                        idFormula: qcIdFormula,
-                        lote: qcLote
+                        idFormula: qcIdFormula || qcIdFormulaRef.current,
+                        lote: qcLote || qcLoteRef.current
                       };
                       console.log("guardandovalores", newCtx);
                       setQcSessionName(name);
@@ -1069,6 +1071,8 @@ export default function QualityControl() {
             onConfirm={handleEscaneoConfirm}
             currentStandard={standard}
             currentSample={sample}
+            idFormula={qcIdFormula || qcIdFormulaRef.current}
+            lote={qcLote || qcLoteRef.current}
           />
         )}
       </AnimatePresence>
@@ -1301,8 +1305,8 @@ export default function QualityControl() {
             sessionName: name,
             sessionDesc: desc,
             pdf_url: record?.pdf_url || null,
-            idFormula: qcIdFormula,
-            lote: qcLote
+            idFormula: qcIdFormula || qcIdFormulaRef.current,
+            lote: qcLote || qcLoteRef.current
           };
           setQcSessionName(name);
           setQcSessionDesc(desc);

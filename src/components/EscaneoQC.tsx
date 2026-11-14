@@ -35,7 +35,7 @@ function labToHex(l: number, a: number, b: number): string {
   return `#${gamma(rl).toString(16).padStart(2, '0')}${gamma(gl).toString(16).padStart(2, '0')}${gamma(bl).toString(16).padStart(2, '0')}`;
 }
 
-export default function EscaneoQC({ mode, onClose, onConfirm, currentStandard, currentSample }: EscaneoQCProps) {
+export default function EscaneoQC({ mode, onClose, onConfirm, currentStandard, currentSample, idFormula, lote }: EscaneoQCProps & { idFormula?: string | null; lote?: string | null }) {
   const navigate = useNavigate();
   const {
     isConnected,
@@ -105,6 +105,8 @@ export default function EscaneoQC({ mode, onClose, onConfirm, currentStandard, c
           escaneoMode: mode,
           standardFromQC: currentStandard,
           sampleFromQC: currentSample,
+          idFormula: idFormula ?? undefined,
+          lote: lote ?? undefined
         }
       });
       return;
