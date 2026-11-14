@@ -1460,7 +1460,7 @@ app.post('/api/qualitycontrol', authenticateToken, async (req: Request, res: Res
                     LOTE: resolvedLote !== undefined ? resolvedLote : (existing as any).LOTE
                 } as any
             });
-            console.log(`[QUALITY-CONTROL] Registro actualizado ID: ${qcRecord.id}`);
+            console.log(`✅ [QUALITY-CONTROL] REGISTRO ACTUALIZADO EN BD -> ID: ${qcRecord.id}, Nombre: "${qcRecord.nombre}", IDFORMULA: "${(qcRecord as any).IDFORMULA}", LOTE: "${(qcRecord as any).LOTE}"`);
         } else {
             qcRecord = await prisma.qualityControl.create({
                 data: {
@@ -1490,7 +1490,7 @@ app.post('/api/qualitycontrol', authenticateToken, async (req: Request, res: Res
                     LOTE: resolvedLote || null
                 } as any
             });
-            console.log(`[QUALITY-CONTROL] Registro creado ID: ${qcRecord.id}`);
+            console.log(`✅ [QUALITY-CONTROL] REGISTRO CREADO EN BD -> ID: ${qcRecord.id}, Nombre: "${qcRecord.nombre}", IDFORMULA: "${(qcRecord as any).IDFORMULA}", LOTE: "${(qcRecord as any).LOTE}"`);
         }
 
         res.json({ message: 'Control de calidad guardado con éxito', record: qcRecord });

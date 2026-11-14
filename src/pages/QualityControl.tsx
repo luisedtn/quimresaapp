@@ -468,10 +468,19 @@ export default function QualityControl() {
       });
 
       if (!response.ok) {
+        const errBody = await response.text();
+        console.error('❌ [QC -> SERVER] ERROR respuesta no OK:', response.status, errBody);
         throw new Error('Error al guardar control de calidad en el servidor');
       }
 
       const resData = await response.json();
+      console.log('✅ [QC -> SERVER] RESPUESTA EXITOSA DEL SERVIDOR:', {
+        id: resData.record?.id,
+        nombre: resData.record?.nombre,
+        IDFORMULA: resData.record?.IDFORMULA,
+        LOTE: resData.record?.LOTE,
+        accion: resData.message
+      });
       return resData.record;
     } catch (err) {
       console.error('Error al guardar control de calidad:', err);
