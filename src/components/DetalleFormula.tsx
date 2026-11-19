@@ -36,6 +36,7 @@ interface DetalleFormulaProps {
     formula: any;
     isOpen: boolean;
     onClose: () => void;
+    initialTab?: 'mezcla' | 'lab' | 'procesos' | 'obs' | 'fichatecnica' | 'fichaseguridad';
 }
 
 // ── PdfTabContent — componente de nivel superior para identidad estable ───────
@@ -121,11 +122,18 @@ function PdfTabContent({
     );
 }
 
-export default function DetalleFormula({ formula, isOpen, onClose }: DetalleFormulaProps) {
+export default function DetalleFormula({ formula, isOpen, onClose, initialTab }: DetalleFormulaProps) {
     const navigate = useNavigate();
     const [lotesPersonales, setLotesPersonales] = useState<any[]>([]);
     const [selectedLoteIndex, setSelectedLoteIndex] = useState<number>(0);
-    const [activeTab, setActiveTab] = useState<'mezcla' | 'lab' | 'procesos' | 'obs' | 'fichatecnica' | 'fichaseguridad'>('mezcla');
+    const [activeTab, setActiveTab] = useState<'mezcla' | 'lab' | 'procesos' | 'obs' | 'fichatecnica' | 'fichaseguridad'>(initialTab || 'mezcla');
+
+    // Sincronizar activeTab cuando initialTab cambie o se abra el componente
+    useEffect(() => {
+        if (isOpen && initialTab) {
+            setActiveTab(initialTab);
+        }
+    }, [isOpen, initialTab]);
     const [densities, setDensities] = useState<Record<string, number>>({});
     const [calculating, setCalculating] = useState(false);
     const [componentColors, setComponentColors] = useState<Record<string, any>>({});
@@ -600,7 +608,10 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
             lote: loteNombre,
             formulaName: nombreFormula || undefined,
             returnTo: '/formulas',
-            sourceFrom: 'formulas'
+            sourceFrom: 'formulas',
+            returnToDetail: true,
+            formulaData: formula,
+            initialTab: 'lab'
         };
 
         onClose();
@@ -880,7 +891,10 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                                                                     lote: lote.LOTE || formula.LOTE ? String(lote.LOTE || formula.LOTE) : undefined,
                                                                                     formulaName: formula.NOMBREFORMULA || undefined,
                                                                                     returnTo: '/formulas',
-                                                                                    sourceFrom: 'formulas'
+                                                                                    sourceFrom: 'formulas',
+                                                                                    returnToDetail: true,
+                                                                                    formulaData: formula,
+                                                                                    initialTab: 'mezcla'
                                                                                 }
                                                                             });
                                                                         }}

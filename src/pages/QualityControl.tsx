@@ -368,9 +368,21 @@ export default function QualityControl() {
     formulaName?: string;
     returnTo?: string;
     sourceFrom?: string;
+    returnToDetail?: boolean;
+    formulaData?: any;
+    initialTab?: string;
   } | null;
 
   const [returnPath, setReturnPath] = useState<string | null>(navStateInitial?.returnTo || null);
+  const [returnState, setReturnState] = useState<any>(
+    navStateInitial?.returnToDetail
+      ? {
+          openDetail: true,
+          formula: navStateInitial.formulaData,
+          initialTab: navStateInitial.initialTab || 'lab'
+        }
+      : null
+  );
   const [sourceFrom, setSourceFrom] = useState<string | null>(navStateInitial?.sourceFrom || null);
   const initialSnapshotRef = useRef<string | null>(null);
   const initialSampleRef = useRef<any>(navStateInitial?.sampleFromQC || null);
@@ -587,6 +599,9 @@ export default function QualityControl() {
       idFormula?: string;
       lote?: string;
       formulaName?: string;
+      returnToDetail?: boolean;
+      formulaData?: any;
+      initialTab?: string;
     } | null;
 
     if (state && !initialStandardSet.current) {
@@ -605,6 +620,13 @@ export default function QualityControl() {
 
       if (state.returnTo) {
         setReturnPath(state.returnTo);
+      }
+      if (state.returnToDetail) {
+        setReturnState({
+          openDetail: true,
+          formula: state.formulaData,
+          initialTab: state.initialTab || 'lab'
+        });
       }
       if (state.sourceFrom) {
         setSourceFrom(state.sourceFrom);
@@ -719,7 +741,7 @@ export default function QualityControl() {
 
   const handleExitQC = () => {
     if (returnPath) {
-      navigate(returnPath);
+      navigate(returnPath, returnState ? { state: returnState } : undefined);
     } else {
       navigate(-1);
     }

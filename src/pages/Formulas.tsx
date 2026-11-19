@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Search, Beaker, Calendar, User, Tag, ChevronUp, ClipboardCheck } from 'lucide-react';
 import { motion } from 'motion/react';
 import { API_BASE_URL } from '../config';
@@ -47,6 +47,7 @@ interface FormulasProps {
 
 export default function Formulas({ email, onLogout }: FormulasProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formulas, setFormulas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -58,7 +59,22 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [selectedFormula, setSelectedFormula] = useState<any>(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [detailInitialTab, setDetailInitialTab] = useState<'mezcla' | 'lab' | 'procesos' | 'obs' | 'fichatecnica' | 'fichaseguridad'>('mezcla');
   const [reloadTrigger, setReloadTrigger] = useState(0);
+
+  // Manejar retorno desde Control de Calidad u otras vistas con detalle de fórmula abierto
+  useEffect(() => {
+    const state = location.state as { openDetail?: boolean; formula?: any; initialTab?: any } | null;
+    if (state?.openDetail && state?.formula) {
+      setSelectedFormula(state.formula);
+      if (state.initialTab) {
+        setDetailInitialTab(state.initialTab);
+      }
+      setShowDetail(true);
+      // Limpiar state del historial para que un reload o navegación limpia no lo reabra inesperadamente
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Debounce search term
   useEffect(() => {
@@ -202,6 +218,7 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
 
   const handleFormulaClick = (formula: any) => {
     setSelectedFormula(formula);
+    setDetailInitialTab('mezcla');
     setShowDetail(true);
   };
 
@@ -319,7 +336,7 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
     <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col overflow-x-hidden">
       {/* ── Header ── */}
       <header className="fixed top-0 z-10 flex w-full items-center justify-between border-b border-black/10 bg-[#CC5200] shadow-lg px-4 py-4">
-        <button onClick={() => navigate(-1)} className="p-2 text-black hover:text-white transition-colors">
+        <button onClick={() => navigate('/')} className="p-2 text-black hover:text-white transition-colors" title="Volver al Dashboard">
           <ArrowLeft className="h-6 w-6 text-white" />
         </button>
         <h1 className="text-lg font-semibold uppercase tracking-tight text-white">Fórmulas Personales</h1>
@@ -544,6 +561,7 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
         formula={selectedFormula}
         isOpen={showDetail}
         onClose={() => setShowDetail(false)}
+        initialTab={detailInitialTab}
       />
     </div>
   );
