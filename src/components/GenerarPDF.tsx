@@ -1,19 +1,33 @@
-import React, { useRef, useState } from 'react';
-import { X, Download, Printer, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import React, { useRef, useState, useImperativeHandle, forwardRef } from 'react';
+import { X, Download, Printer, CheckCircle, XCircle, AlertCircle, Share2 } from 'lucide-react';
 import html2canvas from 'html2canvas-pro';
 import { jsPDF } from 'jspdf';
 import { format, addYears } from 'date-fns';
 import { motion } from 'motion/react';
+import { Share as CapShare } from '@capacitor/share';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Capacitor } from '@capacitor/core';
+import { Printer as NativePrinter } from '@capgo/capacitor-printer';
 import { loadSettings } from './DeviceSettings';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
+export interface GenerarPDFHandle {
+    sharePDF: () => Promise<void>;
+    printPDF: () => Promise<void>;
+    savePDF: () => Promise<void>;
+}
+
 interface GenerarPDFProps {
     onClose: () => void;
     qcContextData: any;
+    hideHeaderActions?: boolean;
 }
 
-export default function GenerarPDF({ onClose, qcContextData }: GenerarPDFProps) {
+const GenerarPDF = forwardRef<GenerarPDFHandle, GenerarPDFProps>(function GenerarPDF(
+    { onClose, qcContextData, hideHeaderActions = false },
+    ref
+) {
     const printRef = useRef<HTMLDivElement>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [savedOk, setSavedOk] = useState<boolean | null>(null);
@@ -70,28 +84,176 @@ export default function GenerarPDF({ onClose, qcContextData }: GenerarPDFProps) 
 
     const StatusIcon = dE <= 1.0 ? CheckCircle : dE <= 3.0 ? AlertCircle : XCircle;
 
+    const buildPDFInstance = async (): Promise<jsPDF | null> => {
+        if (!printRef.current) return null;
+        const canvas = await html2canvas(printRef.current, {
+            scale: 1.5,
+            useCORS: true,
+            logging: false,
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.85);
+        const pageWidth = 210;
+        const imgHeightMm = (canvas.height * pageWidth) / canvas.width;
+
+        const pdf = new jsPDF({
+            orientation: 'p',
+            unit: 'mm',
+            format: [pageWidth, imgHeightMm],
+        });
+
+        pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, imgHeightMm);
+        return pdf;
+    };
+
+    const handleSharePDF = async () => {
+        setIsGenerating(true);
+        try {
+            const pdf = await buildPDFInstance();
+            if (!pdf) return;
+
+            const filename = `ControlCalidad_${qcContextData?.sessionName || formulaName || 'QC'}_${Date.now()}.pdf`.replace(/\s+/g, '_');
+
+            // If running on Capacitor Native (Android / iOS)
+            if (Capacitor.isNativePlatform()) {
+                const pdfDataUri = pdf.output('datauristring');
+                const pdfBase64 = pdfDataUri.split('base64,')[1];
+
+                // Write file to Cache directory to get a real file:// URI
+                const savedFile = await Filesystem.writeFile({
+                    path: filename,
+                    data: pdfBase64,
+                    directory: Directory.Cache
+                });
+
+                await CapShare.share({
+                    title: `Informe de Control de Calidad - ${qcContextData?.sessionName || formulaName}`,
+                    text: `Reporte de control de calidad: ${qcContextData?.sessionName || formulaName}`,
+                    url: savedFile.uri,
+                    dialogTitle: 'Compartir informe PDF'
+                });
+                return;
+            }
+
+            // Web browser: Try Web Share API with file
+            const pdfBlob = pdf.output('blob');
+            if (navigator.canShare && navigator.canShare({ files: [new File([pdfBlob], filename, { type: 'application/pdf' })] })) {
+                const file = new File([pdfBlob], filename, { type: 'application/pdf' });
+                await navigator.share({
+                    title: `Informe de Control de Calidad - ${qcContextData?.sessionName || formulaName}`,
+                    text: `Reporte de control de calidad: ${qcContextData?.sessionName || formulaName}`,
+                    files: [file]
+                });
+                return;
+            }
+
+            // Fallback download if navigator.share is not available on desktop browser
+            pdf.save(filename);
+        } catch (err: any) {
+            if (err?.name !== 'AbortError') {
+                console.error('Error al compartir PDF:', err);
+            }
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const handlePrintPDF = async () => {
+        setIsGenerating(true);
+        try {
+            const pdf = await buildPDFInstance();
+            if (!pdf) return;
+
+            const filename = `ControlCalidad_${qcContextData?.sessionName || formulaName || 'QC'}_${Date.now()}.pdf`.replace(/\s+/g, '_');
+
+            // En Android/iOS nativo: usar el plugin nativo de impresión de Capacitor
+            // Esto abre el servicio nativo de impresión de Android (PrintSpooler),
+            // el cual busca impresoras compatibles conectadas (Wi-Fi, Bluetooth, red)
+            // y automáticamente incluye siempre la opción "Guardar como PDF" tanto si hay impresoras como si no.
+            if (Capacitor.isNativePlatform()) {
+                const pdfDataUri = pdf.output('datauristring');
+                const pdfBase64 = pdfDataUri.split('base64,')[1];
+
+                try {
+                    await NativePrinter.printBase64({
+                        name: filename,
+                        data: pdfBase64,
+                        mimeType: 'application/pdf',
+                    });
+                    return;
+                } catch (nativePrintErr) {
+                    console.warn('Native printer failed, falling back to file-based print:', nativePrintErr);
+                    try {
+                        const savedFile = await Filesystem.writeFile({
+                            path: filename,
+                            data: pdfBase64,
+                            directory: Directory.Cache
+                        });
+                        await NativePrinter.printFile({
+                            name: filename,
+                            path: savedFile.uri,
+                            mimeType: 'application/pdf'
+                        });
+                        return;
+                    } catch (filePrintErr) {
+                        console.error('All native print methods failed, downloading PDF directly:', filePrintErr);
+                        // Fallback si no hay soporte de impresión: guardar archivo PDF en Downloads/Documentos
+                        pdf.save(filename);
+                        return;
+                    }
+                }
+            }
+
+            // En navegador Web:
+            const pdfBlob = pdf.output('blob');
+            const blobUrl = URL.createObjectURL(pdfBlob);
+
+            // Open iframe or new window to trigger system printer selection / Save as PDF dialog
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'fixed';
+            iframe.style.top = '-10000px';
+            iframe.style.left = '-10000px';
+            iframe.style.width = '1px';
+            iframe.style.height = '1px';
+            iframe.src = blobUrl;
+
+            document.body.appendChild(iframe);
+
+            iframe.onload = () => {
+                setTimeout(() => {
+                    try {
+                        iframe.contentWindow?.focus();
+                        iframe.contentWindow?.print();
+                    } catch (e) {
+                        console.warn('Iframe print failed, falling back to window.open:', e);
+                        const win = window.open(blobUrl, '_blank');
+                        win?.focus();
+                        win?.print();
+                    }
+                }, 300);
+            };
+
+            // Cleanup iframe after some time
+            setTimeout(() => {
+                try {
+                    document.body.removeChild(iframe);
+                    URL.revokeObjectURL(blobUrl);
+                } catch { }
+            }, 60000);
+        } catch (err) {
+            console.error('Error al imprimir PDF:', err);
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     const handleGeneratePDF = async () => {
         if (!printRef.current) return;
         setIsGenerating(true);
         setSavedOk(null);
         try {
-            const canvas = await html2canvas(printRef.current, {
-                scale: 1.5,
-                useCORS: true,
-                logging: false,
-            });
-
-            const imgData = canvas.toDataURL('image/jpeg', 0.85);
-            const pageWidth = 210;
-            const imgHeightMm = (canvas.height * pageWidth) / canvas.width;
-
-            const pdf = new jsPDF({
-                orientation: 'p',
-                unit: 'mm',
-                format: [pageWidth, imgHeightMm],
-            });
-
-            pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, imgHeightMm);
+            const pdf = await buildPDFInstance();
+            if (!pdf) return;
 
             const pdfDataUri = pdf.output('datauristring');
             const pdfBase64 = pdfDataUri.split('base64,')[1];
@@ -179,6 +341,12 @@ export default function GenerarPDF({ onClose, qcContextData }: GenerarPDFProps) 
         }
     };
 
+    useImperativeHandle(ref, () => ({
+        sharePDF: handleSharePDF,
+        printPDF: handlePrintPDF,
+        savePDF: handleGeneratePDF
+    }));
+
     return (
         <div className="fixed inset-0 z-[200] flex flex-col bg-slate-50 dark:bg-[#0A0F14] overflow-hidden">
 
@@ -213,16 +381,44 @@ export default function GenerarPDF({ onClose, qcContextData }: GenerarPDFProps) 
                         </span>
                     )}
 
-                    {/* Save button */}
-                    <motion.button
-                        whileTap={{ scale: 0.96 }}
-                        onClick={handleGeneratePDF}
-                        disabled={isGenerating}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-black/20 hover:bg-black/30 text-white text-xs font-bold uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
-                    >
-                        <Download className="w-4 h-4" />
-                        {isGenerating ? 'Guardando...' : 'Guardar PDF'}
-                    </motion.button>
+                    {!hideHeaderActions && (
+                        <>
+                            {/* Compartir button */}
+                            <motion.button
+                                whileTap={{ scale: 0.96 }}
+                                onClick={handleSharePDF}
+                                disabled={isGenerating}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-black/20 hover:bg-black/30 text-white text-xs font-bold uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
+                                title="Compartir PDF"
+                            >
+                                <Share2 className="w-4 h-4" />
+                                <span className="hidden sm:inline">Compartir</span>
+                            </motion.button>
+
+                            {/* Imprimir button */}
+                            <motion.button
+                                whileTap={{ scale: 0.96 }}
+                                onClick={handlePrintPDF}
+                                disabled={isGenerating}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-black/20 hover:bg-black/30 text-white text-xs font-bold uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
+                                title="Imprimir o guardar PDF"
+                            >
+                                <Printer className="w-4 h-4" />
+                                <span className="hidden sm:inline">Imprimir</span>
+                            </motion.button>
+
+                            {/* Save button */}
+                            <motion.button
+                                whileTap={{ scale: 0.96 }}
+                                onClick={handleGeneratePDF}
+                                disabled={isGenerating}
+                                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/20 hover:bg-black/30 text-white text-xs font-bold uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
+                            >
+                                <Download className="w-4 h-4" />
+                                <span className="hidden sm:inline">{isGenerating ? 'Guardando...' : 'Guardar'}</span>
+                            </motion.button>
+                        </>
+                    )}
 
                     {/* Close button — far right */}
                     <button
@@ -463,4 +659,6 @@ export default function GenerarPDF({ onClose, qcContextData }: GenerarPDFProps) 
             </div>
         </div>
     );
-}
+});
+
+export default GenerarPDF;

@@ -1631,6 +1631,8 @@ app.get('/api/qualitycontrol', async (req: Request, res: Response) => {
         const search = (req.query.search as string || '').trim();
         const desde  = req.query.desde  as string | undefined;
         const hasta  = req.query.hasta  as string | undefined;
+        const idformula = (req.query.idformula as string || req.query.IDFORMULA as string || '').trim();
+        const lote = (req.query.lote as string || req.query.LOTE as string || '').trim();
 
         const where: any = {};
         
@@ -1642,6 +1644,16 @@ app.get('/api/qualitycontrol', async (req: Request, res: Response) => {
             console.log('[GET /api/qualitycontrol] Usuario normal sin id_cliente, usando fallback:', where.id_cliente);
         } else {
             console.log('[GET /api/qualitycontrol] Usuario es ADMIN, omitiendo filtro de cliente (viendo todos)');
+        }
+
+        if (idformula) {
+            where.IDFORMULA = idformula;
+            console.log('[GET /api/qualitycontrol] Filtro IDFORMULA aplicado:', idformula);
+        }
+
+        if (lote) {
+            where.LOTE = lote;
+            console.log('[GET /api/qualitycontrol] Filtro LOTE aplicado:', lote);
         }
 
         if (search) {

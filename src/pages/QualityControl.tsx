@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, X, ZoomIn, ZoomOut, FileText, Plus, Scan, RotateCcw, Save, List, CheckCircle, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, X, ZoomIn, ZoomOut, FileText, Plus, Scan, RotateCcw, Save, List, CheckCircle, AlertTriangle, Share2, Printer, Layers } from 'lucide-react';
 import { useNixDevice } from '../hooks/useNixDevice';
 import { deltaE2000 } from '../services/NixBluetoothService';
-import GenerarPDF from '../components/GenerarPDF';
+import GenerarPDF, { GenerarPDFHandle } from '../components/GenerarPDF';
 import EscaneoQC from '../components/EscaneoQC';
 import { loadSettings } from '../components/DeviceSettings';
 import GuardarQCModal from '../components/GuardarQCModal';
+import HistorialQC, { QCRecord } from '../components/HistorialQC';
 
 function labToHex(l: number, a: number, b: number): string {
   const y = (l + 16) / 116;
@@ -277,7 +278,7 @@ const ColorDeltaChart = ({ standard, sample }: { standard: any, sample: any }) =
         >
           <span style={{ color: isLightColor(standard?.hex) ? '#000000' : '#ffffff' }} className="text-[10px] font-black uppercase tracking-widest">Patrón</span>
         </div>
-        {/* Right Color (Fórmula/Muestra) */}
+        {/* Right Color (Muestra) */}
         <div
           className="absolute right-0 top-0 bottom-0 w-1/2 rounded-l-2xl border-l border-slate-300 dark:border-black/20 flex items-center justify-end pr-4 shadow-[-2px_0_5px_rgba(0,0,0,0.1)]"
           style={{ backgroundColor: sample ? sample.hex : '#e2e8f0' }}
@@ -311,7 +312,7 @@ const ColorDeltaChart = ({ standard, sample }: { standard: any, sample: any }) =
                 <td className="py-2 px-1 border-b border-slate-300 dark:border-slate-700/50 font-medium">{standard ? standard.b.toFixed(2) : '--'}</td>
               </tr>
               <tr className="font-bold bg-white dark:bg-slate-900/60 text-slate-800 dark:text-slate-300">
-                <td className="py-2 px-2 text-left border-b-2 border-r border-slate-300 dark:border-slate-700/50 text-[12px]">Fórmula</td>
+                <td className="py-2 px-2 text-left border-b-2 border-r border-slate-300 dark:border-slate-700/50 text-[12px]">Muestra</td>
                 <td className="py-2 px-1 border-b-2 border-r border-slate-300 dark:border-slate-700/50 font-medium">{sample ? sample.l.toFixed(2) : '--'}</td>
                 <td className="py-2 px-1 border-b-2 border-r border-slate-300 dark:border-slate-700/50 font-medium">{sample ? sample.a.toFixed(2) : '--'}</td>
                 <td className="py-2 px-1 border-b-2 border-slate-300 dark:border-slate-700/50 font-medium">{sample ? sample.b.toFixed(2) : '--'}</td>
@@ -338,8 +339,10 @@ export default function QualityControl() {
   const [sample, setSample] = useState<any>(null);
   const [qcContextData, setQcContextData] = useState<any>(null);
   const [showPDF, setShowPDF] = useState(false);
+  const pdfRef = useRef<GenerarPDFHandle>(null);
   const [showNewQCModal, setShowNewQCModal] = useState(false);
   const [isGuardarModalOpen, setIsGuardarModalOpen] = useState(false);
+  const [showHistorialModal, setShowHistorialModal] = useState(false);
   const [qcSessionName, setQcSessionName] = useState('');
   const [qcSessionDesc, setQcSessionDesc] = useState('');
   const [isSessionActive, setIsSessionActive] = useState(false);
@@ -364,10 +367,14 @@ export default function QualityControl() {
     lote?: string;
     formulaName?: string;
     returnTo?: string;
+    sourceFrom?: string;
   } | null;
 
   const [returnPath, setReturnPath] = useState<string | null>(navStateInitial?.returnTo || null);
+  const [sourceFrom, setSourceFrom] = useState<string | null>(navStateInitial?.sourceFrom || null);
   const initialSnapshotRef = useRef<string | null>(null);
+  const initialSampleRef = useRef<any>(navStateInitial?.sampleFromQC || null);
+  const [hasSampleChanged, setHasSampleChanged] = useState<boolean>(false);
   const [qcIdFormula, setQcIdFormula] = useState<string | null>(navStateInitial?.idFormula || null);
   const [qcLote, setQcLote] = useState<string | null>(navStateInitial?.lote || null);
   const qcIdFormulaRef = useRef<string | null>(navStateInitial?.idFormula || null);
@@ -576,6 +583,7 @@ export default function QualityControl() {
       sampleFromQC?: { l: number; a: number; b: number; hex: string; name?: string };
       escaneoMode?: 'standard' | 'sample';
       returnTo?: string;
+      sourceFrom?: string;
       idFormula?: string;
       lote?: string;
       formulaName?: string;
@@ -590,12 +598,16 @@ export default function QualityControl() {
         lote: state.lote,
         formulaName: state.formulaName,
         returnTo: state.returnTo,
+        sourceFrom: state.sourceFrom,
         standardFromFormula: state.standardFromFormula,
         sampleFromQC: state.sampleFromQC
       });
 
       if (state.returnTo) {
         setReturnPath(state.returnTo);
+      }
+      if (state.sourceFrom) {
+        setSourceFrom(state.sourceFrom);
       }
 
       if (state.idFormula) {
@@ -647,6 +659,8 @@ export default function QualityControl() {
           l: stdSnap?.l ?? null, a: stdSnap?.a ?? null, b: stdSnap?.b ?? null,
           sl: smpSnap?.l ?? null, sa: smpSnap?.a ?? null, sb: smpSnap?.b ?? null,
         });
+        initialSampleRef.current = smpSnap;
+        setHasSampleChanged(false);
       }
 
       // If returning from Colorimetro after connecting a device,
@@ -698,6 +712,7 @@ export default function QualityControl() {
       setStandard(result);
     } else {
       setSample(result);
+      setHasSampleChanged(true);
     }
     setShowEscaneoQC(false);
   };
@@ -776,113 +791,210 @@ export default function QualityControl() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          {/* Botón Crear PDF — solo visible cuando hay datos de patrón y muestra calculados */}
-          {standard && sample ? (
-            <button
-              onClick={() => setShowPDF(true)}
-              className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-black/15 hover:bg-black/25 active:scale-95 transition-all duration-150 group"
-              title="Crear informe PDF"
-            >
-              {/* Icono PDF personalizado */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                className="w-6 h-6"
+          {showPDF ? (
+            <>
+              {/* Botón Compartir PDF */}
+              <button
+                onClick={() => pdfRef.current?.sharePDF()}
+                className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-black/15 hover:bg-black/25 active:scale-95 transition-all duration-150 text-white"
+                title="Compartir informe PDF"
               >
-                {/* Hoja de papel */}
-                <path
-                  d="M6 2h9l4 4v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"
-                  fill="rgba(255,255,255,0.15)"
-                  stroke="white"
-                  strokeWidth="1.5"
-                  strokeLinejoin="round"
-                />
-                {/* Doblez esquina */}
-                <path
-                  d="M15 2v4h4"
-                  stroke="white"
-                  strokeWidth="1.5"
-                  strokeLinejoin="round"
-                  fill="none"
-                />
-                {/* Texto PDF */}
-                <text
-                  x="5"
-                  y="17"
-                  fontSize="6"
-                  fontWeight="900"
-                  fontFamily="Arial, sans-serif"
-                  fill="white"
-                  letterSpacing="0.3"
-                >
-                  PDF
-                </text>
-              </svg>
-            </button>
-          ) : null}
+                <Share2 className="h-5 w-5 text-white" />
+              </button>
 
-          {/* Si se ha escrito nombre/descripción Y se tienen datos de patrón y muestra, mostrar botón Guardar, si no, botón + */}
-          {(qcSessionName || qcSessionDesc) && standard && sample ? (
-            <button
-              onClick={() => setIsGuardarModalOpen(true)}
-              className="p-2 text-black hover:text-white transition-colors bg-black/10 hover:bg-black/20 rounded-lg shadow-sm"
-              title="Guardar sesión"
-            >
-              <Save className="h-5 w-5" />
-            </button>
+              {/* Botón Imprimir PDF */}
+              <button
+                onClick={() => pdfRef.current?.printPDF()}
+                className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-black/15 hover:bg-black/25 active:scale-95 transition-all duration-150 text-white"
+                title="Imprimir informe PDF"
+              >
+                <Printer className="h-5 w-5 text-white" />
+              </button>
+            </>
           ) : (
-            <button
-              onClick={() => {
-                if (standard && sample) {
-                  setConfirmDialog({
-                    title: "¿Guardar control actual?",
-                    message: "¿Deseas guardar los datos del control de calidad actual antes de iniciar uno nuevo?",
-                    onYes: async () => {
-                      const name = qcSessionName || prompt("Introduce el Nombre/Lote para guardar:") || "Sesión Sin Nombre";
-                      const currentIdFormula = qcIdFormula || qcIdFormulaRef.current || qcContextData?.idFormula || null;
-                      const currentLote = qcLote || qcLoteRef.current || qcContextData?.lote || null;
-                      await saveQCRecordToServer(name, qcSessionDesc, standard, sample, undefined, undefined, undefined, currentIdFormula, currentLote);
-                      setConfirmDialog(null);
-                      setQcSessionName('');
-                      setQcSessionDesc('');
-                      setStandard(null);
-                      setSample(null);
-                      setIsSessionActive(false);
-                      initialStandardSet.current = false;
-                      localStorage.removeItem('qc_context');
-                      setQcContextData(null);
-                      setShowNewQCModal(true);
-                    },
-                    onNo: () => {
-                      setConfirmDialog(null);
-                      setQcSessionName('');
-                      setQcSessionDesc('');
-                      setStandard(null);
-                      setSample(null);
-                      setIsSessionActive(false);
-                      initialStandardSet.current = false;
-                      localStorage.removeItem('qc_context');
-                      setQcContextData(null);
-                      setShowNewQCModal(true);
-                    }
-                  });
+            <>
+              {/* Botón Historial de Calidad: solo visible cuando proviene de una fórmula o búsqueda de color */}
+              {(() => {
+                const isFromFormulaOrMatch = !!(
+                  sourceFrom === 'color-match' ||
+                  sourceFrom === 'formulas' ||
+                  sourceFrom === 'standard-formulas' ||
+                  returnPath === '/color-match' ||
+                  returnPath === '/formulas' ||
+                  returnPath === '/standard-formulas' ||
+                  qcIdFormula ||
+                  qcLote
+                );
+                if (!isFromFormulaOrMatch) return null;
+
+                return (
+                  <button
+                    onClick={() => setShowHistorialModal(true)}
+                    className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-black/15 hover:bg-black/25 active:scale-95 transition-all duration-150 text-white"
+                    title="Historial de controles de calidad"
+                  >
+                    <Layers className="h-5 w-5 text-white" />
+                  </button>
+                );
+              })()}
+
+              {/* Botón Crear PDF — solo visible cuando hay datos de patrón y muestra calculados */}
+              {standard && sample ? (
+                <button
+                  onClick={() => setShowPDF(true)}
+                  className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-black/15 hover:bg-black/25 active:scale-95 transition-all duration-150 group"
+                  title="Crear informe PDF"
+                >
+                  {/* Icono PDF personalizado */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className="w-6 h-6"
+                  >
+                    {/* Hoja de papel */}
+                    <path
+                      d="M6 2h9l4 4v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"
+                      fill="rgba(255,255,255,0.15)"
+                      stroke="white"
+                      strokeWidth="1.5"
+                      strokeLinejoin="round"
+                    />
+                    {/* Doblez esquina */}
+                    <path
+                      d="M15 2v4h4"
+                      stroke="white"
+                      strokeWidth="1.5"
+                      strokeLinejoin="round"
+                      fill="none"
+                    />
+                    {/* Texto PDF */}
+                    <text
+                      x="5"
+                      y="17"
+                      fontSize="6"
+                      fontWeight="900"
+                      fontFamily="Arial, sans-serif"
+                      fill="white"
+                      letterSpacing="0.3"
+                    >
+                      PDF
+                    </text>
+                  </svg>
+                </button>
+              ) : null}
+
+              {/* Botón Guardar sesión:
+                  - En flujo normal: si hay nombre/descripción y datos de patrón y muestra
+                  - En flujo desde Búsqueda de Color o Fórmulas: solo si se ha modificado algún valor y se han tomado los valores de Muestra
+              */}
+              {(() => {
+                const isFromExternal = !!(
+                  sourceFrom === 'color-match' ||
+                  sourceFrom === 'formulas' ||
+                  sourceFrom === 'standard-formulas' ||
+                  returnPath === '/color-match' ||
+                  returnPath === '/formulas' ||
+                  returnPath === '/standard-formulas'
+                );
+
+                let showSaveButton = false;
+                if (isFromExternal) {
+                  // Debe haber patrón y muestra
+                  if (standard && sample) {
+                    const currentSnap = JSON.stringify({
+                      l: standard.l, a: standard.a, b: standard.b,
+                      sl: sample.l, sa: sample.a, sb: sample.b,
+                    });
+                    const hasDataChanged = initialSnapshotRef.current !== null
+                      ? currentSnap !== initialSnapshotRef.current
+                      : true;
+
+                    // Debe haberse modificado algún valor Y tener valores de muestra tomados
+                    const sampleTaken = hasSampleChanged || (initialSampleRef.current === null && sample !== null);
+                    showSaveButton = hasDataChanged && sampleTaken;
+                  }
                 } else {
-                  setQcSessionName('');
-                  setQcSessionDesc('');
-                  setShowNewQCModal(true);
+                  showSaveButton = !!((qcSessionName || qcSessionDesc) && standard && sample);
                 }
-              }}
-              className="p-2 text-black hover:text-white transition-colors bg-black/10 hover:bg-black/20 rounded-lg shadow-sm"
-              title="Nueva sesión (+)"
-            >
-              <Plus className="h-5 w-5" />
-            </button>
+
+                if (showSaveButton) {
+                  return (
+                    <button
+                      onClick={() => setIsGuardarModalOpen(true)}
+                      className="p-2 text-black hover:text-white transition-colors bg-black/10 hover:bg-black/20 rounded-lg shadow-sm"
+                      title="Guardar sesión"
+                    >
+                      <Save className="h-5 w-5" />
+                    </button>
+                  );
+                }
+
+                // Si viene de búsqueda de color o fórmulas, no mostrar el botón "+" si no hay guardar
+                if (isFromExternal) return null;
+
+                return (
+                  <button
+                    onClick={() => {
+                      if (standard && sample) {
+                        setConfirmDialog({
+                          title: "¿Guardar control actual?",
+                          message: "¿Deseas guardar los datos del control de calidad actual antes de iniciar uno nuevo?",
+                          onYes: async () => {
+                            const name = qcSessionName || prompt("Introduce el Nombre/Lote para guardar:") || "Sesión Sin Nombre";
+                            const currentIdFormula = qcIdFormula || qcIdFormulaRef.current || qcContextData?.idFormula || null;
+                            const currentLote = qcLote || qcLoteRef.current || qcContextData?.lote || null;
+                            await saveQCRecordToServer(name, qcSessionDesc, standard, sample, undefined, undefined, undefined, currentIdFormula, currentLote);
+                            setConfirmDialog(null);
+                            setQcSessionName('');
+                            setQcSessionDesc('');
+                            setStandard(null);
+                            setSample(null);
+                            setIsSessionActive(false);
+                            initialStandardSet.current = false;
+                            localStorage.removeItem('qc_context');
+                            setQcContextData(null);
+                            setShowNewQCModal(true);
+                          },
+                          onNo: () => {
+                            setConfirmDialog(null);
+                            setQcSessionName('');
+                            setQcSessionDesc('');
+                            setStandard(null);
+                            setSample(null);
+                            setIsSessionActive(false);
+                            initialStandardSet.current = false;
+                            localStorage.removeItem('qc_context');
+                            setQcContextData(null);
+                            setShowNewQCModal(true);
+                          }
+                        });
+                      } else {
+                        setQcSessionName('');
+                        setQcSessionDesc('');
+                        setShowNewQCModal(true);
+                      }
+                    }}
+                    className="p-2 text-black hover:text-white transition-colors bg-black/10 hover:bg-black/20 rounded-lg shadow-sm"
+                    title="Nueva sesión (+)"
+                  >
+                    <Plus className="h-5 w-5" />
+                  </button>
+                );
+              })()}
+            </>
           )}
 
 
-          {/* Botón Limpiar/Reset: Limpia patrón, muestra, nombre, descripción y reinicia todo. Solo visible si hay datos de patrón o muestra */}
-          {(standard || sample) && (
+          {/* Botón Limpiar/Reset: Limpia patrón, muestra, nombre, descripción y reinicia todo. Solo visible si hay datos de patrón o muestra y NO proviene de Búsqueda de Color, Fórmulas personales o Fórmulas Standard */}
+          {(standard || sample) && !(
+            sourceFrom === 'color-match' ||
+            sourceFrom === 'formulas' ||
+            sourceFrom === 'standard-formulas' ||
+            returnPath === '/color-match' ||
+            returnPath === '/formulas' ||
+            returnPath === '/standard-formulas'
+          ) && (
             <button
               onClick={() => {
                 setConfirmDialog({
@@ -1080,7 +1192,12 @@ export default function QualityControl() {
 
       <AnimatePresence>
         {showPDF && (
-          <GenerarPDF onClose={() => setShowPDF(false)} qcContextData={qcContextData} />
+          <GenerarPDF
+            ref={pdfRef}
+            onClose={() => setShowPDF(false)}
+            qcContextData={qcContextData}
+            hideHeaderActions={true}
+          />
         )}
       </AnimatePresence>
 
@@ -1339,11 +1456,43 @@ export default function QualityControl() {
           setQcContextData(newCtx);
           localStorage.setItem('qc_context', JSON.stringify(newCtx));
           setIsSessionActive(true);
+          setHasSampleChanged(false);
           if (record) {
             showSnack('Control de calidad guardado con éxito en el servidor.');
           } else {
             showSnack('Guardado localmente. Error al sincronizar con el servidor.', 'error');
           }
+        }}
+      />
+
+      <HistorialQC
+        isOpen={showHistorialModal}
+        onClose={() => setShowHistorialModal(false)}
+        idFormula={qcIdFormula || qcIdFormulaRef.current || qcContextData?.idFormula || null}
+        lote={qcLote || qcLoteRef.current || qcContextData?.lote || null}
+        formulaName={qcContextData?.formulaName || qcSessionName || undefined}
+        onSelectRecord={(rec: QCRecord) => {
+          if (rec.patron_l != null && rec.patron_a != null && rec.patron_b != null) {
+            setStandard({
+              l: rec.patron_l,
+              a: rec.patron_a,
+              b: rec.patron_b,
+              hex: rec.patron_hex || labToHex(rec.patron_l, rec.patron_a, rec.patron_b),
+              name: rec.patron_nombre || 'Patrón'
+            });
+          }
+          if (rec.muestra_l != null && rec.muestra_a != null && rec.muestra_b != null) {
+            setSample({
+              l: rec.muestra_l,
+              a: rec.muestra_a,
+              b: rec.muestra_b,
+              hex: rec.muestra_hex || labToHex(rec.muestra_l, rec.muestra_a, rec.muestra_b),
+              name: rec.muestra_nombre || 'Muestra'
+            });
+          }
+          if (rec.nombre) setQcSessionName(rec.nombre);
+          if (rec.descripcion) setQcSessionDesc(rec.descripcion);
+          showSnack(`Control "${rec.nombre || 'Historial'}" cargado.`);
         }}
       />
     </div>

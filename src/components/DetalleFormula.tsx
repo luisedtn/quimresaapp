@@ -524,6 +524,91 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
             ? parseFloat(formula.DELTA)
             : Math.sqrt(diffL * diffL + diffA * diffA + diffB * diffB));
 
+    const handleQualityControlCurrentLote = () => {
+        // Patrón: valores de referencia del lote o de la fórmula (currentLO, currentAO, currentBO)
+        let stdL = currentLO != null && currentLO !== '' ? parseFloat(String(currentLO)) : NaN;
+        let stdA = currentAO != null && currentAO !== '' ? parseFloat(String(currentAO)) : NaN;
+        let stdB = currentBO != null && currentBO !== '' ? parseFloat(String(currentBO)) : NaN;
+
+        // Muestra (Fórmula medida): valores de la medición (currentL, currentA, currentB)
+        let smpL = currentL != null && currentL !== '' ? parseFloat(String(currentL)) : NaN;
+        let smpA = currentA != null && currentA !== '' ? parseFloat(String(currentA)) : NaN;
+        let smpB = currentB != null && currentB !== '' ? parseFloat(String(currentB)) : NaN;
+
+        // Deltas de la fórmula o calculados
+        const hasDeltaL = activeLote?.DELTAL != null && activeLote?.DELTAL !== ''
+            ? true
+            : (formula.DELTAL != null && formula.DELTAL !== '');
+        const hasDeltaA = activeLote?.DELTAA != null && activeLote?.DELTAA !== ''
+            ? true
+            : (formula.DELTAA != null && formula.DELTAA !== '');
+        const hasDeltaB = activeLote?.DELTAB != null && activeLote?.DELTAB !== ''
+            ? true
+            : (formula.DELTAB != null && formula.DELTAB !== '');
+
+        const dL = hasDeltaL
+            ? parseFloat(activeLote?.DELTAL ?? formula.DELTAL)
+            : (!isNaN(smpL) && !isNaN(stdL) ? smpL - stdL : 0);
+        const dA = hasDeltaA
+            ? parseFloat(activeLote?.DELTAA ?? formula.DELTAA)
+            : (!isNaN(smpA) && !isNaN(stdA) ? smpA - stdA : 0);
+        const dB = hasDeltaB
+            ? parseFloat(activeLote?.DELTAB ?? formula.DELTAB)
+            : (!isNaN(smpB) && !isNaN(stdB) ? smpB - stdB : 0);
+
+        if (isNaN(stdL)) {
+            if (!isNaN(smpL) && hasDeltaL) stdL = smpL - dL;
+            else if (!isNaN(smpL)) stdL = smpL;
+            else stdL = 0;
+        }
+        if (isNaN(stdA)) {
+            if (!isNaN(smpA) && hasDeltaA) stdA = smpA - dA;
+            else if (!isNaN(smpA)) stdA = smpA;
+            else stdA = 0;
+        }
+        if (isNaN(stdB)) {
+            if (!isNaN(smpB) && hasDeltaB) stdB = smpB - dB;
+            else if (!isNaN(smpB)) stdB = smpB;
+            else stdB = 0;
+        }
+
+        if (isNaN(smpL)) smpL = stdL + dL;
+        if (isNaN(smpA)) smpA = stdA + dA;
+        if (isNaN(smpB)) smpB = stdB + dB;
+
+        const loteVal = activeLote?.LOTE || formula.LOTE;
+        const loteNombre = loteVal ? String(loteVal) : undefined;
+        const nombreFormula = formula.NOMBREFORMULA || formula.NOMBRE;
+
+        const payloadNav = {
+            standardFromFormula: {
+                l: stdL,
+                a: stdA,
+                b: stdB,
+                name: loteNombre ? `${nombreFormula || 'Muestra'} - Lote ${loteNombre}` : (nombreFormula || 'Patrón de Muestra')
+            },
+            sampleFromQC: {
+                l: smpL,
+                a: smpA,
+                b: smpB,
+                hex: labToHex(smpL, smpA, smpB),
+                name: loteNombre
+                    ? `${nombreFormula || 'Muestra'} - Lote ${loteNombre}`
+                    : (nombreFormula ? `${nombreFormula} (Muestra)` : 'Muestra')
+            },
+            idFormula: activeLote?.IDFORMULA || formula.IDFORMULA || formula.ID ? String(activeLote?.IDFORMULA || formula.IDFORMULA || formula.ID) : undefined,
+            lote: loteNombre,
+            formulaName: nombreFormula || undefined,
+            returnTo: '/formulas',
+            sourceFrom: 'formulas'
+        };
+
+        onClose();
+        navigate('/quality-control', {
+            state: payloadNav
+        });
+    };
+
     const processes = [
         { id: 1, text: formula.PROCESOS },
         { id: 2, text: formula.PROCESOS2 },
@@ -535,7 +620,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
 
     // Tab config
     const tabs = [
-        { id: 'mezcla', label: 'Fórmula', icon: Droplets },
+        { id: 'mezcla', label: 'Muestra', icon: Droplets },
         { id: 'lab', label: 'Colorimetría', icon: Activity },
         { id: 'procesos', label: 'Procesos', icon: ClipboardList },
         ...(isSuper ? [{ id: 'obs', label: 'Notas', icon: MessageSquare }] : []),
@@ -794,7 +879,8 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                                                                     idFormula: lote.IDFORMULA || formula.IDFORMULA || formula.ID ? String(lote.IDFORMULA || formula.IDFORMULA || formula.ID) : undefined,
                                                                                     lote: lote.LOTE || formula.LOTE ? String(lote.LOTE || formula.LOTE) : undefined,
                                                                                     formulaName: formula.NOMBREFORMULA || undefined,
-                                                                                    returnTo: '/formulas'
+                                                                                    returnTo: '/formulas',
+                                                                                    sourceFrom: 'formulas'
                                                                                 }
                                                                             });
                                                                         }}
@@ -1028,17 +1114,24 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                             >
                                                 <Layers className="h-4 w-4" />
                                             </div>
-                                            <div>
+                                            <div className="relative w-full">
                                                 <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
                                                     Lote Analizado
                                                 </p>
                                                 <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
                                                     {activeLote ? `Lote: ${activeLote.LOTE}` : (formula.LOTE ? `Lote: ${formula.LOTE}` : 'Datos Base de Fórmula')}
                                                 </p>
+                                                <button
+                                                    onClick={handleQualityControlCurrentLote}
+                                                    className="bg-[#CC5200] absolute top-0 right-0 hover:bg-[#b84a00] text-white px-3 py-2 rounded-xl font-bold text-xs tracking-wider transition-colors shadow-sm flex items-center justify-center gap-1.5 flex-shrink-0"
+                                                    title="Abrir Control de Calidad para este lote"
+                                                >
+                                                    QC
+                                                </button>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                                             {effectiveLotes.length > 0 ? (
                                                 <div className="flex items-center gap-2 w-full sm:w-auto">
                                                     <select
@@ -1063,6 +1156,8 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                                     Sin historial de lotes registrado
                                                 </span>
                                             )}
+
+
                                         </div>
                                     </div>
 
@@ -1098,7 +1193,7 @@ export default function DetalleFormula({ formula, isOpen, onClose }: DetalleForm
                                                 className="grid grid-cols-3"
                                                 style={{ backgroundColor: 'var(--bg-table-header)', borderBottom: '1px solid var(--border-ingredient-card)' }}
                                             >
-                                                {['Canal', 'Patrón', 'Fórmula'].map((h, i) => (
+                                                {['Canal', 'Patrón', 'Muestra'].map((h, i) => (
                                                     <div
                                                         key={h}
                                                         className="p-3 text-center"

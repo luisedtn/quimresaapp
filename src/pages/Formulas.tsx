@@ -274,7 +274,8 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
       idFormula: formula.IDFORMULA || formula.ID ? String(formula.IDFORMULA || formula.ID) : undefined,
       lote: formula.LOTE ? String(formula.LOTE) : undefined,
       formulaName: formula.NOMBREFORMULA || undefined,
-      returnTo: '/formulas'
+      returnTo: '/formulas',
+      sourceFrom: 'formulas'
     };
 
     console.log('[FORMULAS -> QC] Enviando datos a Control de Calidad:', {

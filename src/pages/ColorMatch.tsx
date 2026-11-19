@@ -772,6 +772,10 @@ export default function ColorMatch() {
             state: {
                 standardFromFormula: qcContext.standard,
                 sampleFromQC: qcContext.sample,
+                sourceFrom: 'color-match',
+                returnTo: '/color-match',
+                idFormula: f.id || f.ID || f.IDFORMULA ? String(f.id || f.ID || f.IDFORMULA) : undefined,
+                lote: currentLote || undefined,
             },
         });
     };
@@ -839,6 +843,10 @@ export default function ColorMatch() {
                     hex: selectedMatch.hex,
                     name: f.NOMBREFORMULA || f.NOMBRE || 'Fórmula Encontrada',
                 },
+                sourceFrom: 'color-match',
+                returnTo: '/color-match',
+                idFormula: f.id || f.ID || f.IDFORMULA ? String(f.id || f.ID || f.IDFORMULA) : undefined,
+                lote: currentLote || undefined,
             },
         });
     };

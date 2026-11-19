@@ -179,7 +179,8 @@ export default function StandardFormulas({ onLogout }: { onLogout: () => void })
                 idFormula: formula.id ? String(formula.id) : undefined,
                 lote: formula.LOTE ? String(formula.LOTE) : undefined,
                 formulaName: formula.NOMBRE || undefined,
-                returnTo: '/standard-formulas'
+                returnTo: '/standard-formulas',
+                sourceFrom: 'standard-formulas'
             }
         });
     };
