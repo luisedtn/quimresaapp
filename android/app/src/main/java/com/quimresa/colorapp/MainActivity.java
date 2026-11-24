@@ -16,6 +16,9 @@ public class MainActivity extends BridgeActivity {
         WebView webView = getBridge() != null ? getBridge().getWebView() : null;
         if (webView != null) {
             webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
+            // Fija la escala de texto al 100% para evitar que las configuraciones de accesibilidad/fuentes grandes
+            // del sistema Android rompan el diseño UX/UI en dispositivos de baja resolución o fuentes agrandadas.
+            webView.getSettings().setTextZoom(100);
         }
         android.util.Log.d("QuimresaApp", "NixSensorPlugin y ScreenBrightnessPlugin registrados con éxito");
     }

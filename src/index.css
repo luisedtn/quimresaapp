@@ -13,6 +13,31 @@
 /* ----------------------------------------------------
    SISTEMA DE DISEÑO DE TEMAS (VARIABLES CSS)
    ---------------------------------------------------- */
+html {
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Escala armónica y proporcional según el ancho de pantalla del móvil */
+@media (max-width: 360px) {
+  html {
+    font-size: 13.5px;
+  }
+}
+
+@media (min-width: 361px) and (max-width: 400px) {
+  html {
+    font-size: 14.5px;
+  }
+}
+
+@media (min-width: 401px) {
+  html {
+    font-size: 16px;
+  }
+}
+
 :root {
   /* Tema Oscuro Mejorado (Predeterminado) */
   --bg-app: #05080c;
