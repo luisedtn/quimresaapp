@@ -619,22 +619,23 @@ app.get('/api/formulas', authenticateToken, async (req: Request, res: Response):
         const skip = (page - 1) * limit;
 
         const where: any = {
-            NOMBREFORMULA: { not: '' },
-            FECHA: { not: '' },
-            CODIGO: { not: '' }
+            AND: [
+                { NOMBREFORMULA: { not: null } },
+                { NOMBREFORMULA: { not: '' } }
+            ]
         };
         if (idcliente) {
             where.IDCLIENTE = idcliente;
         }
         if (search) {
-            where.AND = [
-                {
-                    OR: [
-                        { NOMBREFORMULA: { contains: search, mode: 'insensitive' } },
-                        { CODIGO: { contains: search, mode: 'insensitive' } }
-                    ]
-                }
-            ];
+            where.AND.push({
+                OR: [
+                    { NOMBREFORMULA: { contains: search, mode: 'insensitive' } },
+                    { CODIGO: { contains: search, mode: 'insensitive' } },
+                    { LOTE: { contains: search, mode: 'insensitive' } },
+                    { NOMBRECLI: { contains: search, mode: 'insensitive' } }
+                ]
+            });
         }
 
         let formulas: any[];
@@ -650,9 +651,7 @@ app.get('/api/formulas', authenticateToken, async (req: Request, res: Response):
             const params: any[] = [];
             let idx = 1;
 
-            conds.push(`"NOMBREFORMULA" != ''`);
-            conds.push(`"FECHA" != ''`);
-            conds.push(`"CODIGO" != ''`);
+            conds.push(`"NOMBREFORMULA" IS NOT NULL AND "NOMBREFORMULA" != ''`);
 
             if (idcliente) {
                 conds.push(`"IDCLIENTE" = $${idx++}`);
@@ -660,7 +659,7 @@ app.get('/api/formulas', authenticateToken, async (req: Request, res: Response):
             }
 
             if (search) {
-                conds.push(`("NOMBREFORMULA" ILIKE $${idx} OR "CODIGO" ILIKE $${idx})`);
+                conds.push(`("NOMBREFORMULA" ILIKE $${idx} OR "CODIGO" ILIKE $${idx} OR "LOTE" ILIKE $${idx} OR "NOMBRECLI" ILIKE $${idx})`);
                 params.push(`%${search}%`);
                 idx++;
             }
