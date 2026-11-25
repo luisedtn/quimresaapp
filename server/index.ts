@@ -621,18 +621,7 @@ app.get('/api/formulas', authenticateToken, async (req: Request, res: Response):
         const where: any = {
             NOMBREFORMULA: { not: '' },
             FECHA: { not: '' },
-            CODIGO: { not: '' },
-            NOT: [
-                { LO: null },
-                { LO: '' },
-                {
-                    AND: [
-                        { LO: { in: ['0', '0.0', '0.00', '0.000'] } },
-                        { AO: { in: ['0', '0.0', '0.00', '0.000'] } },
-                        { BO: { in: ['0', '0.0', '0.00', '0.000'] } }
-                    ]
-                }
-            ]
+            CODIGO: { not: '' }
         };
         if (idcliente) {
             where.IDCLIENTE = idcliente;
@@ -664,7 +653,6 @@ app.get('/api/formulas', authenticateToken, async (req: Request, res: Response):
             conds.push(`"NOMBREFORMULA" != ''`);
             conds.push(`"FECHA" != ''`);
             conds.push(`"CODIGO" != ''`);
-            conds.push(`"LO" IS NOT NULL AND "LO" != '' AND NOT (CAST(NULLIF("LO", '') AS DOUBLE PRECISION) = 0 AND CAST(NULLIF("AO", '') AS DOUBLE PRECISION) = 0 AND CAST(NULLIF("BO", '') AS DOUBLE PRECISION) = 0)`);
 
             if (idcliente) {
                 conds.push(`"IDCLIENTE" = $${idx++}`);

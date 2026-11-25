@@ -3,22 +3,11 @@ import { API_BASE_URL } from '../config';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Scan,
-  Layers,
-  History,
-  Library,
-  Heart,
-  Search,
-  MessageCircle,
-  Cloud,
-  Settings,
-  PaintBucket,
-  LogOut,
-  ChevronRight,
   Menu,
   Power,
   Users,
-  MapPin
+  Pipette,
+  ChevronRight
 } from 'lucide-react';
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
@@ -27,6 +16,8 @@ import { useNixDevice } from '../hooks/useNixDevice';
 import HistorialControl from '../components/HistorialControl';
 import CustomerSearch from '../components/CustomerSearch';
 import LocalizacionClientes from '../components/LocalizacionClientes';
+import Colorimetria from '../components/Colorimetria';
+import ConsumoProyectos from '../components/ConsumoProyectos';
 
 import IconoAjustes from '../assets/iconSpectro.svg';
 
@@ -35,6 +26,8 @@ interface DashboardProps {
   onLogout: () => void;
   onUserDataChange: (data: any) => void;
 }
+
+type ActiveView = 'main' | 'colorimetria' | 'consumoproyectos';
 
 export default function Dashboard({ userData, onLogout, onUserDataChange }: DashboardProps) {
   const navigate = useNavigate();
@@ -45,6 +38,9 @@ export default function Dashboard({ userData, onLogout, onUserDataChange }: Dash
   const [showCustomerSearch, setShowCustomerSearch] = useState(false);
   const [showLocalizacion, setShowLocalizacion] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  // Control de vista: 'main' muestra los dos contenedores, 'colorimetria' o 'consumoproyectos'
+  const [activeView, setActiveView] = useState<ActiveView>('main');
 
   useEffect(() => {
     console.log("[DEBUG] Dashboard userData:", userData);
@@ -85,8 +81,6 @@ export default function Dashboard({ userData, onLogout, onUserDataChange }: Dash
     }
   };
 
-  const isSuperUser = Boolean(userData?.issuper || userData?.isSuper);
-
   const handleSelectClient = (cliente: any) => {
     const updatedUserData = {
       ...userData,
@@ -99,19 +93,6 @@ export default function Dashboard({ userData, onLogout, onUserDataChange }: Dash
     onUserDataChange(updatedUserData);
     setShowCustomerSearch(false);
   };
-
-  const menuItems = [
-    { id: 'scan', icon: Scan, title: 'Escaneo único', desc: 'Obtén datos espectrales, RGB, HEX, CIELAB y más.', path: '/scan' },
-    { id: 'match', icon: Search, title: 'Búsqueda de color', desc: 'Encuentra la coincidencia más cercana en bibliotecas de pintura.', path: '/color-match' },
-    { id: 'formulas', icon: PaintBucket, title: 'Fórmulas Personales', desc: 'Ver tus formulaciones de color específicas.', path: '/formulas' },
-    // { id: 'colorimetro', icon: Scan, title: 'Colorímetro Bluetooth', desc: 'Conecta tu Nix para escanear y capturar colores.', path: '/colorimetro' },
-    { id: 'libraries', icon: Library, title: 'Fórmulas stándard', desc: 'Explora tus fórmulas stándard.', path: '/libraries' },
-    { id: 'qc', icon: Layers, title: 'Control de calidad', desc: 'Compara muestras contra un estándar e identifica si pasan o fallan.', path: '/quality-control' },
-    { id: 'qc-history', icon: History, title: 'Historial de control', desc: 'Tu registro de sesiones de control de calidad.', path: '/lista-qc' },
-    { id: 'favorites', icon: Heart, title: 'Colecciones', desc: 'Accede, descarga y edita tus colores favoritos.' },
-    ...(isSuperUser ? [{ id: 'location', icon: MapPin, title: 'Ubicación Clientes', desc: 'Visualiza en mapa las ubicaciones de acceso de tus clientes.', path: '__localizacion__' }] : []),
-    // { id: 'cloud', icon: Cloud, title: 'Panel en la nube', desc: 'Comparte colores, ve analíticas y gestiona usuarios.' },
-  ];
 
   return (
     <div className="min-h-screen bg-[#0A0F14] text-slate-200 font-sans flex flex-col overflow-x-hidden">
@@ -227,41 +208,120 @@ export default function Dashboard({ userData, onLogout, onUserDataChange }: Dash
 
       {/* Main Content */}
       <main className="pt-24 pb-8 flex-grow">
-        <div className="px-6 mb-6">
-          <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Herramientas de Laboratorio</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-6 mb-12">
-          {menuItems.map((item) => (
-            <motion.button
-              key={item.id}
-              whileHover={{ y: -2, scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              onClick={() => {
-                if (item.path === '__localizacion__') {
-                  setShowLocalizacion(true);
-                } else if (item.path) {
-                  navigate(item.path);
-                }
-              }}
-              className="elegant-card flex items-center gap-4 p-5 text-left transition-all duration-300 group border border-slate-200/60 dark:border-slate-800/80 rounded-2xl w-full"
-            >
-              <div className="rounded-xl p-3.5 bg-gradient-to-br from-[var(--accent-orange)]/15 to-[var(--accent-orange)]/5 border border-[var(--accent-orange)]/15 dark:border-slate-700/50 flex-shrink-0 flex items-center justify-center transition-all duration-300 group-hover:from-[var(--accent-orange)]/25 group-hover:to-[var(--accent-orange)]/15">
-                <item.icon className="h-6 w-6 text-[var(--accent-orange)] transition-transform duration-300 group-hover:scale-110" />
-              </div>
-              <div className="flex-grow min-w-0 pr-2">
-                <h3 className="text-base font-bold tracking-tight transition-colors group-hover:text-[#005EC3] dark:group-hover:text-blue-400" style={{ color: 'var(--text-primary)' }}>
-                  {item.title}
-                </h3>
-                <p className="text-xs mt-1 leading-relaxed line-clamp-2" style={{ color: 'var(--text-secondary)', opacity: 0.9 }}>
-                  {item.desc}
-                </p>
-              </div>
-              <div className="flex-shrink-0 bg-slate-100 dark:bg-slate-800/60 p-2 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300">
-                <ChevronRight className="h-4 w-4 text-slate-600 dark:text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-              </div>
-            </motion.button>
-          ))}
-        </div>
+        {activeView === 'main' && (
+          <div className="px-6 mb-12">
+            <div className="mb-8">
+              <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Módulos Principales</h2>
+              <p className="text-sm text-slate-400">Selecciona el módulo de trabajo que deseas abrir:</p>
+            </div>
+
+            {/* Dos contenedores principales */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+              {/* Contenedor 1: COLORIMETRÍA */}
+              <motion.div
+                whileHover={{ y: -4, scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => setActiveView('colorimetria')}
+                className="cursor-pointer group relative overflow-hidden rounded-2xl p-6 elegant-card border border-slate-200/60 dark:border-slate-800/80 hover:border-[var(--accent-orange)]/50 transition-all duration-300 shadow-xl hover:shadow-[var(--accent-orange)]/10"
+              >
+                <div className="absolute top-0 right-0 w-44 h-44 bg-[var(--accent-orange)]/10 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-[var(--accent-orange)]/20 transition-all duration-500 pointer-events-none" />
+                <div className="flex flex-col h-full justify-between relative z-10">
+                  <div>
+                    {/* Header: Ícono y al frente Título + Subtítulo */}
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="rounded-xl p-3 bg-gradient-to-br from-[var(--accent-orange)]/20 to-[var(--accent-orange)]/5 border border-[var(--accent-orange)]/25 dark:border-slate-700/50 flex-shrink-0 flex items-center justify-center transition-all duration-300 group-hover:from-[var(--accent-orange)]/30 group-hover:to-[var(--accent-orange)]/15 group-hover:scale-105 shadow-md shadow-[var(--accent-orange)]/10 w-16 h-16">
+                        <img
+                          src={IconoAjustes}
+                          alt="Colorímetro / Espectrómetro"
+                          className="h-10 w-10 object-contain drop-shadow transition-transform duration-300 group-hover:scale-110"
+                        />
+                      </div>
+                      <div className="flex-grow min-w-0">
+                        <span className="text-[10px] font-bold tracking-widest uppercase text-amber-400 block mb-0.5">
+                          Laboratorio Quimresa
+                        </span>
+                        <h3 className="text-xl font-bold tracking-tight text-[#CC5200] group-hover:text-[#b84800] transition-colors leading-tight">
+                          COLORIMETRÍA
+                        </h3>
+                        <p className="text-xs text-slate-400 font-medium mt-0.5">
+                          Medición, formulación y control de calidad
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="text-xs leading-relaxed line-clamp-3 mb-6" style={{ color: 'var(--text-secondary)', opacity: 0.9 }}>
+                      Accede a las herramientas de escaneo espectral, formulación estándar y personal, control de calidad y búsqueda de color en bibliotecas.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-300 group-hover:text-[var(--accent-orange)] transition-colors pt-4 border-t border-slate-200/20 dark:border-slate-800/80">
+                    <span className="tracking-wider text-[11px] uppercase">Ingresar a Colorimetría</span>
+                    <div className="flex-shrink-0 bg-slate-100 dark:bg-slate-800/60 p-1.5 rounded-full opacity-70 group-hover:opacity-100 transition-opacity">
+                      <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[var(--accent-orange)] group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Contenedor 2: CONSUMO DE PROYECTOS */}
+              <motion.div
+                whileHover={{ y: -4, scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => setActiveView('consumoproyectos')}
+                className="cursor-pointer group relative overflow-hidden rounded-2xl p-6 elegant-card border border-slate-200/60 dark:border-slate-800/80 hover:border-[#005EC3]/50 transition-all duration-300 shadow-xl hover:shadow-[#005EC3]/10"
+              >
+                <div className="absolute top-0 right-0 w-44 h-44 bg-[#005EC3]/10 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-[#005EC3]/20 transition-all duration-500 pointer-events-none" />
+                <div className="flex flex-col h-full justify-between relative z-10">
+                  <div>
+                    {/* Header: Ícono y al frente Título + Subtítulo */}
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="rounded-xl p-3 bg-gradient-to-br from-[#005EC3]/20 to-[#005EC3]/5 border border-[#005EC3]/25 dark:border-slate-700/50 flex-shrink-0 flex items-center justify-center transition-all duration-300 group-hover:from-[#005EC3]/30 group-hover:to-[#005EC3]/15 group-hover:scale-105 shadow-md shadow-[#005EC3]/10 w-16 h-16">
+                        <Pipette className="h-8 w-8 text-[#005EC3] dark:text-blue-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-12" />
+                      </div>
+                      <div className="flex-grow min-w-0">
+                        <span className="text-[10px] font-bold tracking-widest uppercase block mb-0.5">
+                          Actividad y Operaciones
+                        </span>
+                        <h3 className="text-xl font-bold tracking-tight text-[#073c76] group-hover:text-[#004ca0] transition-colors leading-tight">
+                          CONSUMO DE PROYECTOS
+                        </h3>
+                        <p className="text-xs text-slate-400 font-medium mt-0.5">
+                          Control de rendimiento e insumos
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="text-xs leading-relaxed line-clamp-3 mb-6" style={{ color: 'var(--text-secondary)', opacity: 0.9 }}>
+                      Gestiona la predicción de consumos, rendimiento por proyecto, trazabilidad operativa y análisis comparativo de producción.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-300 group-hover:text-[#005EC3] dark:group-hover:text-blue-400 transition-colors pt-4 border-t border-slate-200/20 dark:border-slate-800/80">
+                    <span className="tracking-wider text-[11px] uppercase">Ingresar a Consumo de Proyectos</span>
+                    <div className="flex-shrink-0 bg-slate-100 dark:bg-slate-800/60 p-1.5 rounded-full opacity-70 group-hover:opacity-100 transition-opacity">
+                      <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#005EC3] dark:group-hover:text-blue-400 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        )}
+
+        {activeView === 'colorimetria' && (
+          <Colorimetria
+            userData={userData}
+            onBack={() => setActiveView('main')}
+            onOpenLocalizacion={() => setShowLocalizacion(true)}
+          />
+        )}
+
+        {activeView === 'consumoproyectos' && (
+          <ConsumoProyectos
+            userData={userData}
+            onBack={() => setActiveView('main')}
+          />
+        )}
       </main>
 
       {/* Footer Status Bar */}

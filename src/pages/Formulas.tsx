@@ -142,10 +142,10 @@ export default function Formulas({ email, onLogout }: FormulasProps) {
         }
 
         const data = await response.json();
-        const validData = Array.isArray(data) ? data.filter(isPatternValid) : [];
+        const validData = Array.isArray(data) ? data : [];
 
         const sortLabel = sortBy === 'FECHA' ? 'fecha (más reciente)' : 'nombre (alfabético)';
-        console.log(`[FORMULAS] Recibidos ${data.length} registros (${validData.length} válidos con patrón) | sortBy=${sortBy} (${sortLabel}) | page=${page}`);
+        console.log(`[FORMULAS] Recibidos ${data.length} registros (${validData.length} en total) | sortBy=${sortBy} (${sortLabel}) | page=${page}`);
 
         if (page === 1) {
           setFormulas(validData);
